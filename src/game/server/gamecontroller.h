@@ -14,12 +14,14 @@ typedef unsigned __int64 uint64_t;
 #include <stdint.h>
 #endif
 
+#include "lastday/item.h"
+
 /*
 	Class: Game Controller
 		Controls the main game logic. Keeping track of team and player score,
 		winning conditions and specific game logic.
 */
-class IGameController
+class CGameController
 {
 	vec2 m_aaSpawnPoints[3][64];
 	int m_aNumSpawnPoints[3];
@@ -27,7 +29,6 @@ class IGameController
 	class CGameContext *m_pGameServer;
 	class IServer *m_pServer;
 
-protected:
 	CGameContext *GameServer() const { return m_pGameServer; }
 	IServer *Server() const { return m_pServer; }
 
@@ -60,9 +61,6 @@ protected:
 	int m_GameOverTick;
 	int m_SuddenDeath;
 
-	int m_aTeamscore[2];
-
-	int m_Warmup;
 	int m_UnpauseTimer;
 	int m_RoundCount;
 
@@ -76,12 +74,11 @@ public:
 	bool IsTeamplay() const;
 	bool IsGameOver() const { return m_GameOverTick != -1; }
 
-	IGameController(class CGameContext *pGameServer);
-	virtual ~IGameController();
+	CGameController(class CGameContext *pGameServer);
+	virtual ~CGameController();
 
 	virtual void DoWincheck();
 
-	void DoWarmup(int Seconds);
 	void TogglePause();
 
 	void StartRound();
@@ -113,7 +110,7 @@ public:
 		Returns:
 			bool?
 	*/
-	virtual bool OnEntity(const char* pName, vec2 Pivot, vec2 P0, vec2 P1, vec2 P2, vec2 P3, int PosEnv);
+	virtual bool OnEntity(int Index, vec2 Pos);
 
 	/*
 		Function: on_CCharacter_spawn
@@ -148,13 +145,28 @@ public:
 	virtual const char *GetTeamName(int Team);
 	virtual int GetAutoTeam(int NotThisID);
 	virtual bool CanJoinTeam(int Team, int NotThisID);
-	bool CheckTeamBalance();
 	bool CanChangeTeam(CPlayer *pPplayer, int JoinTeam);
 	int ClampTeam(int Team);
 
 	virtual void PostReset();
 
 	double GetTime();
+
+	// MakeItem
+	class CItem
+	{
+	public:
+		CItem();
+		char m_aName[64];
+		int m_GiveID;
+		int m_GiveNum;
+		Resource m_NeedResource;
+	};
+
+	const char* GetResourceName(int ID);
+	void OnItemMake(const char *pMakeItem, int ClientID);
+	void ReturnItem(CItem Item, int ClientID);
+	bool FindItem(const char *pMakeItem, CItem *ItemInfo);
 };
 
 #endif

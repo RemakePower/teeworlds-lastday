@@ -1,0 +1,212 @@
+{"translation": 
+    [
+        {
+            "key": "Metal",
+            "value": "金属碎片"
+        },
+        {
+            "key": "Wood",
+            "value": "木头"
+        },
+        {
+            "key": "shotgun",
+            "value": "霰弹枪"
+        },
+        {
+            "key": "grenade",
+            "value": "榴弹炮"
+        },
+        {
+            "key": "rifle",
+            "value": "激光枪"
+        },
+        {
+    		"key": "Language successfully switched to English",
+    		"value": "语言成功切换为中文"
+    	},
+        {
+            "key": "Unknown language or no input language code",
+            "value": "未知语言或没有输入语言代码"
+        },
+        {
+            "key": "Available languages: {STR}",
+            "value": "可用语言: {STR}"
+        },
+        {
+            "key": "'{STR}' entered and joined the game",
+            "value": "'{STR}' 进入服务器并加入游戏"
+        },
+        {
+            "key": "'{STR}' has left the game ({STR})",
+            "value": "'{STR}' 离开了游戏 ({STR})"
+        },
+        {
+            "key": "'{STR}' has left the game",
+            "value": "'{STR}' 离开了游戏"
+        },
+        {
+            "key": "Spectators aren't allowed to start a vote.",
+            "value": "旁观者不能发起投票."
+        },
+        {
+            "key": "Wait for current vote to end before calling a new one.",
+            "value": "等待当前投票结束后发起新的投票."
+        },
+        {
+            "key": "Vote aborted",
+            "value": "投票中止"
+        },
+        {
+            "key": "Vote passed",
+            "value": "投票通过"
+        },
+        {
+            "key": "Vote failed",
+            "value": "投票否决"
+        },
+        {
+            "key":  "admin forced server option '{STR}' ({STR})",
+            "value":  "管理员修改了服务器设置 '{STR}' ({STR})"
+        },
+        {
+            "key": "admin moved '{STR}' to spectator ({STR})",
+            "value": "管理员将 '{STR}' 移到旁观 ({STR})"
+        },
+        {
+            "key": "admin forced vote yes",
+            "value": "管理员强制通过投票"
+        },
+        {
+            "key": "admin forced vote no",
+            "value": "管理员强制否决投票"
+        },
+        {
+            "key": "You must wait {INT} seconds before making another vote",
+            "value": "你必须等待 {INT} 秒才能再次提出另一个投票"
+        },
+        {
+            "key": "'{STR}' called vote to change server option '{STR}' ({STR})",
+            "value": "'{STR}' 提议修改服务器设置 '{STR}' ({STR})"
+        },
+        {
+            "key": "'{STR}' isn't an option on this server",
+            "value": "'{STR}' 在此服务器上并不是一个设置"
+        },
+        {
+            "key": "Server does not allow voting to kick players",
+            "value": "服务器不允许投票踢出玩家"
+        },
+        {
+            "key": "Kick voting requires {INT} players on the server",
+            "value": "在这个服务器上开始踢出的投票需要{INT}名玩家"
+        },
+        {
+            "key": "Invalid client id to kick",
+            "value": "无效的踢出者客户端ID"
+        },
+        {
+            "key": "You can't kick yourself",
+            "value": "你不能踢出你自己"
+        },
+        {
+            "key": "You can't kick admins",
+            "value": "你不能踢出管理员"
+        },
+        {
+            "key": "'{STR}' called for vote to kick you",
+            "value": "'{STR}' 提议踢出你"
+        },
+        {
+            "key": "'{STR}' called for vote to kick '{STR}' ({STR})",
+            "value": "'{STR}' 提议踢出 '{STR}' ({STR})"
+        },
+        {
+            "key": "Server does not allow voting to move players to spectators",
+            "value": "服务器不允许投票移动玩家到旁观"
+        },
+        {
+            "key": "Invalid client id to move",
+            "value": "缺少要移动的客户端ID"
+        },
+        {
+            "key": "You can't move yourself",
+            "value": "你不能移动你自己"
+        },
+        {
+            "key": "'{STR}' called for vote to move '{STR}' to spectators ({STR})",
+            "value": "'{STR}' 提议将 '{STR}' 移到旁观 ({STR})"
+        },
+        {
+            "key": "Teams are locked",
+            "value": "队伍已经锁定"
+        },
+        {
+            "key": "Teams were swapped",
+            "value": "队伍交换"
+        },
+        {
+            "key": "Teams were locked",
+            "value": "队伍锁定"
+        },
+        {
+            "key": "Teams were unlocked",
+            "value": "队伍解锁"
+        },
+        {
+            "key": "Teams must be balanced, please join other team",
+            "value": "队伍人数必须均衡，请加入另一个队伍"
+        },
+        {
+            "key": "Only {INT} active players are allowed",
+            "value": "只允许 {INT} 名玩家游玩"
+        },
+        {
+            "key": "Invalid spectator id used",
+            "value": "无效的旁观者客户端ID"
+        },
+        {
+            "key": "'{STR}' changed name to '{STR}'",
+            "value": "'{STR}' 改名为 '{STR}'"
+        },
+        {
+            "key": "'{STR}' joined the spectators",
+            "value": "'{STR}' 加入了旁观"
+        },
+        {
+            "key": "'{STR}' joined the blueteam",
+            "value": "'{STR}' 加入了蓝队"
+        },
+        {
+            "key": "'{STR}' joined the redteam",
+            "value": "'{STR}' 加入了红队"
+        },
+        {
+            "key": "'{STR}' joined the game",
+            "value": "'{STR}' 加入了游戏"
+        },
+        {
+            "key": "Thanks {STR}",
+            "value": "感谢 {STR}"
+        },
+        {
+            "key": "No any item name input",
+            "value": "没有任何物品名称输入"
+        },
+        {
+            "key": "No this item!",
+            "value": "没有这个物品!"
+        },
+        {
+            "key": "This item requires {STR}.",
+            "value": "这个物品需要{STR}."
+        },
+        {
+            "key": "Making {STR}...",
+            "value": "制造{STR}中..."
+        },
+        {
+            "key": "Make finish, you get {INT} {STR}",
+            "value": "制造完成, 你得到了 {INT} {STR}"
+        }
+    ]
+}

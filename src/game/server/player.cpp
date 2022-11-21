@@ -34,10 +34,13 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, int Team)
 	    idMap[i] = -1;
 	}
 	idMap[0] = ClientID;
+
+	m_Resource.ResetResource();
 }
 
 CPlayer::~CPlayer()
 {
+	m_Resource.ResetResource();
 	delete m_pCharacter;
 	m_pCharacter = 0;
 }
@@ -164,7 +167,7 @@ void CPlayer::Snap(int SnappingClient)
 	StrToInts(&pClientInfo->m_Clan0, 3, Server()->ClientClan(m_ClientID));
 	pClientInfo->m_Country = Server()->ClientCountry(m_ClientID);
 	StrToInts(&pClientInfo->m_Skin0, 6, m_TeeInfos.m_SkinName);
-	pClientInfo->m_UseCustomColor = m_TeeInfos.m_UseCustomColor;
+	pClientInfo->m_UseCustomColor = 0;
 	pClientInfo->m_ColorBody = m_TeeInfos.m_ColorBody;
 	pClientInfo->m_ColorFeet = m_TeeInfos.m_ColorFeet;
 
@@ -222,12 +225,12 @@ void CPlayer::OnDisconnect(const char *pReason)
 		if(pReason && *pReason)
 		{
 			str_format(aBuf, sizeof(aBuf), "'%s' has left the game (%s)", Server()->ClientName(m_ClientID), pReason);
-			GameServer()->SendChatTarget(-1, _("'{str:PlayerName}' has left the game ({str:Reason})"), "PlayerName", Server()->ClientName(m_ClientID), "Reason", pReason);
+			GameServer()->SendChatTarget_Locazition(-1, _("'{STR}' has left the game ({STR})"), Server()->ClientName(m_ClientID), pReason);
 		}
 		else
 		{
 			str_format(aBuf, sizeof(aBuf), "'%s' has left the game", Server()->ClientName(m_ClientID));
-			GameServer()->SendChatTarget(-1, _("'{str:PlayerName}' has left the game"), "PlayerName", Server()->ClientName(m_ClientID));
+			GameServer()->SendChatTarget_Locazition(-1, _("'{STR}' has left the game"), Server()->ClientName(m_ClientID));
 		}
 
 		str_format(aBuf, sizeof(aBuf), "leave player='%d:%s'", m_ClientID, Server()->ClientName(m_ClientID));
@@ -315,16 +318,16 @@ void CPlayer::SetTeam(int Team, bool DoChatMsg)
 	{
 		if(Team == TEAM_SPECTATORS)
 		{
-			GameServer()->SendChatTarget(-1, _("'{str:Player}' joined the spectators"),"Player", Server()->ClientName(m_ClientID));
+			GameServer()->SendChatTarget_Locazition(-1, _("'{STR}' joined the spectators"), Server()->ClientName(m_ClientID));
 		}else if(Team == TEAM_RED && GameServer()->m_pController->IsTeamplay())
 		{
-			GameServer()->SendChatTarget(-1, _("'{str:Player}' joined the redteam"),"Player", Server()->ClientName(m_ClientID));
+			GameServer()->SendChatTarget_Locazition(-1, _("'{STR}' joined the redteam"), Server()->ClientName(m_ClientID));
 		}else if(Team == TEAM_BLUE && GameServer()->m_pController->IsTeamplay())
 		{
-			GameServer()->SendChatTarget(-1, _("'{str:Player}' joined the blueteam"),"Player", Server()->ClientName(m_ClientID));
+			GameServer()->SendChatTarget_Locazition(-1, _("'{STR}' joined the blueteam"), Server()->ClientName(m_ClientID));
 		}else
 		{
-			GameServer()->SendChatTarget(-1, _("'{str:Player}' joined the game"),"Player", Server()->ClientName(m_ClientID));
+			GameServer()->SendChatTarget_Locazition(-1, _("'{STR}' joined the game"), Server()->ClientName(m_ClientID));
 		}
 	}
 

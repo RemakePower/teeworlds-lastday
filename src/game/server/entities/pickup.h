@@ -5,22 +5,27 @@
 
 #include <game/server/entity.h>
 
-const int PickupPhysSize = 14;
+const int PickupPhysSize = 16;
+const int PickupAmmoNum = 8;
 
-class CPickup : public CAnimatedEntity
+class CPickup : public CEntity
 {
 public:
-	CPickup(CGameWorld *pGameWorld, int Type, int SubType, vec2 Pivot, vec2 RelPos, int PosEnv);
+	CPickup(CGameWorld *pGameWorld, vec2 Pos, vec2 Dir, int Type, int SubType = 0);
+	~CPickup();
 
-	virtual void Reset();
+	vec2 GetPos(float Time);
+
 	virtual void Tick();
-	virtual void TickPaused();
 	virtual void Snap(int SnappingClient);
 
 private:
+	vec2 m_Direction;
+	vec2 m_StartPos;
+	int m_AmmoIDs[PickupAmmoNum];
 	int m_Type;
 	int m_Subtype;
-	int m_SpawnTick;
+	int m_StartTick;
 };
 
 #endif

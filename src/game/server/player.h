@@ -125,6 +125,7 @@ private:
 
 public:
 	CTuningParams* GetNextTuningParams() { return &m_NextTuningParams; };
+	Resource m_Resource;
 };
 
 #endif

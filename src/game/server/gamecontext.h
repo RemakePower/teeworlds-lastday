@@ -4,6 +4,7 @@
 #define GAME_SERVER_GAMECONTEXT_H
 
 #include <engine/server.h>
+#include <engine/storage.h>
 #include <engine/console.h>
 #include <engine/shared/memheap.h>
 
@@ -16,6 +17,7 @@
 #include "gamecontroller.h"
 #include "gameworld.h"
 #include "player.h"
+#include "define.h"
 
 #ifdef _MSC_VER
 typedef __int32 int32_t;
@@ -50,6 +52,7 @@ typedef unsigned __int64 uint64_t;
 class CGameContext : public IGameServer
 {
 	IServer *m_pServer;
+	IStorage *m_pStorage;
 	class IConsole *m_pConsole;
 	CLayers m_Layers;
 	CCollision m_Collision;
@@ -69,16 +72,14 @@ class CGameContext : public IGameServer
 	static void ConBroadcast(IConsole::IResult *pResult, void *pUserData);
 	static void ConSay(IConsole::IResult *pResult, void *pUserData);
 	static void ConSetTeam(IConsole::IResult *pResult, void *pUserData);
-	static void ConSetTeamAll(IConsole::IResult *pResult, void *pUserData);
-	static void ConSwapTeams(IConsole::IResult *pResult, void *pUserData);
-	static void ConShuffleTeams(IConsole::IResult *pResult, void *pUserData);
-	static void ConLockTeams(IConsole::IResult *pResult, void *pUserData);
 	static void ConAddVote(IConsole::IResult *pResult, void *pUserData);
 	static void ConRemoveVote(IConsole::IResult *pResult, void *pUserData);
 	static void ConForceVote(IConsole::IResult *pResult, void *pUserData);
 	static void ConClearVotes(IConsole::IResult *pResult, void *pUserData);
 	static void ConVote(IConsole::IResult *pResult, void *pUserData);
 	static void ConchainSpecialMotdupdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
+
+	static void ConMake(IConsole::IResult *pResult, void *pUserData);
 
 	CGameContext(int Resetting);
 	void Construct(int Resetting);
@@ -88,11 +89,10 @@ class CGameContext : public IGameServer
 public:
 	int m_ChatResponseTargetID;
 	int m_ChatPrintCBIndex;
-public:
-	int m_ZoneHandle_TeeWorlds;
 
 public:
 	IServer *Server() const { return m_pServer; }
+	IStorage *Storage() const { return m_pStorage; }
 	class IConsole *Console() { return m_pConsole; }
 	CCollision *Collision() { return &m_Collision; }
 	CTuningParams *Tuning() { return &m_Tuning; }
@@ -106,7 +106,7 @@ public:
 	CEventHandler m_Events;
 	CPlayer *m_apPlayers[MAX_CLIENTS];
 
-	IGameController *m_pController;
+	CGameController *m_pController;
 	CGameWorld m_World;
 
 	// helper functions
@@ -160,7 +160,8 @@ public:
 
 	// network
 	void SendMotd(int To, const char* pText);
-	void SendChatTarget(int To, const char *pText, ...);
+	void SendChatTarget(int To, const char *pText);
+	void SendChatTarget_Locazition(int To, const char *pText, ...);
 	void SendChat(int ClientID, int Team, const char *pText);
 	void SendEmoticon(int ClientID, int Emoticon);
 	void SendWeaponPickup(int ClientID, int Weapon);
@@ -168,14 +169,13 @@ public:
 	void SendBroadcast_VL(const char *pText, int ClientID, ...);
 	void SetClientLanguage(int ClientID, const char *pLanguage);
 
+	const char* Localize(const char *pLanguageCode, const char* pText) const;
+
 
 
 	//
 	void CheckPureTuning();
 	void SendTuningParams(int ClientID);
-
-	//
-	void SwapTeams();
 
 	// engine events
 	virtual void OnInit();
