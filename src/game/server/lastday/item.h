@@ -1,6 +1,8 @@
 #ifndef GAME_SERVER_LASTDAY_ITEM_LIST_H
 #define GAME_SERVER_LASTDAY_ITEM_LIST_H
 
+#include <base/system.h>
+
 enum ItemList
 {
     ITEM_SHOTGUN=0,
@@ -20,10 +22,11 @@ enum ResourceList
 
 struct Resource
 {
-    long GetResource(int ID);
+    int64 GetResource(int ID);
+    void SetResource(int ID, int Num);
     void ResetResource();
-    long m_Metal;
-    long m_Wood;
+    int64 m_Metal;
+    int64 m_Wood;
 };
 
 

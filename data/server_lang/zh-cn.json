@@ -201,8 +201,16 @@
             "value": "这个物品需要{STR}."
         },
         {
+            "key": "You had {STR}",
+            "value": "你已经有了{STR}"
+        },
+        {
             "key": "Making {STR}...",
             "value": "制造{STR}中..."
+        },
+        {
+            "key": "Make finish, you get {STR}",
+            "value": "制造完成, 你得到了 {STR}"
         },
         {
             "key": "Make finish, you get {INT} {STR}",

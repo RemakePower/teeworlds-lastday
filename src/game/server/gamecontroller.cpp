@@ -594,6 +594,26 @@ void CGameController::OnItemMake(const char *pMakeItem, int ClientID)
 		return;
 	}
 
+	bool CanMakeGun=true;
+	if(ItemInfo.m_GiveID <= ITEM_RIFLE)
+	{
+		CCharacter *pChr = pPlayer->GetCharacter();
+
+		switch (ItemInfo.m_GiveID)
+		{
+			case ITEM_SHOTGUN: if(pChr->GetWeaponStat()[WEAPON_SHOTGUN].m_Got) CanMakeGun = false;break;
+			case ITEM_GRENADE: if(pChr->GetWeaponStat()[WEAPON_GRENADE].m_Got) CanMakeGun = false;break;
+			case ITEM_RIFLE: if(pChr->GetWeaponStat()[WEAPON_RIFLE].m_Got) CanMakeGun = false;break;
+		}
+	}
+
+	if(!CanMakeGun)
+	{
+		GameServer()->SendChatTarget_Locazition(ClientID, _("You had {STR}"), 
+			GameServer()->Localize(pLanguageCode, pMakeItem));
+		return;
+	}
+
 	GameServer()->SendChatTarget_Locazition(ClientID, _("Making {STR}..."), 
 		GameServer()->Localize(pLanguageCode, pMakeItem));
 
@@ -624,8 +644,18 @@ void CGameController::ReturnItem(CItem Item, int ClientID)
 		}	
 	}
 
-	GameServer()->SendChatTarget_Locazition(ClientID, _("Make finish, you get {INT} {STR}"), 
-		Item.m_GiveNum, GameServer()->Localize(pLanguageCode, Item.m_aName));
+	if(Item.m_GiveNum)
+		GameServer()->SendChatTarget_Locazition(ClientID, _("Make finish, you get {INT} {STR}"), 
+			Item.m_GiveNum, GameServer()->Localize(pLanguageCode, Item.m_aName));
+	else GameServer()->SendChatTarget_Locazition(ClientID, _("Make finish, you get {STR}"), 
+			GameServer()->Localize(pLanguageCode, Item.m_aName));
+	
+	for(int i = 0; i < NUM_RESOURCES;i ++)
+	{
+		int Need = Item.m_NeedResource.GetResource(i);
+		int Have = pPlayer->m_Resource.GetResource(i);
+		pPlayer->m_Resource.SetResource(i, Have - Need);
+	}
 }
 
 // Find Item, if it in the json.return the FOUND(and the Item info)

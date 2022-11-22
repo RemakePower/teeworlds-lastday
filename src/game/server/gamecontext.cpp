@@ -1601,7 +1601,7 @@ void CGameContext::OnConsoleInit()
 	Console()->Register("about", "", CFGFLAG_CHAT, ConAbout, this, "Show information about the mod");
 	Console()->Register("language", "?s", CFGFLAG_CHAT, ConLanguage, this, "change language");
 
-	Console()->Register("make", "s", CFGFLAG_CHAT, ConMake, this, "make item");
+	Console()->Register("make", "?s", CFGFLAG_CHAT, ConMake, this, "make item");
 	
 	Console()->Chain("sv_motd", ConchainSpecialMotdupdate, this);
 }
