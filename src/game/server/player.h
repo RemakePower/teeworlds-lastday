@@ -117,7 +117,7 @@ private:
 
 	char m_aLanguage[16];
 
-	private:
+private:
 	CTuningParams m_PrevTuningParams;
 	CTuningParams m_NextTuningParams;
 
@@ -126,6 +126,14 @@ private:
 public:
 	CTuningParams* GetNextTuningParams() { return &m_NextTuningParams; };
 	Resource m_Resource;
+#ifdef CONF_SQL
+	struct
+	{
+		int m_UserID;
+		char m_Username[32];
+		char m_Password[32];
+	} m_AccData;
+#endif
 };
 
 #endif

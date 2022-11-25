@@ -13,6 +13,133 @@
 
 #include <teeuniverses/components/localization.h>
 
+#ifdef CONF_SQL
+
+void CQueryRegister::OnData()
+{
+	if(Next())
+	{
+		m_pGameServer->SendChatTarget_Locazition(m_ClientID, _("Account already exists."));
+	}
+	else
+	{
+		if(m_pDatabase->Register(Username, Password, Language, m_ClientID))
+		{
+			char aBuf[256];
+			m_pGameServer->SendChatTarget_Locazition(m_ClientID, _("=====Registered====="));
+			m_pGameServer->SendChatTarget_Locazition(m_ClientID, _("Username: {STR}"), Username);
+			m_pGameServer->SendChatTarget_Locazition(m_ClientID, _("Password: {STR}"), Password);
+			m_pGameServer->SendChatTarget_Locazition(m_ClientID, _("=====Registered====="));
+			m_pGameServer->Login(Username, Password, m_ClientID, true);
+		}
+	}
+}
+
+void CQueryLogin::OnData()
+{
+	if(Next())
+	{
+		if(m_pDatabase->Login(Username, Password, m_ClientID))
+		{
+			if(m_pGameServer->m_apPlayers[m_ClientID]->m_AccData.m_UserID > -1)
+			{
+				m_pGameServer->SendChatTarget_Locazition(m_ClientID, _("You are logged in"));
+				return;
+			}
+
+			for(int j = 0; j < MAX_CLIENTS; j++)
+			{
+				if(m_pGameServer->m_apPlayers[j] && m_pGameServer->m_apPlayers[j]->m_AccData.m_UserID == GetInt(GetID("ID")))
+				{
+					dbg_msg("account", "Account login failed ('%s' - already in use (local))", Username);
+					m_pGameServer->SendChatTarget_Locazition(m_ClientID, _("Account already in use"));
+					return;
+				}
+			};
+
+			m_pGameServer->m_apPlayers[m_ClientID]->m_AccData.m_UserID = GetInt(GetID("ID"));
+			str_format(m_pGameServer->m_apPlayers[m_ClientID]->m_AccData.m_Username, sizeof(m_pGameServer->m_apPlayers[m_ClientID]->m_AccData.m_Username), GetText(GetID("Username")));
+			str_format(m_pGameServer->m_apPlayers[m_ClientID]->m_AccData.m_Password, sizeof(m_pGameServer->m_apPlayers[m_ClientID]->m_AccData.m_Password), GetText(GetID("Password")));
+			
+			if(Register)
+			{
+				m_pGameServer->Apply(Username, Password, m_pGameServer->m_apPlayers[m_ClientID]->GetLanguage(), GetInt(GetID("ID")), m_pGameServer->m_apPlayers[m_ClientID]->m_Resource);
+			}
+			else
+			{
+				m_pGameServer->m_apPlayers[m_ClientID]->m_Resource.m_Metal = GetInt64(GetID("Metal"));
+				m_pGameServer->m_apPlayers[m_ClientID]->m_Resource.m_Wood = GetInt64(GetID("Wood"));
+				m_pGameServer->Server()->SetClientLanguage(m_ClientID, GetText(GetID("Language")));
+				m_pGameServer->m_apPlayers[m_ClientID]->SetLanguage(GetText(GetID("Language")));
+				dbg_msg("SQLite", "Login, Language='%s',Metal=%lld,Wood=%lld WHERE ID=%d", GetText(GetID("Language")),
+				 GetInt64(GetID("Metal")), GetInt64(GetID("Wood")), GetInt(GetID("ID")));
+			}
+			m_pGameServer->SendChatTarget_Locazition(m_ClientID, _("You are now logged in"));
+		}else
+		{
+			m_pGameServer->SendChatTarget_Locazition(m_ClientID, _("Error password"));
+		}
+	}
+	else
+	{
+		m_pGameServer->SendChatTarget_Locazition(m_ClientID, _("This account does not exist"));
+	}
+}
+
+void CQueryApply::OnData()
+{
+	if(Next())
+	{
+		m_pDatabase->Apply(Username, Password, Language, m_ClientID, 
+			m_Resource.m_Metal, m_Resource.m_Wood);
+	}
+}
+
+void CGameContext::Register(const char *Username, const char *Password, int ClientID)
+{
+	char *pQueryBuf = sqlite3_mprintf("SELECT * FROM Accounts WHERE Username='%q'", Username);
+	CQueryRegister *pQuery = new CQueryRegister();
+	str_copy(pQuery->Username, Username, sizeof(pQuery->Username));
+	str_copy(pQuery->Password, Password, sizeof(pQuery->Password));
+	pQuery->m_ClientID = ClientID;
+	pQuery->m_pGameServer = this;
+	str_copy(pQuery->Language, m_apPlayers[ClientID]->GetLanguage(), sizeof(pQuery->Language));
+	pQuery->Query(m_pDatabase, pQueryBuf);
+	sqlite3_free(pQueryBuf);
+}
+
+void CGameContext::Login(const char *Username, const char *Password, int ClientID, bool Register)
+{
+	char *pQueryBuf = sqlite3_mprintf("SELECT * FROM Accounts WHERE Username='%q'", Username);
+	CQueryLogin *pQuery = new CQueryLogin();
+	str_copy(pQuery->Username, Username, sizeof(pQuery->Username));
+	str_copy(pQuery->Password, Password, sizeof(pQuery->Password));
+	pQuery->m_ClientID = ClientID;
+	pQuery->m_pGameServer = this;
+	pQuery->Register = Register;
+	pQuery->Query(m_pDatabase, pQueryBuf);
+	sqlite3_free(pQueryBuf);
+}
+
+bool CGameContext::Apply(const char *Username, const char *Password, const char *Language, int AccID, Resource Resource)
+{
+	char *pQueryBuf = sqlite3_mprintf("SELECT * FROM Accounts WHERE Username='%q'", Username);
+	CQueryApply *pQuery = new CQueryApply();
+	str_copy(pQuery->Username, Username, sizeof(pQuery->Username));
+	str_copy(pQuery->Password, Password, sizeof(pQuery->Password));
+	pQuery->m_ClientID = AccID;
+	pQuery->m_pGameServer = this;
+	str_copy(pQuery->Language, Language, sizeof(pQuery->Language));
+	pQuery->m_Resource = Resource;
+	pQuery->m_pGameServer = this;
+	pQuery->Query(m_pDatabase, pQueryBuf);
+	sqlite3_free(pQueryBuf);
+
+	return true;
+}
+
+#endif
+
 enum
 {
 	RESET,
@@ -37,6 +164,9 @@ void CGameContext::Construct(int Resetting)
 
 	if(Resetting==NO_RESET)
 		m_pVoteOptionHeap = new CHeap();
+#ifdef CONF_SQL
+	m_pDatabase = new CSql();
+#endif
 }
 
 CGameContext::CGameContext(int Resetting)
@@ -629,6 +759,13 @@ void CGameContext::OnClientConnected(int ClientID)
 
 void CGameContext::OnClientDrop(int ClientID, const char *pReason)
 {
+#ifdef CONF_SQL
+	const char* Username = m_apPlayers[ClientID]->m_AccData.m_Username;
+	const char* Password = m_apPlayers[ClientID]->m_AccData.m_Password;
+	const char* Language = m_apPlayers[ClientID]->GetLanguage();
+	int AccID = m_apPlayers[ClientID]->m_AccData.m_UserID;
+	Apply(Username, Password, Language, AccID, m_apPlayers[ClientID]->m_Resource);
+#endif
 	AbortVoteKickOnDisconnect(ClientID);
 	m_apPlayers[ClientID]->OnDisconnect(pReason);
 	delete m_apPlayers[ClientID];
@@ -1451,8 +1588,9 @@ void CGameContext::ConAbout(IConsole::IResult *pResult, void *pUserData)
 
 	char aThanksList[256];
 
-	str_copy(aThanksList, "necropotame, kurosio, and ST-Chara", sizeof(aThanksList));
+	str_copy(aThanksList, "necropotame, kurosio, GutZuFusss, and ST-Chara", sizeof(aThanksList));
 	// necropotame made this frame, ST-Chara and RemakePower now support it.Localization from Kurosio.
+	// sqlite3 from ST-Chara and GutZuFusss
 
 	pSelf->SendChatTarget_Locazition(ClientID, "====={STR}=====", MOD_NAME);
 	pSelf->SendChatTarget_Locazition(ClientID, "{STR} by {STR}", 
@@ -1527,12 +1665,54 @@ void CGameContext::ConMake(IConsole::IResult *pResult, void *pUserData)
 	int ClientID = pResult->GetClientID();
 	if(!pMakeItem)
 	{
-		pSelf->SendChatTarget_Locazition(ClientID, "No any item name input");
+		pSelf->SendChatTarget_Locazition(ClientID, _("No any item name input"));
 		return;
 	}
 	pSelf->m_pController->OnItemMake(pMakeItem, ClientID);
 }
 
+void CGameContext::ConStatus(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	
+	int ClientID = pResult->GetClientID();
+
+	pSelf->m_pController->ShowStatus(ClientID);
+}
+
+#ifdef CONF_SQL
+void CGameContext::ConRegister(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	
+	const char *UserName = pResult->GetString(0);
+	const char *Password = pResult->GetString(1);
+	int ClientID = pResult->GetClientID();
+	if(!UserName || !Password)
+	{
+		pSelf->SendChatTarget_Locazition(ClientID, _("Please use {STR} <username> <password>"), "/register");
+		return;
+	}
+	
+	pSelf->Register(UserName, Password, ClientID);
+}
+
+void CGameContext::ConLogin(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	
+	const char *UserName = pResult->GetString(0);
+	const char *Password = pResult->GetString(1);
+	int ClientID = pResult->GetClientID();
+	if(!UserName || !Password)
+	{
+		pSelf->SendChatTarget_Locazition(ClientID, _("Please use {STR} <username> <password>"), "/login");
+		return;
+	}
+	
+	pSelf->Login(UserName, Password, ClientID);
+}
+#endif
 void CGameContext::SetClientLanguage(int ClientID, const char *pLanguage)
 {
 	Server()->SetClientLanguage(ClientID, pLanguage);
@@ -1545,6 +1725,21 @@ void CGameContext::SetClientLanguage(int ClientID, const char *pLanguage)
 const char* CGameContext::Localize(const char *pLanguageCode, const char* pText) const
 {
 	return Server()->Localization()->Localize(pLanguageCode, pText);
+}
+
+const char* CGameContext::Format(const char* pText, ...) const
+{
+	dynamic_string Buffer;
+
+	va_list VarArgs;
+	va_start(VarArgs, pText);
+	
+	Buffer.clear();
+	Server()->Localization()->Format(Buffer, "en", pText, VarArgs);
+	
+	va_end(VarArgs);
+
+	return Buffer.buffer();
 }
 
 void CGameContext::ConsoleOutputCallback_Chat(const char *pLine, void *pUser)
@@ -1602,7 +1797,12 @@ void CGameContext::OnConsoleInit()
 	Console()->Register("language", "?s", CFGFLAG_CHAT, ConLanguage, this, "change language");
 
 	Console()->Register("make", "?s", CFGFLAG_CHAT, ConMake, this, "make item");
-	
+	Console()->Register("status", "", CFGFLAG_CHAT, ConStatus, this, "show status");
+	Console()->Register("me", "", CFGFLAG_CHAT, ConStatus, this, "show status");
+#ifdef CONF_SQL
+	Console()->Register("register", "?s?s", CFGFLAG_CHAT, ConRegister, this, "register");
+	Console()->Register("login", "?s?s", CFGFLAG_CHAT, ConLogin, this, "login");
+#endif	
 	Console()->Chain("sv_motd", ConchainSpecialMotdupdate, this);
 }
 

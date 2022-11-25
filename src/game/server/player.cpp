@@ -34,6 +34,9 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, int Team)
 	    idMap[i] = -1;
 	}
 	idMap[0] = ClientID;
+#ifdef CONF_SQL
+	m_AccData.m_UserID = -1;
+#endif
 
 	m_Resource.ResetResource();
 }

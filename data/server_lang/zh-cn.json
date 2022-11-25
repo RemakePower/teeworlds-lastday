@@ -21,6 +21,46 @@
             "value": "激光枪"
         },
         {
+            "key": "Account already exists.",
+            "value": "该账号已存在"
+        },
+        {
+            "key": "=====Registered=====",
+            "value": "=====已注册====="
+        },
+        {
+            "key": "Username: {STR}",
+            "value": "用户名: {STR}" 
+        },
+        {
+            "key": "Password: {STR}",
+            "value": "密码: {STR}"
+        },
+        {
+            "key": "Please use {STR} <username> <password>",
+            "value": "请使用{STR} <用户名> <密码>"
+        },
+        {
+            "key": "You are logged in",
+            "value": "你已经登录了"
+        },
+        {
+            "key": "You are now logged in",
+            "value": "你现在登录了"
+        },
+        {
+            "key": "Account already in use",
+            "value": "账号已被登录"
+        },
+        {
+            "key": "Error password",
+            "value": "错误的密码"
+        },
+        {
+            "key": "This account does not exist",
+            "value": "没有这个账号"
+        },
+        {
     		"key": "Language successfully switched to English",
     		"value": "语言成功切换为中文"
     	},

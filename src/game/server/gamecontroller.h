@@ -167,6 +167,8 @@ public:
 	void OnItemMake(const char *pMakeItem, int ClientID);
 	void ReturnItem(CItem Item, int ClientID);
 	bool FindItem(const char *pMakeItem, CItem *ItemInfo);
+	// Status
+	void ShowStatus(int ClientID);
 };
 
 #endif

@@ -28,6 +28,8 @@ typedef unsigned __int64 uint64_t;
 #include <stdint.h>
 #endif
 
+#include "lastday/item.h"
+#include "lastday/accounts/db_sqlite3.h"
 /*
 	Tick
 		Game Context (CGameContext::tick)
@@ -80,6 +82,12 @@ class CGameContext : public IGameServer
 	static void ConchainSpecialMotdupdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 
 	static void ConMake(IConsole::IResult *pResult, void *pUserData);
+	static void ConStatus(IConsole::IResult *pResult, void *pUserData);
+#ifdef CONF_SQL
+	static void ConRegister(IConsole::IResult *pResult, void *pUserData);
+	static void ConLogin(IConsole::IResult *pResult, void *pUserData);
+#endif
+
 
 	CGameContext(int Resetting);
 	void Construct(int Resetting);
@@ -170,6 +178,7 @@ public:
 	void SetClientLanguage(int ClientID, const char *pLanguage);
 
 	const char* Localize(const char *pLanguageCode, const char* pText) const;
+	const char* Format(const char* pText, ...) const;
 
 
 
@@ -203,7 +212,47 @@ public:
 	virtual const char *GameType();
 	virtual const char *Version();
 	virtual const char *NetVersion();
+
+#ifdef CONF_SQL
+	CSql *m_pDatabase;
+	void Register(const char *Username, const char *Password, int ClientID); // Register account
+	void Login(const char *Username, const char *Password, int ClientID, bool Register = false); // Login account
+	bool Apply(const char *Username, const char *Password, const char *Language, int AccID, Resource Resource); // Apply account
+	int GetUID(const char *Username, const char *Password); // Get ID
+#endif
 };
+
+#ifdef CONF_SQL
+class CQueryBase : public CQuery
+{
+public:
+	int m_ClientID;
+	char Username[32];
+	char Password[32];
+	char Language[16];
+	CGameContext *m_pGameServer;
+};
+
+class CQueryRegister: public CQueryBase
+{
+	void OnData();
+public:
+};
+
+class CQueryLogin: public CQueryBase
+{
+	void OnData();
+public:
+	bool Register;
+};
+
+class CQueryApply: public CQueryBase
+{
+	void OnData();
+public:
+	Resource m_Resource;
+};
+#endif
 
 inline int64_t CmaskAll() { return -1LL; }
 inline int64_t CmaskOne(int ClientID) { return 1LL<<ClientID; }

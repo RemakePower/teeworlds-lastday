@@ -323,9 +323,6 @@ void CCharacter::FireWeapon()
 			if(Hits)
 				m_ReloadTimer = Server()->TickSpeed()/3;
 
-			new CPickup(GameWorld(), vec2(m_Pos.x, 0), 
-				Direction, random_int(PICKUP_HEALTH, PICKUP_AMMO), random_int(WEAPON_GUN, WEAPON_RIFLE));
-
 		} break;
 
 		case WEAPON_GUN:

@@ -24,6 +24,6 @@ void Resource::SetResource(int ID, int Num)
 
 void Resource::ResetResource()
 {
-    m_Metal = 100;
-    m_Wood = 100;
+    m_Metal = 0;
+    m_Wood = 0;
 }

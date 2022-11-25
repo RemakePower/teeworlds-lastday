@@ -324,13 +324,13 @@ void CLocalization::Format_V(dynamic_string& Buffer, const char* pLanguageCode, 
 			else if(str_comp_num("FLOAT", pText + ParamTypeStart, 5) == 0) // float
 			{
 				char aBuf[128];
-				const int pVarArgValue = va_arg(VarArgsIter, int);
+				const float pVarArgValue = va_arg(VarArgsIter, float);
 				str_format(aBuf, sizeof(aBuf), "%f", pVarArgValue); // %f
 				BufferIter = Buffer.append_at(BufferIter, aBuf);
 			}
 			else if(str_comp_num("VAL", pText + ParamTypeStart, 5) == 0) // value
 			{
-				const int pVarArgValue = va_arg(VarArgsIter, int);
+				const int64 pVarArgValue = va_arg(VarArgsIter, int64);
 				char* aBuffer = format_integer_with_commas(',', pVarArgValue);
 				BufferIter = Buffer.append_at(BufferIter, aBuffer);
 				delete[] aBuffer;
