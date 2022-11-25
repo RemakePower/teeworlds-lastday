@@ -9,7 +9,7 @@ SDL.dll
 freetype.dll
 autoexec.cfg
 .vscode
-*.db
+lastday-accounts.db
 
 teeworlds*
 teeworlds_srv*
