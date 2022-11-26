@@ -83,10 +83,8 @@ class CGameContext : public IGameServer
 
 	static void ConMake(IConsole::IResult *pResult, void *pUserData);
 	static void ConStatus(IConsole::IResult *pResult, void *pUserData);
-#ifdef CONF_SQL
 	static void ConRegister(IConsole::IResult *pResult, void *pUserData);
 	static void ConLogin(IConsole::IResult *pResult, void *pUserData);
-#endif
 
 
 	CGameContext(int Resetting);
@@ -213,16 +211,13 @@ public:
 	virtual const char *Version();
 	virtual const char *NetVersion();
 
-#ifdef CONF_SQL
 	CSql *m_pDatabase;
 	void Register(const char *Username, const char *Password, int ClientID); // Register account
 	void Login(const char *Username, const char *Password, int ClientID, bool Register = false); // Login account
 	bool Apply(const char *Username, const char *Password, const char *Language, int AccID, Resource Resource); // Apply account
 	int GetUID(const char *Username, const char *Password); // Get ID
-#endif
 };
 
-#ifdef CONF_SQL
 class CQueryBase : public CQuery
 {
 public:
@@ -252,7 +247,6 @@ class CQueryApply: public CQueryBase
 public:
 	Resource m_Resource;
 };
-#endif
 
 inline int64_t CmaskAll() { return -1LL; }
 inline int64_t CmaskOne(int ClientID) { return 1LL<<ClientID; }

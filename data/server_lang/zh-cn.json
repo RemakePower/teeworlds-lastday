@@ -25,6 +25,10 @@
             "value": "该账号已存在"
         },
         {
+            "key": "A minimum of 6 characters is required",
+            "value": "至少需要6个字符"
+        },
+        {
             "key": "=====Registered=====",
             "value": "=====已注册====="
         },

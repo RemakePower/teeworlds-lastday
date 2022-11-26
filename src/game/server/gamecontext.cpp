@@ -13,8 +13,6 @@
 
 #include <teeuniverses/components/localization.h>
 
-#ifdef CONF_SQL
-
 void CQueryRegister::OnData()
 {
 	if(Next())
@@ -138,7 +136,6 @@ bool CGameContext::Apply(const char *Username, const char *Password, const char 
 	return true;
 }
 
-#endif
 
 enum
 {
@@ -164,9 +161,8 @@ void CGameContext::Construct(int Resetting)
 
 	if(Resetting==NO_RESET)
 		m_pVoteOptionHeap = new CHeap();
-#ifdef CONF_SQL
+
 	m_pDatabase = new CSql();
-#endif
 }
 
 CGameContext::CGameContext(int Resetting)
@@ -759,13 +755,15 @@ void CGameContext::OnClientConnected(int ClientID)
 
 void CGameContext::OnClientDrop(int ClientID, const char *pReason)
 {
-#ifdef CONF_SQL
-	const char* Username = m_apPlayers[ClientID]->m_AccData.m_Username;
-	const char* Password = m_apPlayers[ClientID]->m_AccData.m_Password;
-	const char* Language = m_apPlayers[ClientID]->GetLanguage();
 	int AccID = m_apPlayers[ClientID]->m_AccData.m_UserID;
-	Apply(Username, Password, Language, AccID, m_apPlayers[ClientID]->m_Resource);
-#endif
+	if(AccID > -1)
+	{
+		const char* Username = m_apPlayers[ClientID]->m_AccData.m_Username;
+		const char* Password = m_apPlayers[ClientID]->m_AccData.m_Password;
+		const char* Language = m_apPlayers[ClientID]->GetLanguage();
+		Apply(Username, Password, Language, AccID, m_apPlayers[ClientID]->m_Resource);
+	}
+
 	AbortVoteKickOnDisconnect(ClientID);
 	m_apPlayers[ClientID]->OnDisconnect(pReason);
 	delete m_apPlayers[ClientID];
@@ -1680,7 +1678,6 @@ void CGameContext::ConStatus(IConsole::IResult *pResult, void *pUserData)
 	pSelf->m_pController->ShowStatus(ClientID);
 }
 
-#ifdef CONF_SQL
 void CGameContext::ConRegister(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
@@ -1688,9 +1685,15 @@ void CGameContext::ConRegister(IConsole::IResult *pResult, void *pUserData)
 	const char *UserName = pResult->GetString(0);
 	const char *Password = pResult->GetString(1);
 	int ClientID = pResult->GetClientID();
-	if(!UserName || !Password)
+	if(pResult->NumArguments() != 2)
 	{
 		pSelf->SendChatTarget_Locazition(ClientID, _("Please use {STR} <username> <password>"), "/register");
+		return;
+	}
+
+	if(str_length(UserName) < 6 || str_length(Password) < 6)
+	{
+		pSelf->SendChatTarget_Locazition(ClientID, _("A minimum of 6 characters is required"), "/register");
 		return;
 	}
 	
@@ -1704,7 +1707,7 @@ void CGameContext::ConLogin(IConsole::IResult *pResult, void *pUserData)
 	const char *UserName = pResult->GetString(0);
 	const char *Password = pResult->GetString(1);
 	int ClientID = pResult->GetClientID();
-	if(!UserName || !Password)
+	if(pResult->NumArguments() != 2)
 	{
 		pSelf->SendChatTarget_Locazition(ClientID, _("Please use {STR} <username> <password>"), "/login");
 		return;
@@ -1712,7 +1715,7 @@ void CGameContext::ConLogin(IConsole::IResult *pResult, void *pUserData)
 	
 	pSelf->Login(UserName, Password, ClientID);
 }
-#endif
+
 void CGameContext::SetClientLanguage(int ClientID, const char *pLanguage)
 {
 	Server()->SetClientLanguage(ClientID, pLanguage);
@@ -1799,10 +1802,10 @@ void CGameContext::OnConsoleInit()
 	Console()->Register("make", "?s", CFGFLAG_CHAT, ConMake, this, "make item");
 	Console()->Register("status", "", CFGFLAG_CHAT, ConStatus, this, "show status");
 	Console()->Register("me", "", CFGFLAG_CHAT, ConStatus, this, "show status");
-#ifdef CONF_SQL
+
 	Console()->Register("register", "?s?s", CFGFLAG_CHAT, ConRegister, this, "register");
 	Console()->Register("login", "?s?s", CFGFLAG_CHAT, ConLogin, this, "login");
-#endif	
+
 	Console()->Chain("sv_motd", ConchainSpecialMotdupdate, this);
 }
 
