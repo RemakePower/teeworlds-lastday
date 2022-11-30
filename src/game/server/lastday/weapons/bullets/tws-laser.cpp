@@ -1,10 +1,8 @@
-/* (c) Magnus Auvinen. See licence.txt in the root of the distribution for more information. */
-/* If you are missing that file, acquire a complete release at teeworlds.com.                */
 #include <game/generated/protocol.h>
 #include <game/server/gamecontext.h>
-#include "laser.h"
+#include "tws-laser.h"
 
-CLaser::CLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEnergy, int Owner)
+CTWSLaser::CTWSLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEnergy, int Owner)
 : CEntity(pGameWorld, CGameWorld::ENTTYPE_LASER)
 {
 	m_Pos = Pos;
@@ -18,7 +16,7 @@ CLaser::CLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEner
 }
 
 
-bool CLaser::HitCharacter(vec2 From, vec2 To)
+bool CTWSLaser::HitCharacter(vec2 From, vec2 To)
 {
 	vec2 At;
 	CCharacter *pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
@@ -33,7 +31,7 @@ bool CLaser::HitCharacter(vec2 From, vec2 To)
 	return true;
 }
 
-void CLaser::DoBounce()
+void CTWSLaser::DoBounce()
 {
 	m_EvalTick = Server()->Tick();
 
@@ -80,23 +78,23 @@ void CLaser::DoBounce()
 	}
 }
 
-void CLaser::Reset()
+void CTWSLaser::Reset()
 {
 	GameServer()->m_World.DestroyEntity(this);
 }
 
-void CLaser::Tick()
+void CTWSLaser::Tick()
 {
 	if(Server()->Tick() > m_EvalTick+(Server()->TickSpeed()*GameServer()->Tuning()->m_LaserBounceDelay)/1000.0f)
 		DoBounce();
 }
 
-void CLaser::TickPaused()
+void CTWSLaser::TickPaused()
 {
 	++m_EvalTick;
 }
 
-void CLaser::Snap(int SnappingClient)
+void CTWSLaser::Snap(int SnappingClient)
 {
 	if(NetworkClipped(SnappingClient))
 		return;

@@ -1,4 +1,4 @@
-#include "item.h"
+#include "resource.h"
 
 int64 Resource::GetResource(int ID)
 {
@@ -11,12 +11,12 @@ int64 Resource::GetResource(int ID)
     }
 }
 
-void Resource::SetResource(int ID, int Num)
+void Resource::SetResource(int ID, int64 Num)
 {
     switch (ID)
     {
-        case RESOURCE_METAL: m_Metal = Num;
-        case RESOURCE_WOOD: m_Wood = Num;
+        case RESOURCE_METAL: m_Metal = Num;return;
+        case RESOURCE_WOOD: m_Wood = Num;return;
         
         default: return;
     }

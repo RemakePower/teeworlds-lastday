@@ -23,7 +23,7 @@ enum ResourceList
 struct Resource
 {
     int64 GetResource(int ID);
-    void SetResource(int ID, int Num);
+    void SetResource(int ID, int64 Num);
     void ResetResource();
     int64 m_Metal;
     int64 m_Wood;

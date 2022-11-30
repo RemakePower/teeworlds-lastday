@@ -96,7 +96,7 @@ void CPickup::Tick()
 
 	// Check if a player intersected us
 	CCharacter *pChr = GameServer()->m_World.ClosestCharacter(m_Pos, 32.0f, 0);
-	if(pChr && pChr->IsAlive())
+	if(pChr && pChr->IsAlive() && !pChr->GetPlayer()->m_IsBot)
 	{
 		bool Destroy = false;
 		switch (m_Type)
@@ -129,6 +129,12 @@ void CPickup::Tick()
 				}
 				break;
 			}
+			case PICKUP_RESOURCE:
+			{
+				GameServer()->AddResource(pChr->GetCID(), m_Subtype);
+				Destroy = true;
+				break;
+			}
 		}
 
 		if(Destroy)
@@ -149,9 +155,19 @@ void CPickup::Snap(int SnappingClient)
 
 		pP->m_X = (int)m_Pos.x;
 		pP->m_Y = (int)m_Pos.y;
-		pP->m_Type = m_Type;
-		pP->m_Subtype = 0;
-	}else
+		if(m_Type != PICKUP_RESOURCE)
+		{
+			pP->m_Type = m_Type;
+			pP->m_Subtype = 0;
+		}
+		else
+		{
+			pP->m_Type = POWERUP_WEAPON;
+			pP->m_Subtype = WEAPON_HAMMER;
+		}
+		
+	}
+	else
 	{
 		int Degres = 0;
 

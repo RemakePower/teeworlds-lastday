@@ -245,6 +245,8 @@ public:
 
 	void RegisterCommands();
 
+	// Bots
+	virtual void InitClientBot(int ClientID);
 
 	virtual int SnapNewID();
 	virtual void SnapFreeID(int ID);

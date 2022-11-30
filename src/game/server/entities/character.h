@@ -41,6 +41,7 @@ public:
 
 	void HandleWeapons();
 	void HandleNinja();
+	void HandleEvents();
 
 	void OnPredictedInput(CNetObj_PlayerInput *pNewInput);
 	void OnDirectInput(CNetObj_PlayerInput *pNewInput);
@@ -92,6 +93,9 @@ private:
 
 	int m_DamageTaken;
 
+	// Death layer
+	int m_NextDmgTick;
+
 	int m_EmoteType;
 	int m_EmoteStop;
 
@@ -115,7 +119,7 @@ private:
 	int m_Armor;
 
 	// ninja
-	struct
+	struct NinjaInfo
 	{
 		vec2 m_ActivationDir;
 		int m_ActivationTick;
@@ -132,8 +136,27 @@ private:
 	CCharacterCore m_ReckoningCore; // the dead reckoning core
 
 public:
+	CCharacterCore *GetCore() {return &m_Core;}
 	WeaponStat *GetWeaponStat() {return m_aWeapons;}
 	int GetActiveWeapon() {return m_ActiveWeapon; }
+	int GetCID() const;
+/** Weapon Public for weapon system*/
+	NinjaInfo *GetNinjaInfo() {return &m_Ninja;}
+	void SetReloadTimer(int ReloadTimer) { m_ReloadTimer = ReloadTimer;}
+
+/*** Bot ***/
+	struct
+	{
+		int m_Target;
+		int m_Direction;
+		int m_NextDirectionTick;
+		vec2 m_LastTargetPos;
+		vec2 m_RandomPos;
+	} m_Botinfo;
+	void DoBotActions();
+	bool CheckPos(vec2 CheckPos);
+/*** Bot End ***/
+
 };
 
 #endif

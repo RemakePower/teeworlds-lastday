@@ -258,7 +258,11 @@
         },
         {
             "key": "Make finish, you get {INT} {STR}",
-            "value": "制造完成, 你得到了 {INT} {STR}"
+            "value": "制造完成, 你得到了{INT}{STR}"
+        },
+        {
+            "key": "You got {INT} {STR}",
+            "value": "你得到了{INT}{STR}"
         }
     ]
 }

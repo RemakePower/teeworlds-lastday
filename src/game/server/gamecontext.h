@@ -28,8 +28,7 @@ typedef unsigned __int64 uint64_t;
 #include <stdint.h>
 #endif
 
-#include "lastday/item.h"
-#include "lastday/accounts/db_sqlite3.h"
+#include "lastday/item/resource.h"
 /*
 	Tick
 		Game Context (CGameContext::tick)
@@ -83,8 +82,6 @@ class CGameContext : public IGameServer
 
 	static void ConMake(IConsole::IResult *pResult, void *pUserData);
 	static void ConStatus(IConsole::IResult *pResult, void *pUserData);
-	static void ConRegister(IConsole::IResult *pResult, void *pUserData);
-	static void ConLogin(IConsole::IResult *pResult, void *pUserData);
 
 
 	CGameContext(int Resetting);
@@ -114,6 +111,8 @@ public:
 
 	CGameController *m_pController;
 	CGameWorld m_World;
+
+	CTile *m_pTiles;
 
 	// helper functions
 	class CCharacter *GetPlayerChar(int ClientID);
@@ -211,41 +210,14 @@ public:
 	virtual const char *Version();
 	virtual const char *NetVersion();
 
-	CSql *m_pDatabase;
-	void Register(const char *Username, const char *Password, int ClientID); // Register account
-	void Login(const char *Username, const char *Password, int ClientID, bool Register = false); // Login account
-	bool Apply(const char *Username, const char *Password, const char *Language, int AccID, Resource Resource); // Apply account
-	int GetUID(const char *Username, const char *Password); // Get ID
-};
+	void AddResource(int ClientID, int ResourceID, int Num=1);
 
-class CQueryBase : public CQuery
-{
-public:
-	int m_ClientID;
-	char Username[32];
-	char Password[32];
-	char Language[16];
-	CGameContext *m_pGameServer;
-};
+	//Bot Start
+	int GetBotNum() const;
+	void OnBotDead(int ClientID);
+	void CreateBot(int ClientID, int BotPower);
 
-class CQueryRegister: public CQueryBase
-{
-	void OnData();
-public:
-};
-
-class CQueryLogin: public CQueryBase
-{
-	void OnData();
-public:
-	bool Register;
-};
-
-class CQueryApply: public CQueryBase
-{
-	void OnData();
-public:
-	Resource m_Resource;
+	//Bot END
 };
 
 inline int64_t CmaskAll() { return -1LL; }

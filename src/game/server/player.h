@@ -13,7 +13,7 @@ class CPlayer
 	MACRO_ALLOC_POOL_ID()
 
 public:
-	CPlayer(CGameContext *pGameServer, int ClientID, int Team);
+	CPlayer(CGameContext *pGameServer, int ClientID, bool Bot=false, int BotPower = 0);
 	~CPlayer();
 
 	void Init(int CID);
@@ -127,12 +127,9 @@ public:
 	CTuningParams* GetNextTuningParams() { return &m_NextTuningParams; };
 	Resource m_Resource;
 
-	struct
-	{
-		int m_UserID;
-		char m_Username[32];
-		char m_Password[32];
-	} m_AccData;
+	// Bot
+	int m_BotPower;
+	bool m_IsBot;
 };
 
 #endif

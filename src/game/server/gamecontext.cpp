@@ -13,130 +13,6 @@
 
 #include <teeuniverses/components/localization.h>
 
-void CQueryRegister::OnData()
-{
-	if(Next())
-	{
-		m_pGameServer->SendChatTarget_Locazition(m_ClientID, _("Account already exists."));
-	}
-	else
-	{
-		if(m_pDatabase->Register(Username, Password, Language, m_ClientID))
-		{
-			char aBuf[256];
-			m_pGameServer->SendChatTarget_Locazition(m_ClientID, _("=====Registered====="));
-			m_pGameServer->SendChatTarget_Locazition(m_ClientID, _("Username: {STR}"), Username);
-			m_pGameServer->SendChatTarget_Locazition(m_ClientID, _("Password: {STR}"), Password);
-			m_pGameServer->SendChatTarget_Locazition(m_ClientID, _("=====Registered====="));
-			m_pGameServer->Login(Username, Password, m_ClientID, true);
-		}
-	}
-}
-
-void CQueryLogin::OnData()
-{
-	if(Next())
-	{
-		if(m_pDatabase->Login(Username, Password, m_ClientID))
-		{
-			if(m_pGameServer->m_apPlayers[m_ClientID]->m_AccData.m_UserID > -1)
-			{
-				m_pGameServer->SendChatTarget_Locazition(m_ClientID, _("You are logged in"));
-				return;
-			}
-
-			for(int j = 0; j < MAX_CLIENTS; j++)
-			{
-				if(m_pGameServer->m_apPlayers[j] && m_pGameServer->m_apPlayers[j]->m_AccData.m_UserID == GetInt(GetID("ID")))
-				{
-					dbg_msg("account", "Account login failed ('%s' - already in use (local))", Username);
-					m_pGameServer->SendChatTarget_Locazition(m_ClientID, _("Account already in use"));
-					return;
-				}
-			};
-
-			m_pGameServer->m_apPlayers[m_ClientID]->m_AccData.m_UserID = GetInt(GetID("ID"));
-			str_format(m_pGameServer->m_apPlayers[m_ClientID]->m_AccData.m_Username, sizeof(m_pGameServer->m_apPlayers[m_ClientID]->m_AccData.m_Username), GetText(GetID("Username")));
-			str_format(m_pGameServer->m_apPlayers[m_ClientID]->m_AccData.m_Password, sizeof(m_pGameServer->m_apPlayers[m_ClientID]->m_AccData.m_Password), GetText(GetID("Password")));
-			
-			if(Register)
-			{
-				m_pGameServer->Apply(Username, Password, m_pGameServer->m_apPlayers[m_ClientID]->GetLanguage(), GetInt(GetID("ID")), m_pGameServer->m_apPlayers[m_ClientID]->m_Resource);
-			}
-			else
-			{
-				m_pGameServer->m_apPlayers[m_ClientID]->m_Resource.m_Metal = GetInt64(GetID("Metal"));
-				m_pGameServer->m_apPlayers[m_ClientID]->m_Resource.m_Wood = GetInt64(GetID("Wood"));
-				m_pGameServer->Server()->SetClientLanguage(m_ClientID, GetText(GetID("Language")));
-				m_pGameServer->m_apPlayers[m_ClientID]->SetLanguage(GetText(GetID("Language")));
-				dbg_msg("SQLite", "Login, Language='%s',Metal=%lld,Wood=%lld WHERE ID=%d", GetText(GetID("Language")),
-				 GetInt64(GetID("Metal")), GetInt64(GetID("Wood")), GetInt(GetID("ID")));
-			}
-			m_pGameServer->SendChatTarget_Locazition(m_ClientID, _("You are now logged in"));
-		}else
-		{
-			m_pGameServer->SendChatTarget_Locazition(m_ClientID, _("Error password"));
-		}
-	}
-	else
-	{
-		m_pGameServer->SendChatTarget_Locazition(m_ClientID, _("This account does not exist"));
-	}
-}
-
-void CQueryApply::OnData()
-{
-	if(Next())
-	{
-		m_pDatabase->Apply(Username, Password, Language, m_ClientID, 
-			m_Resource.m_Metal, m_Resource.m_Wood);
-	}
-}
-
-void CGameContext::Register(const char *Username, const char *Password, int ClientID)
-{
-	char *pQueryBuf = sqlite3_mprintf("SELECT * FROM Accounts WHERE Username='%q'", Username);
-	CQueryRegister *pQuery = new CQueryRegister();
-	str_copy(pQuery->Username, Username, sizeof(pQuery->Username));
-	str_copy(pQuery->Password, Password, sizeof(pQuery->Password));
-	pQuery->m_ClientID = ClientID;
-	pQuery->m_pGameServer = this;
-	str_copy(pQuery->Language, m_apPlayers[ClientID]->GetLanguage(), sizeof(pQuery->Language));
-	pQuery->Query(m_pDatabase, pQueryBuf);
-	sqlite3_free(pQueryBuf);
-}
-
-void CGameContext::Login(const char *Username, const char *Password, int ClientID, bool Register)
-{
-	char *pQueryBuf = sqlite3_mprintf("SELECT * FROM Accounts WHERE Username='%q'", Username);
-	CQueryLogin *pQuery = new CQueryLogin();
-	str_copy(pQuery->Username, Username, sizeof(pQuery->Username));
-	str_copy(pQuery->Password, Password, sizeof(pQuery->Password));
-	pQuery->m_ClientID = ClientID;
-	pQuery->m_pGameServer = this;
-	pQuery->Register = Register;
-	pQuery->Query(m_pDatabase, pQueryBuf);
-	sqlite3_free(pQueryBuf);
-}
-
-bool CGameContext::Apply(const char *Username, const char *Password, const char *Language, int AccID, Resource Resource)
-{
-	char *pQueryBuf = sqlite3_mprintf("SELECT * FROM Accounts WHERE Username='%q'", Username);
-	CQueryApply *pQuery = new CQueryApply();
-	str_copy(pQuery->Username, Username, sizeof(pQuery->Username));
-	str_copy(pQuery->Password, Password, sizeof(pQuery->Password));
-	pQuery->m_ClientID = AccID;
-	pQuery->m_pGameServer = this;
-	str_copy(pQuery->Language, Language, sizeof(pQuery->Language));
-	pQuery->m_Resource = Resource;
-	pQuery->m_pGameServer = this;
-	pQuery->Query(m_pDatabase, pQueryBuf);
-	sqlite3_free(pQueryBuf);
-
-	return true;
-}
-
-
 enum
 {
 	RESET,
@@ -161,8 +37,6 @@ void CGameContext::Construct(int Resetting)
 
 	if(Resetting==NO_RESET)
 		m_pVoteOptionHeap = new CHeap();
-
-	m_pDatabase = new CSql();
 }
 
 CGameContext::CGameContext(int Resetting)
@@ -728,10 +602,7 @@ void CGameContext::OnClientEnter(int ClientID)
 
 void CGameContext::OnClientConnected(int ClientID)
 {
-	// Check which team the player should be on
-	const int StartTeam = m_pController->GetAutoTeam(ClientID);
-
-	m_apPlayers[ClientID] = new(ClientID) CPlayer(this, ClientID, StartTeam);
+	m_apPlayers[ClientID] = new(ClientID) CPlayer(this, ClientID);
 	//players[client_id].init(client_id);
 	//players[client_id].client_id = client_id;
 
@@ -755,14 +626,6 @@ void CGameContext::OnClientConnected(int ClientID)
 
 void CGameContext::OnClientDrop(int ClientID, const char *pReason)
 {
-	int AccID = m_apPlayers[ClientID]->m_AccData.m_UserID;
-	if(AccID > -1)
-	{
-		const char* Username = m_apPlayers[ClientID]->m_AccData.m_Username;
-		const char* Password = m_apPlayers[ClientID]->m_AccData.m_Password;
-		const char* Language = m_apPlayers[ClientID]->GetLanguage();
-		Apply(Username, Password, Language, AccID, m_apPlayers[ClientID]->m_Resource);
-	}
 
 	AbortVoteKickOnDisconnect(ClientID);
 	m_apPlayers[ClientID]->OnDisconnect(pReason);
@@ -891,7 +754,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			if(pPlayer->m_LastVoteCall && Timeleft > 0)
 			{
 				int Seconds = (Timeleft/Server()->TickSpeed())+1;
-				SendChatTarget_Locazition(ClientID, _("You must wait {INT} seconds before making another vote"), Seconds, NULL);
+				SendChatTarget_Locazition(ClientID, _("You must wait {INT} seconds before making another vote"), &Seconds, NULL);
 				return;
 			}
 
@@ -1074,7 +937,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			}
 			else
 			{
-				SendBroadcast_VL(_("Only {INT} active players are allowed"), ClientID, ClientID);
+				SendBroadcast_VL(_("Only {INT} active players are allowed"), ClientID, &ClientID);
 			}
 		}
 		else if (MsgID == NETMSGTYPE_CL_SETSPECTATORMODE && !m_World.m_Paused)
@@ -1592,7 +1455,7 @@ void CGameContext::ConAbout(IConsole::IResult *pResult, void *pUserData)
 
 	pSelf->SendChatTarget_Locazition(ClientID, "====={STR}=====", MOD_NAME);
 	pSelf->SendChatTarget_Locazition(ClientID, "{STR} by {STR}", 
-		MOD_NAME " " MOD_VERSION "(" VERSION_CODE ")", "RemakePower");
+		MOD_NAME , "RemakePower");
 	pSelf->SendChatTarget_Locazition(ClientID, "Thanks {STR}", aThanksList);
 	
 }
@@ -1664,6 +1527,7 @@ void CGameContext::ConMake(IConsole::IResult *pResult, void *pUserData)
 	if(!pMakeItem)
 	{
 		pSelf->SendChatTarget_Locazition(ClientID, _("No any item name input"));
+		pSelf->m_pController->ShowMakeList(ClientID);
 		return;
 	}
 	pSelf->m_pController->OnItemMake(pMakeItem, ClientID);
@@ -1676,44 +1540,6 @@ void CGameContext::ConStatus(IConsole::IResult *pResult, void *pUserData)
 	int ClientID = pResult->GetClientID();
 
 	pSelf->m_pController->ShowStatus(ClientID);
-}
-
-void CGameContext::ConRegister(IConsole::IResult *pResult, void *pUserData)
-{
-	CGameContext *pSelf = (CGameContext *)pUserData;
-	
-	const char *UserName = pResult->GetString(0);
-	const char *Password = pResult->GetString(1);
-	int ClientID = pResult->GetClientID();
-	if(pResult->NumArguments() != 2)
-	{
-		pSelf->SendChatTarget_Locazition(ClientID, _("Please use {STR} <username> <password>"), "/register");
-		return;
-	}
-
-	if(str_length(UserName) < 6 || str_length(Password) < 6)
-	{
-		pSelf->SendChatTarget_Locazition(ClientID, _("A minimum of 6 characters is required"), "/register");
-		return;
-	}
-	
-	pSelf->Register(UserName, Password, ClientID);
-}
-
-void CGameContext::ConLogin(IConsole::IResult *pResult, void *pUserData)
-{
-	CGameContext *pSelf = (CGameContext *)pUserData;
-	
-	const char *UserName = pResult->GetString(0);
-	const char *Password = pResult->GetString(1);
-	int ClientID = pResult->GetClientID();
-	if(pResult->NumArguments() != 2)
-	{
-		pSelf->SendChatTarget_Locazition(ClientID, _("Please use {STR} <username> <password>"), "/login");
-		return;
-	}
-	
-	pSelf->Login(UserName, Password, ClientID);
 }
 
 void CGameContext::SetClientLanguage(int ClientID, const char *pLanguage)
@@ -1803,9 +1629,6 @@ void CGameContext::OnConsoleInit()
 	Console()->Register("status", "", CFGFLAG_CHAT, ConStatus, this, "show status");
 	Console()->Register("me", "", CFGFLAG_CHAT, ConStatus, this, "show status");
 
-	Console()->Register("register", "?s?s", CFGFLAG_CHAT, ConRegister, this, "register");
-	Console()->Register("login", "?s?s", CFGFLAG_CHAT, ConLogin, this, "login");
-
 	Console()->Chain("sv_motd", ConchainSpecialMotdupdate, this);
 }
 
@@ -1839,7 +1662,7 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 
 	// create all entities from the game layer
 	CMapItemLayerTilemap *pTileMap = m_Layers.GameLayer();
-	CTile *pTiles = (CTile *)Kernel()->RequestInterface<IMap>()->GetData(pTileMap->m_Data);
+	m_pTiles = (CTile *)Kernel()->RequestInterface<IMap>()->GetData(pTileMap->m_Data);
 
 
 
@@ -1854,7 +1677,7 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 	{
 		for(int x = 0; x < pTileMap->m_Width; x++)
 		{
-			int Index = pTiles[y*pTileMap->m_Width+x].m_Index;
+			int Index = m_pTiles[y*pTileMap->m_Width+x].m_Index;
 
 			if(Index >= ENTITY_OFFSET)
 			{
@@ -1863,6 +1686,8 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 			}
 		}
 	}
+
+	m_pController->InitSpawnPos();
 	//game.world.insert_entity(game.Controller);
 
 #ifdef CONF_DEBUG
@@ -1922,8 +1747,60 @@ bool CGameContext::IsClientPlayer(int ClientID)
 	return m_apPlayers[ClientID] && m_apPlayers[ClientID]->GetTeam() == TEAM_SPECTATORS ? false : true;
 }
 
-const char *CGameContext::GameType() { return m_pController && m_pController->m_pGameType ? m_pController->m_pGameType : ""; }
+const char *CGameContext::GameType() { return MOD_NAME; }
 const char *CGameContext::Version() { return GAME_VERSION; }
 const char *CGameContext::NetVersion() { return GAME_NETVERSION; }
 
 IGameServer *CreateGameServer() { return new CGameContext; }
+
+void CGameContext::AddResource(int ClientID, int ResourceID, int Num)
+{
+	if(ClientID > MAX_PLAYERS || !m_apPlayers[ClientID])
+		return;
+	CPlayer *pPlayer = m_apPlayers[ClientID];
+	pPlayer->m_Resource.SetResource(ResourceID, pPlayer->m_Resource.GetResource(ResourceID) + 1);
+
+	const char *pLanguageCode = pPlayer->GetLanguage();
+
+	SendChatTarget_Locazition(ClientID, _("You got {INT} {STR}"), Num, m_pController->GetResourceName(ResourceID));
+
+	SendEmoticon(ClientID, EMOTICON_SUSHI);	
+}
+
+int CGameContext::GetBotNum() const
+{
+	int Num = 0;
+	for(int i = BOT_CLIENTS_START; i < BOT_CLIENTS_END; i ++)
+	{
+		if(m_apPlayers[i])
+			Num++;
+	}
+	return Num;
+}
+
+void CGameContext::OnBotDead(int ClientID)
+{
+	delete m_apPlayers[ClientID];
+
+	m_apPlayers[ClientID] = 0;
+
+	m_VoteUpdate = true;
+
+	// update spectator modes
+	for(int i = 0; i < MAX_CLIENTS; ++i)
+	{
+		if(m_apPlayers[i] && m_apPlayers[i]->m_SpectatorID == ClientID)
+			m_apPlayers[i]->m_SpectatorID = SPEC_FREEVIEW;
+	}
+}
+
+void CGameContext::CreateBot(int ClientID, int BotPower)
+{
+	if(ClientID < MAX_PLAYERS || m_apPlayers[ClientID])
+		return;
+
+	m_apPlayers[ClientID] = new(ClientID) CPlayer(this, ClientID, true, BotPower);
+	Server()->InitClientBot(ClientID);
+
+	m_apPlayers[ClientID]->TryRespawn();
+}

@@ -2,22 +2,25 @@
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 #include <engine/shared/config.h>
 #include <game/mapitems.h>
+#include <game/version.h>
 
 #include <game/generated/protocol.h>
 
 #include <engine/external/json-parser/json.h>
 
-#include <string.h>
+#include "entities/pickup.h"
 
 #include "gamecontroller.h"
 #include "gamecontext.h"
+
+#include <string.h>
 
 
 CGameController::CGameController(class CGameContext *pGameServer)
 {
 	m_pGameServer = pGameServer;
 	m_pServer = m_pGameServer->Server();
-	m_pGameType = "LastDay";
+	m_pGameType = MOD_NAME;
 
 	//
 	m_UnpauseTimer = 0;
@@ -30,114 +33,55 @@ CGameController::CGameController(class CGameContext *pGameServer)
 
 	m_UnbalancedTick = -1;
 	m_ForceBalanced = false;
-
-	m_aNumSpawnPoints[0] = 0;
-	m_aNumSpawnPoints[1] = 0;
-	m_aNumSpawnPoints[2] = 0;
+	
+	m_SpawnPoints.clear();
+	
+	WeaponIniter.InitWeapons(pGameServer);
 }
 
 CGameController::~CGameController()
 {
 }
 
-float CGameController::EvaluateSpawnPos(CSpawnEval *pEval, vec2 Pos)
+vec2 CGameController::GetSpawnPos()
 {
-	float Score = 0.0f;
-	CCharacter *pC = static_cast<CCharacter *>(GameServer()->m_World.FindFirst(CGameWorld::ENTTYPE_CHARACTER));
-	for(; pC; pC = (CCharacter *)pC->TypeNext())
+	vec2 Pos;
+	for(int i = 0;i < m_SpawnPoints.size(); i++)
 	{
-		// team mates are not as dangerous as enemies
-		float Scoremod = 1.0f;
-		if(pEval->m_FriendlyTeam != -1 && pC->GetPlayer()->GetTeam() == pEval->m_FriendlyTeam)
-			Scoremod = 0.5f;
-
-		float d = distance(Pos, pC->m_Pos);
-		Score += Scoremod * (d == 0 ? 1000000000.0f : 1.0f/d);
+		Pos = m_SpawnPoints[random_int(0, m_SpawnPoints.size()-1)];
+		if(!GameServer()->m_World.ClosestCharacter(Pos, 64.0f, 0x0))
+			break;
 	}
-
-	return Score;
+	return Pos;
 }
 
-void CGameController::EvaluateSpawnType(CSpawnEval *pEval, int Type)
+void CGameController::InitSpawnPos()
 {
-	// get spawn point
-	for(int i = 0; i < m_aNumSpawnPoints[Type]; i++)
-	{
-		// check if the position is occupado
-		CCharacter *aEnts[MAX_CLIENTS];
-		int Num = GameServer()->m_World.FindEntities(m_aaSpawnPoints[Type][i], 64, (CEntity**)aEnts, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
-		vec2 Positions[5] = { vec2(0.0f, 0.0f), vec2(-32.0f, 0.0f), vec2(0.0f, -32.0f), vec2(32.0f, 0.0f), vec2(0.0f, 32.0f) };	// start, left, up, right, down
-		int Result = -1;
-		for(int Index = 0; Index < 5 && Result == -1; ++Index)
-		{
-			Result = Index;
-			for(int c = 0; c < Num; ++c)
-				if(GameServer()->Collision()->CheckPoint(m_aaSpawnPoints[Type][i]+Positions[Index]) ||
-					distance(aEnts[c]->m_Pos, m_aaSpawnPoints[Type][i]+Positions[Index]) <= aEnts[c]->m_ProximityRadius)
-				{
-					Result = -1;
-					break;
-				}
-		}
-		if(Result == -1)
-			continue;	// try next spawn point
+	// create all entities from the game layer
+	CMapItemLayerTilemap *pTileMap = GameServer()->Layers()->GameLayer();
+	CTile *pTiles = GameServer()->m_pTiles;
 
-		vec2 P = m_aaSpawnPoints[Type][i]+Positions[Result];
-		float S = EvaluateSpawnPos(pEval, P);
-		if(!pEval->m_Got || pEval->m_Score > S)
+	for(int y = 0; y < pTileMap->m_Height; y++)
+	{
+		for(int x = 0; x < pTileMap->m_Width; x++)
 		{
-			pEval->m_Got = true;
-			pEval->m_Score = S;
-			pEval->m_Pos = P;
+			int Index = pTiles[y*pTileMap->m_Width+x].m_Index;
+
+			if(Index&CCollision::COLFLAG_SOLID || Index&CCollision::COLFLAG_DEATH) continue;
+			int GroudIndex = pTiles[(y+1)*pTileMap->m_Width+x].m_Index;
+			if(GroudIndex&CCollision::COLFLAG_SOLID)
+			{
+				vec2 Pos(x*32.0f+16.0f, y*32.0f+16.0f);
+				m_SpawnPoints.add(Pos);
+			}
 		}
 	}
 }
-
-bool CGameController::CanSpawn(int Team, vec2 *pOutPos)
-{
-	CSpawnEval Eval;
-
-	// spectators can't spawn
-	if(Team == TEAM_SPECTATORS)
-		return false;
-
-	if(IsTeamplay())
-	{
-		Eval.m_FriendlyTeam = Team;
-
-		// first try own team spawn, then normal spawn and then enemy
-		EvaluateSpawnType(&Eval, 1+(Team&1));
-		if(!Eval.m_Got)
-		{
-			EvaluateSpawnType(&Eval, 0);
-			if(!Eval.m_Got)
-				EvaluateSpawnType(&Eval, 1+((Team+1)&1));
-		}
-	}
-	else
-	{
-		EvaluateSpawnType(&Eval, 0);
-		EvaluateSpawnType(&Eval, 1);
-		EvaluateSpawnType(&Eval, 2);
-	}
-
-	*pOutPos = Eval.m_Pos;
-	return Eval.m_Got;
-}
-
 
 bool CGameController::OnEntity(int Index, vec2 Pos)
 {
 	int Type = -1;
 	int SubType = 0;
-
-	if(Index == ENTITY_SPAWN)
-		m_aaSpawnPoints[0][m_aNumSpawnPoints[0]++] = Pos;
-	else if(Index == ENTITY_SPAWN_RED)
-		m_aaSpawnPoints[1][m_aNumSpawnPoints[1]++] = Pos;
-	else if(Index == ENTITY_SPAWN_BLUE)
-		m_aaSpawnPoints[2][m_aNumSpawnPoints[2]++] = Pos;
-
 	return false;
 }
 
@@ -260,6 +204,7 @@ int CGameController::OnCharacterDeath(class CCharacter *pVictim, class CPlayer *
 	}
 	if(Weapon == WEAPON_SELF)
 		pVictim->GetPlayer()->m_RespawnTick = Server()->Tick()+Server()->TickSpeed()*3.0f;
+
 	return 0;
 }
 
@@ -343,6 +288,12 @@ void CGameController::Tick()
 			GameServer()->m_World.m_Paused = false;
 	}
 
+	if(m_GameOverTick == -1)
+	{
+		if(GameServer()->GetBotNum() < MAX_BOTS)
+			OnCreateBot();
+	}
+
 	// game is Paused
 	if(GameServer()->m_World.m_Paused)
 		++m_RoundStartTick;
@@ -359,7 +310,7 @@ void CGameController::Tick()
 					break;
 			}
 		#endif
-			if(GameServer()->m_apPlayers[i] && GameServer()->m_apPlayers[i]->GetTeam() != TEAM_SPECTATORS && !Server()->IsAuthed(i))
+			if(GameServer()->m_apPlayers[i] && !GameServer()->m_apPlayers[i]->m_IsBot && GameServer()->m_apPlayers[i]->GetTeam() != TEAM_SPECTATORS && !Server()->IsAuthed(i))
 			{
 				if(Server()->Tick() > GameServer()->m_apPlayers[i]->m_LastActionTick+g_Config.m_SvInactiveKickTime*Server()->TickSpeed()*60)
 				{
@@ -520,14 +471,6 @@ double CGameController::GetTime()
 {
 	return static_cast<double>(Server()->Tick() - m_RoundStartTick)/Server()->TickSpeed();
 }
-/*********************MAKE ITEM*********************/ 
-
-CGameController::CItem::CItem()
-{
-	m_GiveID = 0;
-	m_GiveNum = 0;
-	m_NeedResource.ResetResource();
-}
 
 const char* CGameController::GetResourceName(int ID)
 {
@@ -537,6 +480,14 @@ const char* CGameController::GetResourceName(int ID)
 		case RESOURCE_WOOD: return "Wood";
 	}
 }
+/*********************MAKE ITEM*********************/ 
+// TODO: Move this to item make module
+CGameController::CItem::CItem()
+{
+	m_GiveID = 0;
+	m_GiveNum = 0;
+	m_NeedResource.ResetResource();
+}
 
 void CGameController::OnItemMake(const char *pMakeItem, int ClientID)
 {
@@ -544,6 +495,7 @@ void CGameController::OnItemMake(const char *pMakeItem, int ClientID)
 	if(!FindItem(pMakeItem, &ItemInfo))
 	{
 		GameServer()->SendChatTarget_Locazition(ClientID, _("No this item!"));
+		ShowMakeList(ClientID);
 		return;
 	}
 	
@@ -568,8 +520,8 @@ void CGameController::OnItemMake(const char *pMakeItem, int ClientID)
 		}
 	}
 
-	dbg_msg("item", "make %s, need %d metal and %d wood, this player have %d metal, and %d wood", pMakeItem,
-		 ItemInfo.m_NeedResource.m_Metal, ItemInfo.m_NeedResource.m_Wood, pPResource->m_Metal, pPResource->m_Wood);
+	//dbg_msg("item", "make %s, need %d metal and %d wood, this player have %d metal, and %d wood", pMakeItem,
+	//	 ItemInfo.m_NeedResource.m_Metal, ItemInfo.m_NeedResource.m_Wood, pPResource->m_Metal, pPResource->m_Wood);
 
 	if(!CanMake)
 	{
@@ -713,6 +665,60 @@ bool CGameController::FindItem(const char *pMakeItem, CItem *ItemInfo)
 	return Found;
 }
 
+void CGameController::ShowMakeList(int ClientID)
+{
+	// read file data into buffer
+	const char *pFilename = "./data/item.json";
+	IOHANDLE File = GameServer()->Storage()->OpenFile(pFilename, IOFLAG_READ, IStorage::TYPE_ALL);
+	if(!File)
+	{
+		dbg_msg("Item", "can't open 'data/item.json'");
+		return;
+	}
+	
+	int FileSize = (int)io_length(File);
+	char *pFileData = new char[FileSize+1];
+	io_read(File, pFileData, FileSize);
+	pFileData[FileSize] = 0;
+	io_close(File);
+
+	// parse json data
+	json_settings JsonSettings;
+	mem_zero(&JsonSettings, sizeof(JsonSettings));
+	char aError[256];
+	json_value *pJsonData = json_parse_ex(&JsonSettings, pFileData, aError);
+	if(pJsonData == 0)
+	{
+		delete[] pFileData;
+		return;
+	}
+
+	const json_value &rStart = (*pJsonData)["items"];
+	bool Found = false;
+
+	std::string Buffer;
+	if(rStart.type == json_array)
+	{
+		bool First = true;
+		for(unsigned i = 0; i < rStart.u.array.length; ++i)
+		{
+			if(!First)
+				Buffer.append(", ");
+			else First = false;
+			Buffer.append((const char *)rStart[i]["name"]);
+		}
+	}
+
+	// clean up
+	json_value_free(pJsonData);
+	delete[] pFileData;
+
+	GameServer()->SendChatTarget_Locazition(ClientID, _("You can make: {STR}"), Buffer.c_str());
+
+	return;
+}
+/* Item Make End*/
+
 static char* format_int64_with_commas(char commas, int64 n)
 {
 	char _number_array[64] = { '\0' };
@@ -773,11 +779,49 @@ void CGameController::ShowStatus(int ClientID)
 		if(!First)
 			Buffer.append(", ");
 		else First = false;
-		Buffer.append(GetResourceName(i));
+		Buffer.append(GameServer()->Localize(pLanguageCode, GetResourceName(i)));
 		Buffer.append(": ");
 		Buffer.append(format_int64_with_commas(',', pPResource->GetResource(i)));
 		Buffer.append(" ");
 	}
 
 	GameServer()->SendChatTarget(ClientID, Buffer.c_str());
+}
+
+void CGameController::OnCreateBot()
+{
+	for(int i = BOT_CLIENTS_START; i < BOT_CLIENTS_END; i ++)
+	{
+		if(GameServer()->m_apPlayers[i]) continue;
+		int Power = RandomPower();
+		GameServer()->CreateBot(i, Power);
+	}
+}
+
+int CGameController::RandomPower()
+{
+	int PowerNum = random_int(1, NUM_BOTPOWERS);
+	int Power = 0;
+	for(int i = 0;i < PowerNum;i ++)
+	{
+		Power |= 1<<random_int(0, NUM_BOTPOWERS);
+	}
+	return Power;
+}
+
+void CGameController::CreateZombiePickup(vec2 Pos, vec2 Dir)
+{
+	int PickupType, PickupSubtype;
+	PickupType = random_int(PICKUP_HEALTH, PICKUP_RESOURCE);
+	
+	if(PickupType == PICKUP_AMMO)
+	{
+		PickupSubtype = random_int(WEAPON_GUN, WEAPON_RIFLE);
+	}
+	else if(PickupType == PICKUP_RESOURCE)
+	{
+		PickupSubtype = random_int(RESOURCE_METAL, NUM_RESOURCES-1);
+	}
+
+	new CPickup(&GameServer()->m_World, Pos, Dir, PickupType, PickupSubtype);
 }

@@ -14,7 +14,12 @@ typedef unsigned __int64 uint64_t;
 #include <stdint.h>
 #endif
 
-#include "lastday/item.h"
+#include <base/tl/array.h>
+#include "lastday/item/resource.h"
+
+#include "lastday/weapons-core/weapon.h"
+
+struct WeaponInit;
 
 /*
 	Class: Game Controller
@@ -23,33 +28,13 @@ typedef unsigned __int64 uint64_t;
 */
 class CGameController
 {
-	vec2 m_aaSpawnPoints[3][64];
-	int m_aNumSpawnPoints[3];
+	array<vec2> m_SpawnPoints;
 
 	class CGameContext *m_pGameServer;
 	class IServer *m_pServer;
 
 	CGameContext *GameServer() const { return m_pGameServer; }
 	IServer *Server() const { return m_pServer; }
-
-	struct CSpawnEval
-	{
-		CSpawnEval()
-		{
-			m_Got = false;
-			m_FriendlyTeam = -1;
-			m_Pos = vec2(100,100);
-		}
-
-		vec2 m_Pos;
-		bool m_Got;
-		int m_FriendlyTeam;
-		float m_Score;
-	};
-
-	float EvaluateSpawnPos(CSpawnEval *pEval, vec2 Pos);
-	void EvaluateSpawnType(CSpawnEval *pEval, int Type);
-	bool EvaluateSpawn(class CPlayer *pP, vec2 *pPos);
 
 	void CycleMap();
 	void ResetGame();
@@ -137,7 +122,9 @@ public:
 	virtual void OnPlayerInfoChange(class CPlayer *pP);
 
 	//
-	virtual bool CanSpawn(int Team, vec2 *pPos);
+	virtual vec2 GetSpawnPos();
+	bool IsCanSpawn(vec2 Pos);
+	void InitSpawnPos();
 
 	/*
 
@@ -167,8 +154,17 @@ public:
 	void OnItemMake(const char *pMakeItem, int ClientID);
 	void ReturnItem(CItem Item, int ClientID);
 	bool FindItem(const char *pMakeItem, CItem *ItemInfo);
+	void ShowMakeList(int ClientID);
 	// Status
 	void ShowStatus(int ClientID);
+/** Bot **/
+	void OnCreateBot();
+	int RandomPower();
+/** Bot End **/
+
+	void CreateZombiePickup(vec2 Pos, vec2 Dir);
+
+	WeaponInit WeaponIniter;
 };
 
 #endif

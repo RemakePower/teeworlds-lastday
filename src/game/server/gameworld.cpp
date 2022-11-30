@@ -262,7 +262,10 @@ void CGameWorld::UpdatePlayerMaps()
                                 	)
 				)
                         ) continue;*/
-
+			if(!GameServer()->m_apPlayers[j])
+				continue;
+			if(!GameServer()->m_apPlayers[i])
+				break;
 			dist[j].first = distance(GameServer()->m_apPlayers[i]->m_ViewPos, GameServer()->m_apPlayers[j]->m_ViewPos);
 		}
 
@@ -307,7 +310,7 @@ void CGameWorld::UpdatePlayerMaps()
 	}
 }
 
-CCharacter *CGameWorld::ClosestCharacter(vec2 Pos, float Radius, CEntity *pNotThis)
+CCharacter *CGameWorld::ClosestCharacter(vec2 Pos, float Radius, CEntity *pNotThis, bool Bot)
 {
 	// Find other players
 	float ClosestRange = Radius*2;
@@ -317,6 +320,9 @@ CCharacter *CGameWorld::ClosestCharacter(vec2 Pos, float Radius, CEntity *pNotTh
 	for(; p; p = (CCharacter *)p->TypeNext())
  	{
 		if(p == pNotThis)
+			continue;
+
+		if(p->GetPlayer()->m_IsBot && !Bot)
 			continue;
 
 		float Len = distance(Pos, p->m_Pos);
