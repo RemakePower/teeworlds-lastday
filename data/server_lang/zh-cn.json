@@ -9,6 +9,10 @@
             "value": "木头"
         },
         {
+            "key": "gun",
+            "value": "手枪"
+        },
+        {
             "key": "gun ammo",
             "value": "手枪子弹"
         },
