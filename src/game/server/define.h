@@ -3,10 +3,10 @@
 
 enum PickupType
 {
-    PICKUP_HEALTH=0,
-    PICKUP_ARMOR,
-    PICKUP_AMMO,
+    PICKUP_AMMO=0,
     PICKUP_RESOURCE,
+    
+    NUM_PICKUPS,
 };
 
 enum LastDayWeapons
@@ -26,11 +26,12 @@ enum BotPower
     BOTPOWER_HAMMER=1<<0,
     BOTPOWER_HOOK=1<<1,
     BOTPOWER_GUN=1<<2,
-    //BOTPOWER_SHOTGUN=1<<3,
-    //BOTPOWER_GRENADE=1<<4,
-    //BOTPOWER_RIFLE=1<<5,
+    BOTPOWER_TEAMDAMAGE=1<<3,
+    //BOTPOWER_SHOTGUN=1<<4,
+    //BOTPOWER_GRENADE=1<<5,
+    //BOTPOWER_RIFLE=1<<6,
 
-    NUM_BOTPOWERS=3,
+    NUM_BOTPOWERS=4,
 };
 
 #endif

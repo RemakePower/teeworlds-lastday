@@ -578,6 +578,10 @@ void CCharacter::Die(int Killer, int Weapon)
 
 bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon)
 {
+	CPlayer *pFrom = GameServer()->m_apPlayers[From];
+	if(pFrom && pFrom->m_IsBot && m_pPlayer->m_IsBot && !pFrom->m_BotPower&BOTPOWER_TEAMDAMAGE)
+		return false;
+
 	m_Core.m_Vel += Force;
 
 	// m_pPlayer only inflicts half damage on self
@@ -653,7 +657,7 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon)
 
 		// create pickup
 		if(m_pPlayer->m_IsBot && random_int(0, 100) < g_Config.m_LdPickupProba)
-			GameServer()->m_pController->CreateZombiePickup(m_Pos, vec2(random_int(-4,4), random_int(-4,4)));
+			GameServer()->m_pController->CreateZombiePickup(m_Pos, Force/Force);
 
 		Die(From, Weapon);
 
@@ -749,7 +753,7 @@ void CCharacter::DoBotActions()
 
 	bool NeedRefind = true;
 	CCharacter *pOldTarget = GameServer()->GetPlayerChar(m_Botinfo.m_Target);
-	if(pOldTarget && distance(pOldTarget->m_Pos, m_Pos) < 580.0f)
+	if(pOldTarget && distance(pOldTarget->m_Pos, m_Pos) < 640.0f)
 		NeedRefind = false;
 
 	// Refind target
@@ -768,7 +772,7 @@ void CCharacter::DoBotActions()
 	m_Input.m_Fire = 0;
 	m_LatestInput.m_Fire = 0;
 	// Jump
-	vec2 NeedCheckPos = m_Pos + vec2(m_Core.m_Vel.x, 0) + ((m_Core.m_Vel.x > 0 && m_Botinfo.m_Direction == 0) ? vec2(0,0) : vec2(m_Botinfo.m_Direction * 32.0f, 0));
+	vec2 NeedCheckPos = m_Pos + vec2(m_Core.m_Vel.x, 0) + ((m_Core.m_Vel.x > 0 && m_Botinfo.m_Direction == 0) ? vec2(0,0) : vec2(m_Botinfo.m_Direction * 48.0f, 0));
 	if(CheckPos(NeedCheckPos))
 	{
 		m_Input.m_Jump = 1;
@@ -779,28 +783,45 @@ void CCharacter::DoBotActions()
 	if(pTarget)
 	{
 		// Reset random angle
-		if(abs(m_Botinfo.m_LastTargetPos.y - pTarget->m_Pos.y) > 5)
+		if(abs(m_Botinfo.m_LastTargetPos.y - pTarget->m_Pos.y) > 1.0f)
 		{
-			m_Botinfo.m_RandomPos.x = random_int(0, 1) ? random_int(0, 8) : -(random_int(0, 8));
-			m_Botinfo.m_RandomPos.y = random_int(0, 1) ? random_int(0, 8) : -(random_int(0, 8));
+			m_Botinfo.m_RandomPos.x = random_int(-8, 8);
+			m_Botinfo.m_RandomPos.y = random_int(-8, 8);
 		}else
 		{
 			m_Botinfo.m_RandomPos = vec2(0, 0);
 		}
 
 		// Move
-		if(pTarget->m_Pos.x - m_Pos.x > 40.0f)
+		if(m_pPlayer->m_BotPower&BOTPOWER_HAMMER)
 		{
-			m_Botinfo.m_Direction = 1;
-		}else if(pTarget->m_Pos.x - m_Pos.x < -40.0f)
+			if(pTarget->m_Pos.x - m_Pos.x > 40.0f)
+			{
+				m_Botinfo.m_Direction = 1;
+			}else if(pTarget->m_Pos.x - m_Pos.x < -40.0f)
+			{
+				m_Botinfo.m_Direction = -1;
+			}else m_Botinfo.m_Direction = 0;
+		}else // can't use hammer bot need run 
 		{
-			m_Botinfo.m_Direction = -1;
-		}else m_Botinfo.m_Direction = 0;
-
+			if(pTarget->m_Pos.x - m_Pos.x > 448.0f)
+			{
+				m_Botinfo.m_Direction = 1;
+			}else if(pTarget->m_Pos.x - m_Pos.x < -448.0f)
+			{
+				m_Botinfo.m_Direction = -1;
+			}else if(pTarget->m_Pos.x - m_Pos.x < 480.0f && pTarget->m_Pos.x - m_Pos.x > 0.0f)
+			{
+				m_Botinfo.m_Direction = -1;
+			}else if(pTarget->m_Pos.x - m_Pos.x > -480.0f && pTarget->m_Pos.x - m_Pos.x < 0.0f)
+			{
+				m_Botinfo.m_Direction = 1;
+			}else m_Botinfo.m_Direction = 0;
+		}
 		//Attack
 		if(m_pPlayer->m_BotPower&BOTPOWER_HAMMER)
 		{
-			if(distance(pTarget->m_Pos, m_Pos) < m_ProximityRadius + 40.0f)
+			if(distance(pTarget->m_Pos, m_Pos) < m_ProximityRadius + 40.0f && !(random_int(0, 50) % 50))
 			{
 				m_ActiveWeapon = WEAPON_HAMMER;
 				m_Input.m_Fire = 1;
@@ -809,25 +830,25 @@ void CCharacter::DoBotActions()
 		}
 		else if(m_pPlayer->m_BotPower&BOTPOWER_GUN)
 		{
-			if(distance(pTarget->m_Pos, m_Pos) > 280.0f)
+			if(distance(pTarget->m_Pos, m_Pos) > 240.0f && !GameServer()->Collision()->IntersectLine(pTarget->m_Pos, m_Pos, NULL, NULL))
 			{
 				m_ActiveWeapon = WEAPON_GUN;
 				m_Input.m_Fire = 1;
 				m_LatestInput.m_Fire = 1;
-				m_Botinfo.m_RandomPos.x = random_int(0, 1) ? random_int(0, 8) : -(random_int(0, 8));
-				m_Botinfo.m_RandomPos.y = random_int(0, 1) ? random_int(0, 8) : -(random_int(0, 8));
+				m_Botinfo.m_RandomPos.x = random_int(-16, 16);
+				m_Botinfo.m_RandomPos.y = random_int(-16, 16);
 			}
 		}
 		
-		// Hook
-		if(m_pPlayer->m_BotPower&BOTPOWER_HOOK)
+		// Hook (you don't want a can't hammer attack bot to hook target, make target come to bot here, right?)
+		if(m_pPlayer->m_BotPower&BOTPOWER_HOOK && m_pPlayer->m_BotPower&BOTPOWER_HAMMER)
 		{
 			
 			if(!GameServer()->Collision()->IntersectLine(pTarget->m_Pos, m_Pos, NULL, NULL) && (m_Core.m_HookedPlayer == pTarget->GetCID() && distance(pTarget->m_Pos, m_Pos) > 96.0f) || (distance(pTarget->m_Pos, m_Pos) > 320.0f && distance(pTarget->m_Pos, m_Pos) < 380.0f))
 			{
 				m_Input.m_Hook = 1;
-				m_Botinfo.m_RandomPos.x = random_int(0, 1) ? random_int(0, 8) : -(random_int(0, 8));
-				m_Botinfo.m_RandomPos.y = random_int(0, 1) ? random_int(0, 8) : -(random_int(0, 8));
+				m_Botinfo.m_RandomPos.x = random_int(-8, 8);
+				m_Botinfo.m_RandomPos.y = random_int(-8, 8);
 			}else
 			{
 				m_Input.m_Hook = 0;
@@ -846,7 +867,7 @@ void CCharacter::DoBotActions()
 		int LastDirection = m_Botinfo.m_Direction;
 		if(Server()->Tick() >= m_Botinfo.m_NextDirectionTick || ( Server()->Tick() >= m_Botinfo.m_NextDirectionTick - 150 && CheckPos(NeedCheckPos)))
 		{
-			m_Botinfo.m_Direction = random_int(0, 2) - 1;
+			m_Botinfo.m_Direction = random_int(-1, 1);
 			m_Botinfo.m_NextDirectionTick = Server()->Tick() + (m_Botinfo.m_Direction ? Server()->TickSpeed() * random_int(2, 6) : Server()->TickSpeed());
 		}
 

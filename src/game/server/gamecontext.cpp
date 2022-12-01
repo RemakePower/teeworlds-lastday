@@ -1451,7 +1451,6 @@ void CGameContext::ConAbout(IConsole::IResult *pResult, void *pUserData)
 
 	str_copy(aThanksList, "necropotame, kurosio, GutZuFusss, and ST-Chara", sizeof(aThanksList));
 	// necropotame made this frame, ST-Chara and RemakePower now support it.Localization from Kurosio.
-	// sqlite3 from ST-Chara and GutZuFusss
 
 	pSelf->SendChatTarget_Locazition(ClientID, "====={STR}=====", MOD_NAME);
 	pSelf->SendChatTarget_Locazition(ClientID, "{STR} by {STR}", 

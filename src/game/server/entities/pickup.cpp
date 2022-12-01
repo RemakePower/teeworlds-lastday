@@ -101,24 +101,6 @@ void CPickup::Tick()
 		bool Destroy = false;
 		switch (m_Type)
 		{
-			case PICKUP_HEALTH:
-			{
-				if(pChr->IncreaseHealth(1));
-				{
-					GameServer()->CreateSound(m_Pos, SOUND_PICKUP_HEALTH);
-					Destroy = true;
-				}
-				break;
-			}
-			case PICKUP_ARMOR:
-			{
-				if(pChr->IncreaseArmor(1));
-				{
-					GameServer()->CreateSound(m_Pos, SOUND_PICKUP_ARMOR);
-					Destroy = true;
-				}
-				break;
-			}
 			case PICKUP_AMMO:
 			{
 				if(pChr->GetWeaponStat()[m_Subtype].m_Got)
@@ -147,7 +129,7 @@ void CPickup::Snap(int SnappingClient)
 	if(NetworkClipped(SnappingClient))
 		return;
 
-	if(m_Type != PICKUP_AMMO)
+	if(m_Type == PICKUP_RESOURCE)
 	{
 		CNetObj_Pickup *pP = static_cast<CNetObj_Pickup *>(Server()->SnapNewItem(NETOBJTYPE_PICKUP, m_ID, sizeof(CNetObj_Pickup)));
 		if(!pP)
@@ -155,17 +137,8 @@ void CPickup::Snap(int SnappingClient)
 
 		pP->m_X = (int)m_Pos.x;
 		pP->m_Y = (int)m_Pos.y;
-		if(m_Type != PICKUP_RESOURCE)
-		{
-			pP->m_Type = m_Type;
-			pP->m_Subtype = 0;
-		}
-		else
-		{
-			pP->m_Type = POWERUP_WEAPON;
-			pP->m_Subtype = WEAPON_HAMMER;
-		}
-		
+		pP->m_Type = POWERUP_WEAPON;
+		pP->m_Subtype = WEAPON_HAMMER;
 	}
 	else
 	{

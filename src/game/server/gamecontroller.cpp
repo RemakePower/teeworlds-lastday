@@ -598,9 +598,9 @@ void CGameController::ReturnItem(CItem Item, int ClientID)
 
 	if(Item.m_GiveNum)
 		GameServer()->SendChatTarget_Locazition(ClientID, _("Make finish, you get {INT} {STR}"), 
-			Item.m_GiveNum, GameServer()->Localize(pLanguageCode, Item.m_aName));
+			Item.m_GiveNum, Item.m_aName);
 	else GameServer()->SendChatTarget_Locazition(ClientID, _("Make finish, you get {STR}"), 
-			GameServer()->Localize(pLanguageCode, Item.m_aName));
+			Item.m_aName);
 	
 	for(int i = 0; i < NUM_RESOURCES;i ++)
 	{
@@ -812,7 +812,7 @@ int CGameController::RandomPower()
 void CGameController::CreateZombiePickup(vec2 Pos, vec2 Dir)
 {
 	int PickupType, PickupSubtype;
-	PickupType = random_int(PICKUP_HEALTH, PICKUP_RESOURCE);
+	PickupType = random_int(0, NUM_PICKUPS-1);
 	
 	if(PickupType == PICKUP_AMMO)
 	{

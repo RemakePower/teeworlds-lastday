@@ -261,6 +261,10 @@
             "value": "制造完成, 你得到了{INT}{STR}"
         },
         {
+            "key": "You can make: {STR}",
+            "value": "你可以制作:{STR}"
+        },
+        {
             "key": "You got {INT} {STR}",
             "value": "你得到了{INT}{STR}"
         }
