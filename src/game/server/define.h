@@ -1,11 +1,55 @@
 #ifndef GAME_SERVER_DEFINE_H
 #define GAME_SERVER_DEFINE_H
 
+enum ItemList
+{
+    ITEM_GUN,
+    ITEM_SHOTGUN,
+    ITEM_GRENADE,
+    ITEM_RIFLE,
+
+    NUM_ITEMS,
+};
+
+enum ResourceList
+{
+    RESOURCE_METAL=0,
+    RESOURCE_WOOD,
+
+    NUM_RESOURCES,
+};
+
 enum PickupType
 {
-    PICKUP_HEALTH=0,
-    PICKUP_ARMOR,
-    PICKUP_AMMO
+    PICKUP_AMMO=0,
+    PICKUP_RESOURCE,
+    
+    NUM_PICKUPS,
+};
+
+enum LastDayWeapons
+{
+    TWS_WEAPON_HAMMER=0,
+    TWS_WEAPON_GUN,
+    TWS_WEAPON_SHOTGUN,
+    TWS_WEAPON_GRENADE,
+    TWS_WEAPON_RIFLE,
+    TWS_WEAPON_NINJA,
+
+    NUM_LASTDAY_WEAPONS,
+};
+
+enum BotPower
+{
+    BOTPOWER_HAMMER=1<<0,
+    BOTPOWER_HOOK=1<<1,
+    BOTPOWER_GUN=1<<2,
+    BOTPOWER_TEAMDAMAGE=1<<3,
+    //BOTPOWER_SHOTGUN=1<<4,
+    //BOTPOWER_GRENADE=1<<5,
+    //BOTPOWER_RIFLE=1<<6,
+
+    NUM_BOTPOWERS=4,
 };
 
 #endif

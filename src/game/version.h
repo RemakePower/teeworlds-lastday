@@ -17,11 +17,6 @@
 static const char GAME_RELEASE_VERSION[8] = {'0', '.', '6', '.', '4', 0};
 
 #define MOD_NAME "LastDay"
-#define MOD_VERSION "v0.1.0"
-#define VERSION_CODE "HardCore"
-/*
-v0.1.0 HardCore
-*/
 
 #endif
 #endif

@@ -275,7 +275,7 @@ void CServer::CClient::Reset()
 	m_LastInputTick = -1;
 	m_SnapRate = CClient::SNAPRATE_INIT;
 	m_Score = 0;
-	str_copy(m_aLanguage, "en", sizeof(m_aLanguage));
+	str_copy(m_aLanguage, g_Config.m_SvDefaultLanguage, sizeof(m_aLanguage));
 }
 
 const char* CServer::GetClientLanguage(int ClientID)
@@ -559,15 +559,15 @@ int CServer::SendMsgEx(CMsgPacker *pMsg, int Flags, int ClientID, bool System)
 		{
 			// broadcast
 			int i;
-			for(i = 0; i < MAX_CLIENTS; i++)
+			for(i = 0; i < MAX_PLAYERS; i++)
 				if(m_aClients[i].m_State == CClient::STATE_INGAME)
 				{
 					Packet.m_ClientID = i;
 					m_NetServer.Send(&Packet);
 				}
 		}
-		else
-			m_NetServer.Send(&Packet);
+		else if (!(Flags & MSGFLAG_NOSEND))
+				m_NetServer.Send(&Packet);
 	}
 	return 0;
 }
@@ -1168,7 +1168,7 @@ void CServer::SendServerInfo(const NETADDR *pAddr, int Token, int Type, bool Sen
 
 	// count the players
 	int PlayerCount = 0, ClientCount = 0;
-	for(int i = 0; i < MAX_CLIENTS; i++)
+	for(int i = 0; i < MAX_PLAYERS; i++)
 	{
 		if(m_aClients[i].m_State != CClient::STATE_EMPTY)
 		{
@@ -1320,7 +1320,7 @@ void CServer::SendServerInfo(const NETADDR *pAddr, int Token, int Type, bool Sen
 	// For legacy 64p, send 24 players per packet.
 	// For extended, send as much players as possible.
 
-	for(int i = 0; i < MAX_CLIENTS; i++)
+	for(int i = 0; i < MAX_PLAYERS; i++)
 	{
 		if(m_aClients[i].m_State != CClient::STATE_EMPTY)
 		{
@@ -2029,4 +2029,15 @@ int main(int argc, const char **argv) // ignore_convention
 	delete pStorage;
 	delete pConfig;
 	return 0;
+}
+
+void CServer::InitClientBot(int ClientID)
+{
+	if (ClientID < MAX_PLAYERS || ClientID >= MAX_CLIENTS)
+		return;
+
+	m_aClients[ClientID].m_State = CClient::STATE_INGAME;
+	m_aClients[ClientID].m_Score = 0;
+
+	SendConnectionReady(ClientID);
 }

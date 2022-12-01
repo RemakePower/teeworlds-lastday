@@ -4,7 +4,7 @@
 #include <game/server/gamecontext.h>
 #include "pickup.h"
 
-CPickup::CPickup(CGameWorld *pGameWorld, vec2 Pos, vec2 Dir, int Type, int SubType)
+CPickup::CPickup(CGameWorld *pGameWorld, vec2 Pos, vec2 Dir, int Type, int SubType, int Num)
 : CEntity(pGameWorld, CGameWorld::ENTTYPE_PICKUP)
 {
 	m_Pos = Pos;
@@ -12,6 +12,7 @@ CPickup::CPickup(CGameWorld *pGameWorld, vec2 Pos, vec2 Dir, int Type, int SubTy
 	m_Direction = Dir;
 	m_Type = Type;
 	m_Subtype = SubType;
+	m_Num = Num;
 	m_ProximityRadius = PickupPhysSize;
 	m_StartTick = Server()->Tick();
 
@@ -96,37 +97,27 @@ void CPickup::Tick()
 
 	// Check if a player intersected us
 	CCharacter *pChr = GameServer()->m_World.ClosestCharacter(m_Pos, 32.0f, 0);
-	if(pChr && pChr->IsAlive())
+	if(pChr && pChr->IsAlive() && !pChr->GetPlayer()->m_IsBot)
 	{
 		bool Destroy = false;
 		switch (m_Type)
 		{
-			case PICKUP_HEALTH:
-			{
-				if(pChr->IncreaseHealth(1));
-				{
-					GameServer()->CreateSound(m_Pos, SOUND_PICKUP_HEALTH);
-					Destroy = true;
-				}
-				break;
-			}
-			case PICKUP_ARMOR:
-			{
-				if(pChr->IncreaseArmor(1));
-				{
-					GameServer()->CreateSound(m_Pos, SOUND_PICKUP_ARMOR);
-					Destroy = true;
-				}
-				break;
-			}
 			case PICKUP_AMMO:
 			{
 				if(pChr->GetWeaponStat()[m_Subtype].m_Got)
 				{
-					pChr->GetWeaponStat()[m_Subtype].m_Ammo ++;
+					pChr->GetWeaponStat()[m_Subtype].m_Ammo += m_Num;
+					GameServer()->SendChatTarget_Locazition(pChr->GetCID(), _("You got {INT} {STR}"),
+						m_Num, GameServer()->GetAmmoType(m_Subtype));
 					GameServer()->CreateSound(m_Pos, SOUND_PICKUP_SHOTGUN);
 					Destroy = true;
 				}
+				break;
+			}
+			case PICKUP_RESOURCE:
+			{
+				GameServer()->AddResource(pChr->GetCID(), m_Subtype, m_Num);
+				Destroy = true;
 				break;
 			}
 		}
@@ -141,7 +132,7 @@ void CPickup::Snap(int SnappingClient)
 	if(NetworkClipped(SnappingClient))
 		return;
 
-	if(m_Type != PICKUP_AMMO)
+	if(m_Type == PICKUP_RESOURCE)
 	{
 		CNetObj_Pickup *pP = static_cast<CNetObj_Pickup *>(Server()->SnapNewItem(NETOBJTYPE_PICKUP, m_ID, sizeof(CNetObj_Pickup)));
 		if(!pP)
@@ -149,9 +140,10 @@ void CPickup::Snap(int SnappingClient)
 
 		pP->m_X = (int)m_Pos.x;
 		pP->m_Y = (int)m_Pos.y;
-		pP->m_Type = m_Type;
-		pP->m_Subtype = 0;
-	}else
+		pP->m_Type = POWERUP_WEAPON;
+		pP->m_Subtype = WEAPON_HAMMER;
+	}
+	else
 	{
 		int Degres = 0;
 

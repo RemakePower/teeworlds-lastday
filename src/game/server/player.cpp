@@ -9,7 +9,7 @@ MACRO_ALLOC_POOL_ID_IMPL(CPlayer, MAX_CLIENTS)
 
 IServer *CPlayer::Server() const { return m_pGameServer->Server(); }
 
-CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, int Team)
+CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, bool Bot, int BotPower)
 {
 	m_pGameServer = pGameServer;
 	m_RespawnTick = Server()->Tick();
@@ -17,7 +17,9 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, int Team)
 	m_ScoreStartTick = Server()->Tick();
 	m_pCharacter = 0;
 	m_ClientID = ClientID;
-	m_Team = GameServer()->m_pController->ClampTeam(Team);
+	m_Team = 0;
+	m_IsBot = Bot;
+	m_BotPower = BotPower;
 	m_SpectatorID = SPEC_FREEVIEW;
 	m_LastActionTick = Server()->Tick();
 	m_TeamChangeTick = Server()->Tick();
@@ -116,7 +118,7 @@ void CPlayer::Tick()
 				m_pCharacter = 0;
 			}
 		}
-		else if(m_Spawning && m_RespawnTick <= Server()->Tick())
+		else if(m_Spawning && m_RespawnTick <= Server()->Tick() && m_Team != TEAM_SPECTATORS)
 			TryRespawn();
 	}
 	else
@@ -166,7 +168,8 @@ void CPlayer::Snap(int SnappingClient)
 	StrToInts(&pClientInfo->m_Name0, 4, Server()->ClientName(m_ClientID));
 	StrToInts(&pClientInfo->m_Clan0, 3, Server()->ClientClan(m_ClientID));
 	pClientInfo->m_Country = Server()->ClientCountry(m_ClientID);
-	StrToInts(&pClientInfo->m_Skin0, 6, m_TeeInfos.m_SkinName);
+	// TODO:rewrite the bot skin select
+	StrToInts(&pClientInfo->m_Skin0, 6, m_IsBot ? "coala" : m_TeeInfos.m_SkinName);
 	pClientInfo->m_UseCustomColor = 0;
 	pClientInfo->m_ColorBody = m_TeeInfos.m_ColorBody;
 	pClientInfo->m_ColorFeet = m_TeeInfos.m_ColorFeet;
@@ -179,7 +182,7 @@ void CPlayer::Snap(int SnappingClient)
 	pPlayerInfo->m_Local = 0;
 	pPlayerInfo->m_ClientID = id;
 	pPlayerInfo->m_Score = m_Score;
-	pPlayerInfo->m_Team = m_Team;
+	pPlayerInfo->m_Team = m_IsBot ? 10 : m_Team;
 
 	if(m_ClientID == SnappingClient)
 		pPlayerInfo->m_Local = 1;
@@ -356,10 +359,7 @@ void CPlayer::SetTeam(int Team, bool DoChatMsg)
 
 void CPlayer::TryRespawn()
 {
-	vec2 SpawnPos;
-
-	if(!GameServer()->m_pController->CanSpawn(m_Team, &SpawnPos))
-		return;
+	vec2 SpawnPos = GameServer()->m_pController->GetSpawnPos();
 
 	m_Spawning = false;
 	m_pCharacter = new(m_ClientID) CCharacter(&GameServer()->m_World);

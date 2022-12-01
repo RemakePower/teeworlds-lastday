@@ -28,6 +28,7 @@ typedef unsigned __int64 uint64_t;
 #include <stdint.h>
 #endif
 
+#include "lastday/item/resource.h"
 /*
 	Tick
 		Game Context (CGameContext::tick)
@@ -80,6 +81,8 @@ class CGameContext : public IGameServer
 	static void ConchainSpecialMotdupdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 
 	static void ConMake(IConsole::IResult *pResult, void *pUserData);
+	static void ConStatus(IConsole::IResult *pResult, void *pUserData);
+
 
 	CGameContext(int Resetting);
 	void Construct(int Resetting);
@@ -108,6 +111,8 @@ public:
 
 	CGameController *m_pController;
 	CGameWorld m_World;
+
+	CTile *m_pTiles;
 
 	// helper functions
 	class CCharacter *GetPlayerChar(int ClientID);
@@ -170,6 +175,7 @@ public:
 	void SetClientLanguage(int ClientID, const char *pLanguage);
 
 	const char* Localize(const char *pLanguageCode, const char* pText) const;
+	const char* Format(const char* pText, ...) const;
 
 
 
@@ -203,6 +209,17 @@ public:
 	virtual const char *GameType();
 	virtual const char *Version();
 	virtual const char *NetVersion();
+
+	void AddResource(int ClientID, int ResourceID, int Num=1);
+
+	const char *GetAmmoType(int WeaponID);
+
+	//Bot Start
+	int GetBotNum() const;
+	void OnBotDead(int ClientID);
+	void CreateBot(int ClientID, int BotPower);
+
+	//Bot END
 };
 
 inline int64_t CmaskAll() { return -1LL; }

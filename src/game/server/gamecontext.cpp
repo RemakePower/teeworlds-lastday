@@ -602,10 +602,7 @@ void CGameContext::OnClientEnter(int ClientID)
 
 void CGameContext::OnClientConnected(int ClientID)
 {
-	// Check which team the player should be on
-	const int StartTeam = m_pController->GetAutoTeam(ClientID);
-
-	m_apPlayers[ClientID] = new(ClientID) CPlayer(this, ClientID, StartTeam);
+	m_apPlayers[ClientID] = new(ClientID) CPlayer(this, ClientID);
 	//players[client_id].init(client_id);
 	//players[client_id].client_id = client_id;
 
@@ -629,6 +626,7 @@ void CGameContext::OnClientConnected(int ClientID)
 
 void CGameContext::OnClientDrop(int ClientID, const char *pReason)
 {
+
 	AbortVoteKickOnDisconnect(ClientID);
 	m_apPlayers[ClientID]->OnDisconnect(pReason);
 	delete m_apPlayers[ClientID];
@@ -756,7 +754,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			if(pPlayer->m_LastVoteCall && Timeleft > 0)
 			{
 				int Seconds = (Timeleft/Server()->TickSpeed())+1;
-				SendChatTarget_Locazition(ClientID, _("You must wait {INT} seconds before making another vote"), Seconds, NULL);
+				SendChatTarget_Locazition(ClientID, _("You must wait {INT} seconds before making another vote"), &Seconds, NULL);
 				return;
 			}
 
@@ -939,7 +937,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			}
 			else
 			{
-				SendBroadcast_VL(_("Only {INT} active players are allowed"), ClientID, ClientID);
+				SendBroadcast_VL(_("Only {INT} active players are allowed"), ClientID, &ClientID);
 			}
 		}
 		else if (MsgID == NETMSGTYPE_CL_SETSPECTATORMODE && !m_World.m_Paused)
@@ -1451,12 +1449,12 @@ void CGameContext::ConAbout(IConsole::IResult *pResult, void *pUserData)
 
 	char aThanksList[256];
 
-	str_copy(aThanksList, "necropotame, kurosio, and ST-Chara", sizeof(aThanksList));
+	str_copy(aThanksList, "necropotame, kurosio, GutZuFusss, and ST-Chara", sizeof(aThanksList));
 	// necropotame made this frame, ST-Chara and RemakePower now support it.Localization from Kurosio.
 
 	pSelf->SendChatTarget_Locazition(ClientID, "====={STR}=====", MOD_NAME);
 	pSelf->SendChatTarget_Locazition(ClientID, "{STR} by {STR}", 
-		MOD_NAME " " MOD_VERSION "(" VERSION_CODE ")", "RemakePower");
+		MOD_NAME , "RemakePower");
 	pSelf->SendChatTarget_Locazition(ClientID, "Thanks {STR}", aThanksList);
 	
 }
@@ -1527,10 +1525,20 @@ void CGameContext::ConMake(IConsole::IResult *pResult, void *pUserData)
 	int ClientID = pResult->GetClientID();
 	if(!pMakeItem)
 	{
-		pSelf->SendChatTarget_Locazition(ClientID, "No any item name input");
+		pSelf->SendChatTarget_Locazition(ClientID, _("No any item name input"));
+		pSelf->m_pController->ShowMakeList(ClientID);
 		return;
 	}
 	pSelf->m_pController->OnItemMake(pMakeItem, ClientID);
+}
+
+void CGameContext::ConStatus(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	
+	int ClientID = pResult->GetClientID();
+
+	pSelf->m_pController->ShowStatus(ClientID);
 }
 
 void CGameContext::SetClientLanguage(int ClientID, const char *pLanguage)
@@ -1545,6 +1553,21 @@ void CGameContext::SetClientLanguage(int ClientID, const char *pLanguage)
 const char* CGameContext::Localize(const char *pLanguageCode, const char* pText) const
 {
 	return Server()->Localization()->Localize(pLanguageCode, pText);
+}
+
+const char* CGameContext::Format(const char* pText, ...) const
+{
+	dynamic_string Buffer;
+
+	va_list VarArgs;
+	va_start(VarArgs, pText);
+	
+	Buffer.clear();
+	Server()->Localization()->Format(Buffer, "en", pText, VarArgs);
+	
+	va_end(VarArgs);
+
+	return Buffer.buffer();
 }
 
 void CGameContext::ConsoleOutputCallback_Chat(const char *pLine, void *pUser)
@@ -1601,8 +1624,10 @@ void CGameContext::OnConsoleInit()
 	Console()->Register("about", "", CFGFLAG_CHAT, ConAbout, this, "Show information about the mod");
 	Console()->Register("language", "?s", CFGFLAG_CHAT, ConLanguage, this, "change language");
 
-	Console()->Register("make", "s", CFGFLAG_CHAT, ConMake, this, "make item");
-	
+	Console()->Register("make", "?s", CFGFLAG_CHAT, ConMake, this, "make item");
+	Console()->Register("status", "", CFGFLAG_CHAT, ConStatus, this, "show status");
+	Console()->Register("me", "", CFGFLAG_CHAT, ConStatus, this, "show status");
+
 	Console()->Chain("sv_motd", ConchainSpecialMotdupdate, this);
 }
 
@@ -1636,7 +1661,7 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 
 	// create all entities from the game layer
 	CMapItemLayerTilemap *pTileMap = m_Layers.GameLayer();
-	CTile *pTiles = (CTile *)Kernel()->RequestInterface<IMap>()->GetData(pTileMap->m_Data);
+	m_pTiles = (CTile *)Kernel()->RequestInterface<IMap>()->GetData(pTileMap->m_Data);
 
 
 
@@ -1651,7 +1676,7 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 	{
 		for(int x = 0; x < pTileMap->m_Width; x++)
 		{
-			int Index = pTiles[y*pTileMap->m_Width+x].m_Index;
+			int Index = m_pTiles[y*pTileMap->m_Width+x].m_Index;
 
 			if(Index >= ENTITY_OFFSET)
 			{
@@ -1660,6 +1685,8 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 			}
 		}
 	}
+
+	m_pController->InitSpawnPos();
 	//game.world.insert_entity(game.Controller);
 
 #ifdef CONF_DEBUG
@@ -1719,8 +1746,72 @@ bool CGameContext::IsClientPlayer(int ClientID)
 	return m_apPlayers[ClientID] && m_apPlayers[ClientID]->GetTeam() == TEAM_SPECTATORS ? false : true;
 }
 
-const char *CGameContext::GameType() { return m_pController && m_pController->m_pGameType ? m_pController->m_pGameType : ""; }
+const char *CGameContext::GameType() { return MOD_NAME; }
 const char *CGameContext::Version() { return GAME_VERSION; }
 const char *CGameContext::NetVersion() { return GAME_NETVERSION; }
 
 IGameServer *CreateGameServer() { return new CGameContext; }
+
+void CGameContext::AddResource(int ClientID, int ResourceID, int Num)
+{
+	if(ClientID > MAX_PLAYERS || !m_apPlayers[ClientID])
+		return;
+	CPlayer *pPlayer = m_apPlayers[ClientID];
+	pPlayer->m_Resource.SetResource(ResourceID, pPlayer->m_Resource.GetResource(ResourceID) + 1);
+
+	const char *pLanguageCode = pPlayer->GetLanguage();
+
+	SendChatTarget_Locazition(ClientID, _("You got {INT} {STR}"), Num, m_pController->GetResourceName(ResourceID));
+
+	SendEmoticon(ClientID, EMOTICON_SUSHI);	
+}
+
+const char *CGameContext::GetAmmoType(int WeaponID)
+{
+	switch (WeaponID)
+	{
+		case WEAPON_GUN: return "gun ammo";
+		case WEAPON_SHOTGUN: return "shotgun ammo";
+		case WEAPON_GRENADE: return "grenade ammo";
+		case WEAPON_RIFLE: return "rifle ammo";
+		default: return "";
+	}
+}
+
+int CGameContext::GetBotNum() const
+{
+	int Num = 0;
+	for(int i = BOT_CLIENTS_START; i < BOT_CLIENTS_END; i ++)
+	{
+		if(m_apPlayers[i])
+			Num++;
+	}
+	return Num;
+}
+
+void CGameContext::OnBotDead(int ClientID)
+{
+	delete m_apPlayers[ClientID];
+
+	m_apPlayers[ClientID] = 0;
+
+	m_VoteUpdate = true;
+
+	// update spectator modes
+	for(int i = 0; i < MAX_CLIENTS; ++i)
+	{
+		if(m_apPlayers[i] && m_apPlayers[i]->m_SpectatorID == ClientID)
+			m_apPlayers[i]->m_SpectatorID = SPEC_FREEVIEW;
+	}
+}
+
+void CGameContext::CreateBot(int ClientID, int BotPower)
+{
+	if(ClientID < MAX_PLAYERS || m_apPlayers[ClientID])
+		return;
+
+	m_apPlayers[ClientID] = new(ClientID) CPlayer(this, ClientID, true, BotPower);
+	Server()->InitClientBot(ClientID);
+
+	m_apPlayers[ClientID]->TryRespawn();
+}

@@ -101,7 +101,7 @@ int CNetServer::Drop(int ClientID, const char *pReason)
 int CNetServer::Update()
 {
 	int64 Now = time_get();
-	for(int i = 0; i < MaxClients(); i++)
+	for(int i = 0; i < NET_MAX_CLIENTS; i++)
 	{
 		m_aSlots[i].m_Connection.Update();
 		if(m_aSlots[i].m_Connection.State() == NET_CONNSTATE_ERROR)
@@ -646,7 +646,7 @@ int CNetServer::Send(CNetChunk *pChunk)
 	{
 		int Flags = 0;
 		dbg_assert(pChunk->m_ClientID >= 0, "errornous client id");
-		dbg_assert(pChunk->m_ClientID < MaxClients(), "errornous client id");
+		dbg_assert(pChunk->m_ClientID < NET_MAX_CLIENTS, "errornous client id");
 
 		if(pChunk->m_Flags&NETSENDFLAG_VITAL)
 			Flags = NET_CHUNKFLAG_VITAL;

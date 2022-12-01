@@ -3,5 +3,5 @@ Teeworlds LastDay
 
 A hardcore surivival mod.
 
-## Support Client List
-All Teeworlds0.6
+## More info
+Check the [wiki](https://github.com/RemakePower/teeworlds-lastday/wiki)
