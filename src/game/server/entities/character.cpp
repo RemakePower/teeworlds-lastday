@@ -562,7 +562,7 @@ void CCharacter::Die(int Killer, int Weapon)
 
 		for(int i = TWS_WEAPON_GUN;i < TWS_WEAPON_NINJA;i ++ )
 		{
-			if(!m_aWeapons->m_Ammo)
+			if(m_aWeapons->m_Ammo < 1)
 				continue;
 			new CPickup(GameWorld(), m_Pos, vec2(random_int(0, 1), random_int(0, 1)), PICKUP_AMMO, i, m_aWeapons->m_Ammo);
 			m_aWeapons->m_Ammo = 0;
