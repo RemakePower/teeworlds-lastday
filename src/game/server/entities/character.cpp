@@ -559,6 +559,22 @@ void CCharacter::Die(int Killer, int Weapon)
 		Msg.m_Weapon = Weapon;
 		Msg.m_ModeSpecial = ModeSpecial;
 		Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, -1);
+
+		for(int i = TWS_WEAPON_GUN;i < TWS_WEAPON_NINJA;i ++ )
+		{
+			if(!m_aWeapons->m_Ammo)
+				continue;
+			new CPickup(GameWorld(), m_Pos, vec2(random_int(0, 1), random_int(0, 1)), PICKUP_AMMO, i, m_aWeapons->m_Ammo);
+			m_aWeapons->m_Ammo = 0;
+		}
+
+		for(int i = 0;i < NUM_RESOURCES;i ++ )
+		{
+			if(!m_pPlayer->m_Resource.GetResource(i))
+				continue;
+			new CPickup(GameWorld(), m_Pos, vec2(random_int(0, 1), random_int(0, 1)), PICKUP_RESOURCE, i, m_pPlayer->m_Resource.GetResource(i));
+			m_pPlayer->m_Resource.SetResource(i, 0);
+		}
 	}
 
 	// a nice sound
@@ -715,7 +731,7 @@ void CCharacter::Snap(int SnappingClient)
 	pCharacter->m_Health = 0;
 	pCharacter->m_Armor = 0;
 
-	pCharacter->m_Weapon = m_ActiveWeapon;
+	pCharacter->m_Weapon = g_Weapons.m_aWeapons[m_ActiveWeapon]->GetShowType();
 	pCharacter->m_AttackTick = m_AttackTick;
 
 	pCharacter->m_Direction = m_Input.m_Direction;

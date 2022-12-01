@@ -215,7 +215,6 @@ void CGameController::OnCharacterSpawn(class CCharacter *pChr)
 
 	// give default weapons
 	pChr->GiveWeapon(WEAPON_HAMMER, -1);
-	pChr->GiveWeapon(WEAPON_GUN, 10);
 }
 
 void CGameController::TogglePause()
@@ -590,6 +589,7 @@ void CGameController::ReturnItem(CItem Item, int ClientID)
 
 		switch (Item.m_GiveID)
 		{
+			case ITEM_GUN: pChr->GetWeaponStat()[WEAPON_GUN].m_Got = true;break;
 			case ITEM_SHOTGUN: pChr->GetWeaponStat()[WEAPON_SHOTGUN].m_Got = true;break;
 			case ITEM_GRENADE: pChr->GetWeaponStat()[WEAPON_GRENADE].m_Got = true;break;
 			case ITEM_RIFLE: pChr->GetWeaponStat()[WEAPON_RIFLE].m_Got = true;break;

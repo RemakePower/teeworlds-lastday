@@ -1766,6 +1766,18 @@ void CGameContext::AddResource(int ClientID, int ResourceID, int Num)
 	SendEmoticon(ClientID, EMOTICON_SUSHI);	
 }
 
+const char *CGameContext::GetAmmoType(int WeaponID)
+{
+	switch (WeaponID)
+	{
+		case WEAPON_GUN: return "gun ammo";
+		case WEAPON_SHOTGUN: return "shotgun ammo";
+		case WEAPON_GRENADE: return "grenade ammo";
+		case WEAPON_RIFLE: return "rifle ammo";
+		default: return "";
+	}
+}
+
 int CGameContext::GetBotNum() const
 {
 	int Num = 0;

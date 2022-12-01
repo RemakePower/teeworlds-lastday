@@ -3,22 +3,6 @@
 
 #include <base/system.h>
 
-enum ItemList
-{
-    ITEM_SHOTGUN=0,
-    ITEM_GRENADE,
-    ITEM_RIFLE,
-
-    NUM_ITEMS,
-};
-
-enum ResourceList
-{
-    RESOURCE_METAL=0,
-    RESOURCE_WOOD,
-
-    NUM_RESOURCES,
-};
 
 struct Resource
 {

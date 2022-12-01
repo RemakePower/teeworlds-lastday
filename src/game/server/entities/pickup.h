@@ -11,7 +11,7 @@ const int PickupAmmoNum = 8;
 class CPickup : public CEntity
 {
 public:
-	CPickup(CGameWorld *pGameWorld, vec2 Pos, vec2 Dir, int Type, int SubType = 0);
+	CPickup(CGameWorld *pGameWorld, vec2 Pos, vec2 Dir, int Type, int SubType = 0, int Num = 1);
 	~CPickup();
 
 	vec2 GetPos(float Time);
@@ -24,6 +24,7 @@ private:
 	vec2 m_StartPos;
 	int m_AmmoIDs[PickupAmmoNum];
 	int m_Type;
+	int m_Num;
 	int m_Subtype;
 	int m_StartTick;
 };

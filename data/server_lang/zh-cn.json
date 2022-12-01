@@ -9,16 +9,32 @@
             "value": "木头"
         },
         {
+            "key": "gun ammo",
+            "value": "手枪子弹"
+        },
+        {
             "key": "shotgun",
             "value": "霰弹枪"
+        },
+        {
+            "key": "shotgun ammo",
+            "value": "霰弹"
         },
         {
             "key": "grenade",
             "value": "榴弹炮"
         },
         {
+            "key": "grenade ammo",
+            "value": "榴弹"
+        },
+        {
             "key": "rifle",
             "value": "激光枪"
+        },
+        {
+            "key": "rifle ammo",
+            "value": "激光"
         },
         {
             "key": "Account already exists.",

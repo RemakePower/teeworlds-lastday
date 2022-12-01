@@ -1,6 +1,24 @@
 #ifndef GAME_SERVER_DEFINE_H
 #define GAME_SERVER_DEFINE_H
 
+enum ItemList
+{
+    ITEM_GUN,
+    ITEM_SHOTGUN,
+    ITEM_GRENADE,
+    ITEM_RIFLE,
+
+    NUM_ITEMS,
+};
+
+enum ResourceList
+{
+    RESOURCE_METAL=0,
+    RESOURCE_WOOD,
+
+    NUM_RESOURCES,
+};
+
 enum PickupType
 {
     PICKUP_AMMO=0,

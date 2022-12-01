@@ -4,7 +4,7 @@
 #include <game/server/gamecontext.h>
 #include "pickup.h"
 
-CPickup::CPickup(CGameWorld *pGameWorld, vec2 Pos, vec2 Dir, int Type, int SubType)
+CPickup::CPickup(CGameWorld *pGameWorld, vec2 Pos, vec2 Dir, int Type, int SubType, int Num)
 : CEntity(pGameWorld, CGameWorld::ENTTYPE_PICKUP)
 {
 	m_Pos = Pos;
@@ -12,6 +12,7 @@ CPickup::CPickup(CGameWorld *pGameWorld, vec2 Pos, vec2 Dir, int Type, int SubTy
 	m_Direction = Dir;
 	m_Type = Type;
 	m_Subtype = SubType;
+	m_Num = Num;
 	m_ProximityRadius = PickupPhysSize;
 	m_StartTick = Server()->Tick();
 
@@ -105,7 +106,9 @@ void CPickup::Tick()
 			{
 				if(pChr->GetWeaponStat()[m_Subtype].m_Got)
 				{
-					pChr->GetWeaponStat()[m_Subtype].m_Ammo ++;
+					pChr->GetWeaponStat()[m_Subtype].m_Ammo += m_Num;
+					GameServer()->SendChatTarget_Locazition(pChr->GetCID(), _("You got {INT} {STR}"),
+						m_Num, GameServer()->GetAmmoType(m_Subtype));
 					GameServer()->CreateSound(m_Pos, SOUND_PICKUP_SHOTGUN);
 					Destroy = true;
 				}
@@ -113,7 +116,7 @@ void CPickup::Tick()
 			}
 			case PICKUP_RESOURCE:
 			{
-				GameServer()->AddResource(pChr->GetCID(), m_Subtype);
+				GameServer()->AddResource(pChr->GetCID(), m_Subtype, m_Num);
 				Destroy = true;
 				break;
 			}

@@ -212,6 +212,8 @@ public:
 
 	void AddResource(int ClientID, int ResourceID, int Num=1);
 
+	const char *GetAmmoType(int WeaponID);
+
 	//Bot Start
 	int GetBotNum() const;
 	void OnBotDead(int ClientID);

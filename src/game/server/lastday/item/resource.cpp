@@ -1,3 +1,4 @@
+#include "game/server/define.h"
 #include "resource.h"
 
 int64 Resource::GetResource(int ID)
