@@ -221,7 +221,6 @@ function build(settings)
 	-- build the small libraries
 	json = Compile(settings, "src/engine/external/json-parser/json.c")
 	md5 = Compile(settings, Collect("src/engine/external/md5/*.c"))
-	sqlite3 = Compile(settings, Collect("src/engine/external/sqlite3/*.c"))
 
 	-- build game components
 	engine_settings = settings:Copy()
@@ -272,7 +271,7 @@ function build(settings)
 
 	-- build server
 	server_exe = Link(server_settings, "teeworlds_srv", engine, server,
-		game_shared, game_server, zlib, md5, sqlite3, server_link_other, json, teeuniverses)
+		game_shared, game_server, zlib, md5, server_link_other, json, teeuniverses)
 
 	serverlaunch = {}
 	if platform == "macosx" then
@@ -319,8 +318,6 @@ if platform == "macosx" then
 
 	ppc_d = build(debug_settings_ppc)
 	ppc_r = build(release_settings_ppc)
-	sql_ppc_d = build(debug_sql_settings_ppc)
-	sql_ppc_r = build(release_sql_settings_ppc)
 
 	if arch == "ia32" or arch == "amd64" then
 		debug_settings_x86 = debug_settings:Copy()
@@ -339,8 +336,6 @@ if platform == "macosx" then
 	
 		x86_d = build(debug_settings_x86)
 		x86_r = build(release_settings_x86)
-		sql_x86_d = build(debug_sql_settings_x86)
-		sql_x86_r = build(release_sql_settings_x86)
 	end
 
 	if arch == "amd64" then
@@ -360,8 +355,6 @@ if platform == "macosx" then
 
 		x86_64_d = build(debug_settings_x86_64)
 		x86_64_r = build(release_settings_x86_64)
-		sql_x86_64_d = build(debug_sql_settings_x86_64)
-		sql_x86_64_r = build(release_sql_settings_x86_64)
 	end
 
 	DefaultTarget("game_debug_x86")
