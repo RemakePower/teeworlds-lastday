@@ -253,6 +253,22 @@
             "value": "感谢 {STR}"
         },
         {
+            "key": "Use [/item help]",
+            "value": "使用/item help"
+        },
+        {
+            "key": "Use [/item help <itemname>] get item need resource",
+            "value": "使用/item help <物品名>获取物品所需资源"
+        },
+        {
+            "key": "Use [/item make <itemname>] make item",
+            "value": "使用/item make <物品名>制造物品"
+        },
+        {
+            "key": "Use [/item list] get item list",
+            "value": "使用/item list获取物品列表"
+        },
+        {
             "key": "No any item name input",
             "value": "没有任何物品名称输入"
         },
@@ -261,8 +277,8 @@
             "value": "没有这个物品!"
         },
         {
-            "key": "This item requires {STR}.",
-            "value": "这个物品需要{STR}."
+            "key": "{STR} requires {STR}.",
+            "value": "{STR}需要{STR}."
         },
         {
             "key": "You had {STR}",
@@ -287,6 +303,10 @@
         {
             "key": "You got {INT} {STR}",
             "value": "你得到了{INT}{STR}"
+        },
+        {
+            "key": "You don't have any things!",
+            "value": "你没有任何东西!" 
         }
     ]
 }

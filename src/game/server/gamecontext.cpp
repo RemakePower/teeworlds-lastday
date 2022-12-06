@@ -13,6 +13,7 @@
 
 #include <teeuniverses/components/localization.h>
 
+#include "lastday/item/make.h"
 enum
 {
 	RESET,
@@ -37,6 +38,8 @@ void CGameContext::Construct(int Resetting)
 
 	if(Resetting==NO_RESET)
 		m_pVoteOptionHeap = new CHeap();
+		
+	m_pMakeSystem = new CMakeBase(this);
 }
 
 CGameContext::CGameContext(int Resetting)
@@ -1517,19 +1520,43 @@ void CGameContext::ConLanguage(IConsole::IResult *pResult, void *pUserData)
 	return;
 }
 
-void CGameContext::ConMake(IConsole::IResult *pResult, void *pUserData)
+void CGameContext::ConItem(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
-	
-	const char *pMakeItem = pResult->NumArguments() ? pResult->GetString(0) : 0x0;
+
 	int ClientID = pResult->GetClientID();
-	if(!pMakeItem)
+	
+	const char *pParamName = pResult->GetString(0);
+	const char *pCommand = pResult->GetString(1);
+
+	if(str_comp(pParamName, "help") == 0)
 	{
-		pSelf->SendChatTarget_Locazition(ClientID, _("No any item name input"));
-		pSelf->m_pController->ShowMakeList(ClientID);
-		return;
-	}
-	pSelf->m_pController->OnItemMake(pMakeItem, ClientID);
+		if(!pCommand[0])
+		{		
+			pSelf->SendChatTarget(ClientID, "=====================");
+			pSelf->SendChatTarget_Locazition(ClientID, _("Use [/item help <itemname>] get item need resource"));
+			pSelf->SendChatTarget_Locazition(ClientID, _("Use [/item make <itemname>] make item"));
+			pSelf->SendChatTarget_Locazition(ClientID, _("Use [/item list] get item list"));
+		}
+		else
+		{
+			pSelf->m_pMakeSystem->ShowNeed(pCommand, ClientID);
+		}
+	}else if(str_comp(pParamName, "make") == 0)
+	{
+		if(!pCommand[0])
+		{
+			pSelf->SendChatTarget_Locazition(ClientID, _("No any item name input"));
+			pSelf->SendChatTarget_Locazition(ClientID, _("Use [/item help]"));
+		}else 
+		{
+			pSelf->m_pMakeSystem->MakeItem(pCommand, ClientID);
+		}
+	}else if(str_comp(pParamName, "list") == 0)
+	{
+		pSelf->m_pMakeSystem->ShowMakeList(ClientID);
+	}else pSelf->SendChatTarget_Locazition(ClientID, _("Use [/item help]"));
+
 }
 
 void CGameContext::ConStatus(IConsole::IResult *pResult, void *pUserData)
@@ -1624,7 +1651,7 @@ void CGameContext::OnConsoleInit()
 	Console()->Register("about", "", CFGFLAG_CHAT, ConAbout, this, "Show information about the mod");
 	Console()->Register("language", "?s", CFGFLAG_CHAT, ConLanguage, this, "change language");
 
-	Console()->Register("make", "?s", CFGFLAG_CHAT, ConMake, this, "make item");
+	Console()->Register("item", "?s?r", CFGFLAG_CHAT, ConItem, this, "item");
 	Console()->Register("status", "", CFGFLAG_CHAT, ConStatus, this, "show status");
 	Console()->Register("me", "", CFGFLAG_CHAT, ConStatus, this, "show status");
 
@@ -1761,21 +1788,9 @@ void CGameContext::AddResource(int ClientID, int ResourceID, int Num)
 
 	const char *pLanguageCode = pPlayer->GetLanguage();
 
-	SendChatTarget_Locazition(ClientID, _("You got {INT} {STR}"), Num, m_pController->GetResourceName(ResourceID));
+	SendChatTarget_Locazition(ClientID, _("You got {INT} {STR}"), Num, GetResourceName(ResourceID));
 
 	SendEmoticon(ClientID, EMOTICON_SUSHI);	
-}
-
-const char *CGameContext::GetAmmoType(int WeaponID)
-{
-	switch (WeaponID)
-	{
-		case WEAPON_GUN: return "gun ammo";
-		case WEAPON_SHOTGUN: return "shotgun ammo";
-		case WEAPON_GRENADE: return "grenade ammo";
-		case WEAPON_RIFLE: return "rifle ammo";
-		default: return "";
-	}
 }
 
 int CGameContext::GetBotNum() const

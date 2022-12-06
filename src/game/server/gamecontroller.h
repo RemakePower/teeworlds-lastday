@@ -139,22 +139,6 @@ public:
 
 	double GetTime();
 
-	// MakeItem
-	class CItem
-	{
-	public:
-		CItem();
-		char m_aName[64];
-		int m_GiveID;
-		int m_GiveNum;
-		Resource m_NeedResource;
-	};
-
-	const char* GetResourceName(int ID);
-	void OnItemMake(const char *pMakeItem, int ClientID);
-	void ReturnItem(CItem Item, int ClientID);
-	bool FindItem(const char *pMakeItem, CItem *ItemInfo);
-	void ShowMakeList(int ClientID);
 	// Status
 	void ShowStatus(int ClientID);
 /** Bot **/

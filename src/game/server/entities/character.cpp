@@ -56,8 +56,8 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_EmoteStop = -1;
 	m_LastAction = -1;
 	m_LastNoAmmoSound = -1;
-	m_ActiveWeapon = WEAPON_GUN;
-	m_LastWeapon = WEAPON_HAMMER;
+	m_ActiveWeapon = TWS_WEAPON_GUN;
+	m_LastWeapon = TWS_WEAPON_HAMMER;
 	m_QueuedWeapon = -1;
 
 	m_pPlayer = pPlayer;
@@ -97,7 +97,7 @@ void CCharacter::SetWeapon(int W)
 	m_ActiveWeapon = W;
 	GameServer()->CreateSound(m_Pos, SOUND_WEAPON_SWITCH);
 
-	if(m_ActiveWeapon < 0 || m_ActiveWeapon >= NUM_WEAPONS)
+	if(m_ActiveWeapon < 0 || m_ActiveWeapon >= NUM_LASTDAY_WEAPONS)
 		m_ActiveWeapon = 0;
 }
 
@@ -113,7 +113,7 @@ bool CCharacter::IsGrounded()
 
 void CCharacter::HandleNinja()
 {
-	if(m_ActiveWeapon != WEAPON_NINJA)
+	if(m_ActiveWeapon != TWS_WEAPON_NINJA)
 		return;
 
 	m_Ninja.m_CurrentMoveTime--;
@@ -167,7 +167,7 @@ void CCharacter::HandleNinja()
 				if(m_NumObjectsHit < 10)
 					m_apHitObjects[m_NumObjectsHit++] = aEnts[i];
 
-				aEnts[i]->TakeDamage(vec2(0, -10.0f), g_pData->m_Weapons.m_Ninja.m_pBase->m_Damage, m_pPlayer->GetCID(), WEAPON_NINJA);
+				aEnts[i]->TakeDamage(vec2(0, -10.0f), g_pData->m_Weapons.m_Ninja.m_pBase->m_Damage, m_pPlayer->GetCID(), TWS_WEAPON_NINJA);
 			}
 		}
 
@@ -202,7 +202,7 @@ void CCharacter::HandleWeaponSwitch()
 	{
 		while(Next) // Next Weapon selection
 		{
-			WantedWeapon = (WantedWeapon+1)%NUM_WEAPONS;
+			WantedWeapon = (WantedWeapon+1)%NUM_LASTDAY_WEAPONS;
 			if(m_aWeapons[WantedWeapon].m_Got)
 				Next--;
 		}
@@ -212,7 +212,7 @@ void CCharacter::HandleWeaponSwitch()
 	{
 		while(Prev) // Prev Weapon selection
 		{
-			WantedWeapon = (WantedWeapon-1)<0?NUM_WEAPONS-1:WantedWeapon-1;
+			WantedWeapon = (WantedWeapon-1)<0?NUM_LASTDAY_WEAPONS-1:WantedWeapon-1;
 			if(m_aWeapons[WantedWeapon].m_Got)
 				Prev--;
 		}
@@ -223,7 +223,7 @@ void CCharacter::HandleWeaponSwitch()
 		WantedWeapon = m_Input.m_WantedWeapon-1;
 
 	// check for insane values
-	if(WantedWeapon >= 0 && WantedWeapon < NUM_WEAPONS && WantedWeapon != m_ActiveWeapon && m_aWeapons[WantedWeapon].m_Got)
+	if(WantedWeapon >= 0 && WantedWeapon < NUM_LASTDAY_WEAPONS && WantedWeapon != m_ActiveWeapon && m_aWeapons[WantedWeapon].m_Got)
 		m_QueuedWeapon = WantedWeapon;
 
 	DoWeaponSwitch();
@@ -556,7 +556,7 @@ void CCharacter::Die(int Killer, int Weapon)
 		CNetMsg_Sv_KillMsg Msg;
 		Msg.m_Killer = Killer;
 		Msg.m_Victim = m_pPlayer->GetCID();
-		Msg.m_Weapon = Weapon;
+		Msg.m_Weapon = g_Weapons.m_aWeapons[Weapon]->GetShowType();
 		Msg.m_ModeSpecial = ModeSpecial;
 		Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, -1);
 

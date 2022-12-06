@@ -28,7 +28,6 @@ typedef unsigned __int64 uint64_t;
 #include <stdint.h>
 #endif
 
-#include "lastday/item/resource.h"
 /*
 	Tick
 		Game Context (CGameContext::tick)
@@ -80,7 +79,7 @@ class CGameContext : public IGameServer
 	static void ConVote(IConsole::IResult *pResult, void *pUserData);
 	static void ConchainSpecialMotdupdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 
-	static void ConMake(IConsole::IResult *pResult, void *pUserData);
+	static void ConItem(IConsole::IResult *pResult, void *pUserData);
 	static void ConStatus(IConsole::IResult *pResult, void *pUserData);
 
 
@@ -212,7 +211,8 @@ public:
 
 	void AddResource(int ClientID, int ResourceID, int Num=1);
 
-	const char *GetAmmoType(int WeaponID);
+	// MakeItem
+	class CMakeBase *m_pMakeSystem;
 
 	//Bot Start
 	int GetBotNum() const;
