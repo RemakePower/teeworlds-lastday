@@ -28,10 +28,10 @@ public:
 
 class CWeapon : public IWeapon
 {
+    virtual void Fire(int Owner, vec2 Dir, vec2 Pos) = 0;
 public:
     CWeapon(CGameContext *pGameServer, int WeaponID, int m_ShowType, int FireDelay);
-    virtual void OnFire(int Owner, vec2 Dir, vec2 Pos);
-    virtual void Fire(int Owner, vec2 Dir, vec2 Pos) = 0;
+    void OnFire(int Owner, vec2 Dir, vec2 Pos) override;
 };
 
 // Weapon Core End

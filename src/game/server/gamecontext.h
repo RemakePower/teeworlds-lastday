@@ -98,7 +98,7 @@ public:
 	class IConsole *Console() { return m_pConsole; }
 	CCollision *Collision() { return &m_Collision; }
 	CTuningParams *Tuning() { return &m_Tuning; }
-	virtual class CLayers *Layers() { return &m_Layers; }
+	class CLayers *Layers() override { return &m_Layers; }
 
 	CGameContext();
 	~CGameContext();
@@ -183,31 +183,31 @@ public:
 	void SendTuningParams(int ClientID);
 
 	// engine events
-	virtual void OnInit();
-	virtual void OnConsoleInit();
-	virtual void OnShutdown();
+	void OnInit() override;
+	void OnConsoleInit() override;
+	void OnShutdown() override;
 
-	virtual void OnTick();
-	virtual void OnPreSnap();
-	virtual void OnSnap(int ClientID);
-	virtual void OnPostSnap();
+	void OnTick() override;
+	void OnPreSnap() override;
+	void OnSnap(int ClientID) override;
+	void OnPostSnap() override;
 
-	virtual void OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID);
+	void OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID) override;
 
-	virtual void OnClientConnected(int ClientID);
-	virtual void OnClientEnter(int ClientID);
-	virtual void OnClientDrop(int ClientID, const char *pReason);
-	virtual void OnClientDirectInput(int ClientID, void *pInput);
-	virtual void OnClientPredictedInput(int ClientID, void *pInput);
+	void OnClientConnected(int ClientID) override;
+	void OnClientEnter(int ClientID) override;
+	void OnClientDrop(int ClientID, const char *pReason) override;
+	void OnClientDirectInput(int ClientID, void *pInput) override;
+	void OnClientPredictedInput(int ClientID, void *pInput) override;
 
-	virtual bool IsClientReady(int ClientID);
-	virtual bool IsClientPlayer(int ClientID);
+	bool IsClientReady(int ClientID) override;
+	bool IsClientPlayer(int ClientID) override;
 
-	virtual void OnSetAuthed(int ClientID,int Level);
+	void OnSetAuthed(int ClientID,int Level) override;
 	
-	virtual const char *GameType();
-	virtual const char *Version();
-	virtual const char *NetVersion();
+	const char *GameType() override;
+	const char *Version() override;
+	const char *NetVersion() override;
 
 	void AddResource(int ClientID, int ResourceID, int Num=1);
 

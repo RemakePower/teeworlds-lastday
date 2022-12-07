@@ -26,12 +26,12 @@ public:
 
 	CCharacter(CGameWorld *pWorld);
 
-	virtual void Reset();
-	virtual void Destroy();
-	virtual void Tick();
-	virtual void TickDefered();
-	virtual void TickPaused();
-	virtual void Snap(int SnappingClient);
+	void Reset() override;
+	void Destroy() override;
+	void Tick() override;
+	void TickDefered() override;
+	void TickPaused() override;
+	void Snap(int SnappingClient) override;
 
 	bool IsGrounded();
 

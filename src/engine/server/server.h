@@ -52,8 +52,8 @@ public:
 
 	void InitServerBan(class IConsole *pConsole, class IStorage *pStorage, class CServer* pServer);
 
-	virtual int BanAddr(const NETADDR *pAddr, int Seconds, const char *pReason);
-	virtual int BanRange(const CNetRange *pRange, int Seconds, const char *pReason);
+	int BanAddr(const NETADDR *pAddr, int Seconds, const char *pReason) override;
+	int BanRange(const CNetRange *pRange, int Seconds, const char *pReason) override;
 
 	static void ConBanExt(class IConsole::IResult *pResult, void *pUser);
 };
@@ -172,10 +172,10 @@ public:
 
 	int TrySetClientName(int ClientID, const char *pName);
 
-	virtual void SetClientName(int ClientID, const char *pName);
-	virtual void SetClientClan(int ClientID, char const *pClan);
-	virtual void SetClientCountry(int ClientID, int Country);
-	virtual void SetClientScore(int ClientID, int Score);
+	void SetClientName(int ClientID, const char *pName) override;
+	void SetClientClan(int ClientID, char const *pClan) override;
+	void SetClientCountry(int ClientID, int Country) override;
+	void SetClientScore(int ClientID, int Score) override;
 
 	void Kick(int ClientID, const char *pReason);
 
@@ -198,7 +198,7 @@ public:
 	bool ClientIngame(int ClientID);
 	int MaxClients() const;
 
-	virtual int SendMsg(CMsgPacker *pMsg, int Flags, int ClientID);
+	int SendMsg(CMsgPacker *pMsg, int Flags, int ClientID) override;
 	int SendMsgEx(CMsgPacker *pMsg, int Flags, int ClientID, bool System);
 
 	void DoSnapshot();
@@ -246,18 +246,18 @@ public:
 	void RegisterCommands();
 
 	// Bots
-	virtual void InitClientBot(int ClientID);
+	void InitClientBot(int ClientID) override;
 
-	virtual int SnapNewID();
-	virtual void SnapFreeID(int ID);
-	virtual void *SnapNewItem(int Type, int ID, int Size);
+	int SnapNewID() override;
+	void SnapFreeID(int ID) override;
+	void *SnapNewItem(int Type, int ID, int Size) override;
 	void SnapSetStaticsize(int ItemType, int Size);
 	
 public:
-	virtual const char* GetClientLanguage(int ClientID);
-	virtual void SetClientLanguage(int ClientID, const char* pLanguage);
-	virtual int* GetIdMap(int ClientID);
-	virtual void SetCustClt(int ClientID);
+	const char* GetClientLanguage(int ClientID) override;
+	void SetClientLanguage(int ClientID, const char* pLanguage) override;
+	int* GetIdMap(int ClientID) override;
+	void SetCustClt(int ClientID) override;
 };
 
 #endif
