@@ -3,7 +3,7 @@
 
 #include "resource.h"
 
-class CMakeBase
+class CItemMake
 {
 	class CGameContext *m_pGameServer;
 	CGameContext *GameServer() const { return m_pGameServer; }
@@ -24,7 +24,7 @@ class CMakeBase
 	void ShowNeed(CItemData ItemInfo, int ClientID);
 
 public:
-    CMakeBase(CGameContext *pGameServer);
+    CItemMake(CGameContext *pGameServer);
 	void MakeItem(const char *pMakeItem, int ClientID);
 	void ShowNeed(const char *pMakeItem, int ClientID);
 	void ShowMakeList(int ClientID);

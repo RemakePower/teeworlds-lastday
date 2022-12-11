@@ -556,7 +556,7 @@ void CCharacter::Die(int Killer, int Weapon)
 		CNetMsg_Sv_KillMsg Msg;
 		Msg.m_Killer = Killer;
 		Msg.m_Victim = m_pPlayer->GetCID();
-		Msg.m_Weapon = g_Weapons.m_aWeapons[Weapon]->GetShowType();
+		Msg.m_Weapon = Killer == GetCID() ? WEAPON_GAME : g_Weapons.m_aWeapons[m_ActiveWeapon]->GetShowType();
 		Msg.m_ModeSpecial = ModeSpecial;
 		Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, -1);
 
@@ -789,10 +789,26 @@ void CCharacter::DoBotActions()
 	m_LatestInput.m_Fire = 0;
 	// Jump
 	vec2 NeedCheckPos = m_Pos + vec2(m_Core.m_Vel.x, 0) + ((m_Core.m_Vel.x > 0 && m_Botinfo.m_Direction == 0) ? vec2(0,0) : vec2(m_Botinfo.m_Direction * 48.0f, 0));
-	if(CheckPos(NeedCheckPos))
+	if(m_PrevInput.m_Jump == 0 && !CheckPos(vec2(m_Pos.x, m_Pos.y - 32.0f)))
 	{
-		m_Input.m_Jump = 1;
+		if(CheckPos(NeedCheckPos) && (IsGrounded() || m_Pos.x != m_Botinfo.m_LastGroundPos.x))
+		{
+			m_Input.m_Jump = 1;
+		}else m_Input.m_Jump = 0;
+
+		// If collison bot
+		CCharacter *pCollison = GameWorld()->ClosestCharacter(NeedCheckPos, 5.0f, this);
+		if(pCollison &&	pCollison->GetPlayer()->m_IsBot && IsGrounded())
+		{
+			m_Input.m_Jump = 1;
+		}
 	}else m_Input.m_Jump = 0;
+
+	CCharacter *pUnder = GameWorld()->ClosestCharacter(vec2(m_Pos.x, m_Pos.y + 32.0f), 5.0f, this);
+	if(pUnder && pUnder->GetPlayer()->m_IsBot)
+	{
+		m_Botinfo.m_Direction = -m_Botinfo.m_Direction;
+	}
 
 	// If Target
 	CCharacter *pTarget = GameServer()->GetPlayerChar(m_Botinfo.m_Target);
@@ -881,17 +897,18 @@ void CCharacter::DoBotActions()
 	{
 		// Change Direction
 		int LastDirection = m_Botinfo.m_Direction;
-		if(Server()->Tick() >= m_Botinfo.m_NextDirectionTick || ( Server()->Tick() >= m_Botinfo.m_NextDirectionTick - 150 && CheckPos(NeedCheckPos)))
+
+		if(IsGrounded() && !CheckPos(vec2(m_Botinfo.m_LastPos.x, m_Botinfo.m_LastPos.y+m_ProximityRadius/2 + 5.0f)))
 		{
-			m_Botinfo.m_Direction = random_int(-1, 1);
-			m_Botinfo.m_NextDirectionTick = Server()->Tick() + (m_Botinfo.m_Direction ? Server()->TickSpeed() * random_int(2, 6) : Server()->TickSpeed());
+			if(distance(m_Pos, m_Botinfo.m_LastGroundPos) < 2.0f)
+				m_Botinfo.m_Direction = -LastDirection;
 		}
 
-		// If collison bot
-		CCharacter *pCollison = GameWorld()->ClosestCharacter(m_Pos, 40.0f, this);
-		if(pCollison && IsGrounded())
+		if(Server()->Tick() >= m_Botinfo.m_NextDirectionTick || ( Server()->Tick() >= m_Botinfo.m_NextDirectionTick - 150 && CheckPos(NeedCheckPos)))
 		{
-			m_Input.m_Jump = 1;
+			if(m_Input.m_Jump == 0 && IsGrounded())
+				m_Botinfo.m_Direction = (random_int(0, 1) && m_Botinfo.m_Direction != 0) ? (-LastDirection) : (random_int(-1, 1));
+			m_Botinfo.m_NextDirectionTick = Server()->Tick() + (m_Botinfo.m_Direction ? Server()->TickSpeed() * random_int(2, 6) : Server()->TickSpeed());
 		}
 
 		// set character angle
@@ -900,7 +917,13 @@ void CCharacter::DoBotActions()
 		m_LatestInput.m_TargetX = m_Input.m_TargetX;
 		m_LatestInput.m_TargetY = m_Input.m_TargetY;
 	}
+
+	if(IsGrounded())
+		m_Botinfo.m_LastGroundPos = m_Pos;
 	
+	m_Botinfo.m_LastPos = m_Pos;
+	
+	m_Botinfo.m_LastVel = m_Core.m_Vel;
 	m_Input.m_Direction = m_Botinfo.m_Direction;
 	
 }

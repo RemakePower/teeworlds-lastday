@@ -225,17 +225,6 @@ void CPlayer::OnDisconnect(const char *pReason)
 	if(Server()->ClientIngame(m_ClientID))
 	{
 		char aBuf[512];
-		if(pReason && *pReason)
-		{
-			str_format(aBuf, sizeof(aBuf), "'%s' has left the game (%s)", Server()->ClientName(m_ClientID), pReason);
-			GameServer()->SendChatTarget_Locazition(-1, _("'{STR}' has left the game ({STR})"), Server()->ClientName(m_ClientID), pReason);
-		}
-		else
-		{
-			str_format(aBuf, sizeof(aBuf), "'%s' has left the game", Server()->ClientName(m_ClientID));
-			GameServer()->SendChatTarget_Locazition(-1, _("'{STR}' has left the game"), Server()->ClientName(m_ClientID));
-		}
-
 		str_format(aBuf, sizeof(aBuf), "leave player='%d:%s'", m_ClientID, Server()->ClientName(m_ClientID));
 		GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "game", aBuf);
 	}

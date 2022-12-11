@@ -212,7 +212,7 @@ public:
 	void AddResource(int ClientID, int ResourceID, int Num=1);
 
 	// MakeItem
-	class CMakeBase *m_pMakeSystem;
+	class CItemMake *m_pMakeSystem;
 
 	//Bot Start
 	int GetBotNum() const;

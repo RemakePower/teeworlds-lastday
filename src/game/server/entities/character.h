@@ -150,6 +150,9 @@ public:
 		int m_Target;
 		int m_Direction;
 		int m_NextDirectionTick;
+		vec2 m_LastVel;
+		vec2 m_LastGroundPos;
+		vec2 m_LastPos;
 		vec2 m_LastTargetPos;
 		vec2 m_RandomPos;
 	} m_Botinfo;

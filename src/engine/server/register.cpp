@@ -8,6 +8,7 @@
 
 #include <mastersrv/mastersrv.h>
 
+#include <curl/curl.h>
 #include "register.h"
 
 CRegister::CRegister()

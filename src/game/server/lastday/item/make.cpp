@@ -4,7 +4,7 @@
 #include <game/server/define.h>
 #include "make.h"
 
-CMakeBase::CItemData::CItemData()
+CItemMake::CItemData::CItemData()
 {
 	m_GiveType = 0;
 	m_GiveID = 0;
@@ -12,13 +12,13 @@ CMakeBase::CItemData::CItemData()
 	m_NeedResource.ResetResource();
 }
 
-CMakeBase::CMakeBase(CGameContext *pGameServer)
+CItemMake::CItemMake(CGameContext *pGameServer)
 {
 	m_pGameServer = pGameServer;
 }
 
 // Public Make
-void CMakeBase::MakeItem(const char *pMakeItem, int ClientID)
+void CItemMake::MakeItem(const char *pMakeItem, int ClientID)
 {
 	CItemData ItemInfo;
 	if(!FindItem(pMakeItem, &ItemInfo))
@@ -84,7 +84,7 @@ void CMakeBase::MakeItem(const char *pMakeItem, int ClientID)
 	
 }
 
-void CMakeBase::ReturnItem(CItemData Item, int ClientID)
+void CItemMake::ReturnItem(CItemData Item, int ClientID)
 {
 	CPlayer *pPlayer = GameServer()->m_apPlayers[ClientID];
 	if(!pPlayer)
@@ -136,14 +136,14 @@ void CMakeBase::ReturnItem(CItemData Item, int ClientID)
 }
 
 // Find Item, if it in the json.return the FOUND(and the Item info)
-bool CMakeBase::FindItem(const char *pMakeItem, CItemData *ItemInfo)
+bool CItemMake::FindItem(const char *pMakeItem, CItemData *ItemInfo)
 {
 	// read file data into buffer
-	const char *pFilename = "./data/json/item.json";
+	const char *pFilename = "./data/json/make.json";
 	IOHANDLE File = GameServer()->Storage()->OpenFile(pFilename, IOFLAG_READ, IStorage::TYPE_ALL);
 	if(!File)
 	{
-		dbg_msg("Item", "can't open 'data/json/item.json'");
+		dbg_msg("Item", "can't open 'data/json/make.json'");
 		return false;
 	}
 	
@@ -191,7 +191,7 @@ bool CMakeBase::FindItem(const char *pMakeItem, CItemData *ItemInfo)
 	return Found;
 }
 
-void CMakeBase::ShowNeed(CItemData ItemInfo, int ClientID)
+void CItemMake::ShowNeed(CItemData ItemInfo, int ClientID)
 {
 	CPlayer *pPlayer = GameServer()->m_apPlayers[ClientID];
 	if(!pPlayer)
@@ -221,7 +221,7 @@ void CMakeBase::ShowNeed(CItemData ItemInfo, int ClientID)
 }
 
 // Public
-void CMakeBase::ShowNeed(const char *pMakeItem, int ClientID)
+void CItemMake::ShowNeed(const char *pMakeItem, int ClientID)
 {
 	CItemData ItemInfo;
 	if(!FindItem(pMakeItem, &ItemInfo))
@@ -233,14 +233,14 @@ void CMakeBase::ShowNeed(const char *pMakeItem, int ClientID)
 	ShowNeed(ItemInfo, ClientID);
 }
 
-void CMakeBase::ShowMakeList(int ClientID)
+void CItemMake::ShowMakeList(int ClientID)
 {
 	// read file data into buffer
-	const char *pFilename = "./data/json/item.json";
+	const char *pFilename = "./data/json/make.json";
 	IOHANDLE File = GameServer()->Storage()->OpenFile(pFilename, IOFLAG_READ, IStorage::TYPE_ALL);
 	if(!File)
 	{
-		dbg_msg("Item", "can't open 'data/json/item.json'");
+		dbg_msg("Item", "can't open 'data/json/make.json'");
 		return;
 	}
 	
