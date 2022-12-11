@@ -208,6 +208,7 @@ public:
 	static int NewClientNoAuthCallback(int ClientID, void *pUser);
 	static int DelClientCallback(int ClientID, const char *pReason, void *pUser);
 
+	void SendCapabilities(int ClientID);
 	void SendMap(int ClientID);
 	void SendConnectionReady(int ClientID);
 	void SendRconLine(int ClientID, const char *pLine);

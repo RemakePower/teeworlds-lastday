@@ -23,6 +23,7 @@
 #include <engine/shared/network.h>
 #include <engine/shared/packer.h>
 #include <engine/shared/protocol.h>
+#include <engine/shared/protocol_ex.h>
 #include <engine/shared/snapshot.h>
 
 #include <mastersrv/mastersrv.h>
@@ -659,7 +660,7 @@ void CServer::DoSnapshot()
 				const int MaxSize = MAX_SNAPSHOT_PACKSIZE;
 				int NumPackets;
 
-				SnapshotSize = CVariableInt::Compress(aDeltaData, DeltaSize, aCompData);
+				SnapshotSize = CVariableInt::Compress(aDeltaData, DeltaSize, aCompData, sizeof(aCompData));
 				NumPackets = (SnapshotSize+MaxSize-1)/MaxSize;
 
 				for(int n = 0, Left = SnapshotSize; Left; n++)
@@ -718,6 +719,7 @@ int CServer::NewClientNoAuthCallback(int ClientID, void *pUser)
 	pThis->m_aClients[ClientID].Reset();
 
 	pThis->SendMap(ClientID);
+	pThis->SendCapabilities(ClientID);
 
 	return 0;
 }
@@ -762,6 +764,14 @@ int CServer::DelClientCallback(int ClientID, const char *pReason, void *pUser)
 	pThis->m_aClients[ClientID].m_CustClt = 0;
 	pThis->m_aClients[ClientID].m_Snapshots.PurgeAll();
 	return 0;
+}
+
+void CServer::SendCapabilities(int ClientID)
+{
+	CMsgPacker Msg(NETMSG_CAPABILITIES, true);
+	Msg.AddInt(SERVERCAP_CURVERSION); // version
+	Msg.AddInt(SERVERCAPFLAG_DDNET | SERVERCAPFLAG_CHATTIMEOUTCODE | SERVERCAPFLAG_ANYPLAYERFLAG | SERVERCAPFLAG_PINGEX | SERVERCAPFLAG_ALLOWDUMMY | SERVERCAPFLAG_SYNCWEAPONINPUT); // flags
+	SendMsg(&Msg, MSGFLAG_VITAL, ClientID);
 }
 
 void CServer::SendMap(int ClientID)
@@ -876,6 +886,7 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 
 				m_aClients[ClientID].m_State = CClient::STATE_CONNECTING;
 				SendMap(ClientID);
+				SendCapabilities(ClientID);
 			}
 		}
 		else if(Msg == NETMSG_REQUEST_MAP_DATA)
