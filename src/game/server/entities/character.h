@@ -135,6 +135,9 @@ private:
 	CCharacterCore m_SendCore; // core that we should send
 	CCharacterCore m_ReckoningCore; // the dead reckoning core
 
+private:
+	void UpdateTuning();
+	int m_JumpCounter;
 public:
 	CCharacterCore *GetCore() {return &m_Core;}
 	WeaponStat *GetWeaponStat() {return m_aWeapons;}

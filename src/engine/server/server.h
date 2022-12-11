@@ -199,7 +199,6 @@ public:
 	int MaxClients() const;
 
 	int SendMsg(CMsgPacker *pMsg, int Flags, int ClientID) override;
-	int SendMsgEx(CMsgPacker *pMsg, int Flags, int ClientID, bool System);
 
 	void DoSnapshot();
 	
@@ -208,6 +207,7 @@ public:
 	static int NewClientNoAuthCallback(int ClientID, void *pUser);
 	static int DelClientCallback(int ClientID, const char *pReason, void *pUser);
 
+	void SendRconType(int ClientID, bool UsernameReq);
 	void SendCapabilities(int ClientID);
 	void SendMap(int ClientID);
 	void SendConnectionReady(int ClientID);

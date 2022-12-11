@@ -31,6 +31,7 @@ public:
 	{
 		const char *m_pName;
 		int m_Latency;
+		int m_Authed;
 		bool m_CustClt;
 	};
 

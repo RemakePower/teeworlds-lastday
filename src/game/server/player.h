@@ -125,6 +125,8 @@ public:
 	CTuningParams* GetNextTuningParams() { return &m_NextTuningParams; };
 	Resource m_Resource;
 
+	bool m_Sit;
+
 	// Bot
 	int m_BotPower;
 	bool m_IsBot;
