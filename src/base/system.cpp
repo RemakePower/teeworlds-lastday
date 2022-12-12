@@ -615,6 +615,11 @@ int net_addr_comp(const NETADDR *a, const NETADDR *b)
 	return mem_comp(a, b, sizeof(NETADDR));
 }
 
+bool NETADDR::operator==(const NETADDR &other) const
+{
+	return net_addr_comp(this, &other) == 0;
+}
+
 void net_addr_str(const NETADDR *addr, char *string, int max_length, int add_port)
 {
 	if(addr->type == NETTYPE_IPV4)
@@ -1392,6 +1397,24 @@ int fs_storage_path(const char *appname, char *path, int max)
 
 	return 0;
 #endif
+}
+
+int fs_makedir_rec_for(const char *path)
+{
+	char buffer[1024 * 2];
+	char *p;
+	str_copy(buffer, path, sizeof(buffer));
+	for(p = buffer + 1; *p != '\0'; p++)
+	{
+		if(*p == '/' && *(p + 1) != '\0')
+		{
+			*p = '\0';
+			if(fs_makedir(buffer) < 0)
+				return -1;
+			*p = '/';
+		}
+	}
+	return 0;
 }
 
 int fs_makedir(const char *path)

@@ -233,6 +233,7 @@ function build(settings)
 			launcher_settings.link.frameworks:Add("Cocoa")
 		end
 		server_settings.link.libs:Add("ssl")
+		server_settings.link.libs:Add("curl")
 		server_settings.link.libs:Add("crypto")
 
 	elseif family == "windows" then
@@ -258,7 +259,7 @@ function build(settings)
 		end
 	end
 	
-	engine = Compile(engine_settings, Collect("src/engine/shared/*.cpp", "src/base/*.c", "src/base/*.cpp"))
+	engine = Compile(engine_settings, Collect("src/engine/shared/*.cpp", "src/base/*.cpp"))
 	server = Compile(server_settings, Collect("src/engine/server/*.cpp"))
 	teeuniverses = Compile(server_settings, Collect("src/teeuniverses/*.cpp", "src/teeuniverses/components/*.cpp", "src/teeuniverses/system/*.cpp"))
 

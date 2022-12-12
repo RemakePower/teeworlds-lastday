@@ -207,7 +207,7 @@ public:
 	int Update();
 	int Flush();
 
-	int Feed(CNetPacketConstruct *pPacket, NETADDR *pAddr);
+	int Feed(CNetPacketConstruct *pPacket, NETADDR *pAddr, SECURITY_TOKEN SecurityToken = NET_SECURITY_TOKEN_UNSUPPORTED);
 	int QueueChunk(int Flags, int DataSize, const void *pData);
 
 	const char *ErrorString();
@@ -332,7 +332,7 @@ public:
 	int Close();
 
 	//
-	int Recv(CNetChunk *pChunk);
+	int Recv(CNetChunk *pChunk, SECURITY_TOKEN *pResponseToken);
 	int Send(CNetChunk *pChunk);
 	int Update();
 
@@ -351,6 +351,7 @@ public:
 	void SetMaxClientsPerIP(int Max);
 
 	// anti spoof
+	SECURITY_TOKEN GetGlobalToken();
 	SECURITY_TOKEN GetToken(const NETADDR &Addr);
 	// vanilla token/gametick shouldn't be negative
 	SECURITY_TOKEN GetVanillaToken(const NETADDR &Addr) { return absolute(GetToken(Addr)); }
@@ -410,7 +411,7 @@ public:
 	static void SendControlMsg(NETSOCKET Socket, NETADDR *pAddr, int Ack, int ControlMsg, const void *pExtra, int ExtraSize, SECURITY_TOKEN SecurityToken);
 	static void SendPacketConnless(NETSOCKET Socket, NETADDR *pAddr, const void *pData, int DataSize, bool Extended, unsigned char aExtra[4]);
 	static void SendPacket(NETSOCKET Socket, NETADDR *pAddr, CNetPacketConstruct *pPacket, SECURITY_TOKEN SecurityToken);
-	static int UnpackPacket(unsigned char *pBuffer, int Size, CNetPacketConstruct *pPacket);
+	static int UnpackPacket(unsigned char *pBuffer, int Size, CNetPacketConstruct *pPacket, SECURITY_TOKEN *pSecurityToken = nullptr, SECURITY_TOKEN *pResponseToken = nullptr);
 
 	// The backroom is ack-NET_MAX_SEQUENCE/2. Used for knowing if we acked a packet or not
 	static int IsSeqInBackroom(int Seq, int Ack);

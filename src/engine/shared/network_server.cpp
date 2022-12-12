@@ -119,6 +119,12 @@ int CNetServer::Update()
 	return 0;
 }
 
+SECURITY_TOKEN CNetServer::GetGlobalToken()
+{
+	static NETADDR NullAddr = {0};
+	return GetToken(NullAddr);
+}
+
 SECURITY_TOKEN CNetServer::GetToken(const NETADDR &Addr)
 {
 	md5_state_t md5;
@@ -533,7 +539,7 @@ static bool IsDDNetControlMsg(const CNetPacketConstruct *pPacket)
 /*
 	TODO: chopp up this function into smaller working parts
 */
-int CNetServer::Recv(CNetChunk *pChunk)
+int CNetServer::Recv(CNetChunk *pChunk, SECURITY_TOKEN *pResponseToken)
 {
 	while(1)
 	{

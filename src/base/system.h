@@ -186,7 +186,9 @@ enum {
 
 	IOSEEK_START = 0,
 	IOSEEK_CUR = 1,
-	IOSEEK_END = 2
+	IOSEEK_END = 2,
+
+	IO_MAX_PATH_LENGTH = 512,
 };
 
 typedef struct IOINTERNAL *IOHANDLE;
@@ -398,6 +400,74 @@ void thread_yield();
 */
 void thread_detach(void *thread);
 
+// Enable thread safety attributes only with clang.
+// The attributes can be safely erased when compiling with other compilers.
+#if defined(__clang__) && (!defined(SWIG))
+#define THREAD_ANNOTATION_ATTRIBUTE__(x) __attribute__((x))
+#else
+#define THREAD_ANNOTATION_ATTRIBUTE__(x) // no-op
+#endif
+
+#define CAPABILITY(x) \
+	THREAD_ANNOTATION_ATTRIBUTE__(capability(x))
+
+#define SCOPED_CAPABILITY \
+	THREAD_ANNOTATION_ATTRIBUTE__(scoped_lockable)
+
+#define GUARDED_BY(x) \
+	THREAD_ANNOTATION_ATTRIBUTE__(guarded_by(x))
+
+#define PT_GUARDED_BY(x) \
+	THREAD_ANNOTATION_ATTRIBUTE__(pt_guarded_by(x))
+
+#define ACQUIRED_BEFORE(...) \
+	THREAD_ANNOTATION_ATTRIBUTE__(acquired_before(__VA_ARGS__))
+
+#define ACQUIRED_AFTER(...) \
+	THREAD_ANNOTATION_ATTRIBUTE__(acquired_after(__VA_ARGS__))
+
+#define REQUIRES(...) \
+	THREAD_ANNOTATION_ATTRIBUTE__(requires_capability(__VA_ARGS__))
+
+#define REQUIRES_SHARED(...) \
+	THREAD_ANNOTATION_ATTRIBUTE__(requires_shared_capability(__VA_ARGS__))
+
+#define ACQUIRE(...) \
+	THREAD_ANNOTATION_ATTRIBUTE__(acquire_capability(__VA_ARGS__))
+
+#define ACQUIRE_SHARED(...) \
+	THREAD_ANNOTATION_ATTRIBUTE__(acquire_shared_capability(__VA_ARGS__))
+
+#define RELEASE(...) \
+	THREAD_ANNOTATION_ATTRIBUTE__(release_capability(__VA_ARGS__))
+
+#define RELEASE_SHARED(...) \
+	THREAD_ANNOTATION_ATTRIBUTE__(release_shared_capability(__VA_ARGS__))
+
+#define RELEASE_GENERIC(...) \
+	THREAD_ANNOTATION_ATTRIBUTE__(release_generic_capability(__VA_ARGS__))
+
+#define TRY_ACQUIRE(...) \
+	THREAD_ANNOTATION_ATTRIBUTE__(try_acquire_capability(__VA_ARGS__))
+
+#define TRY_ACQUIRE_SHARED(...) \
+	THREAD_ANNOTATION_ATTRIBUTE__(try_acquire_shared_capability(__VA_ARGS__))
+
+#define EXCLUDES(...) \
+	THREAD_ANNOTATION_ATTRIBUTE__(locks_excluded(__VA_ARGS__))
+
+#define ASSERT_CAPABILITY(x) \
+	THREAD_ANNOTATION_ATTRIBUTE__(assert_capability(x))
+
+#define ASSERT_SHARED_CAPABILITY(x) \
+	THREAD_ANNOTATION_ATTRIBUTE__(assert_shared_capability(x))
+
+#define RETURN_CAPABILITY(x) \
+	THREAD_ANNOTATION_ATTRIBUTE__(lock_returned(x))
+
+#define NO_THREAD_SAFETY_ANALYSIS \
+	THREAD_ANNOTATION_ATTRIBUTE__(no_thread_safety_analysis)
+
 /* Group: Locks */
 typedef void* LOCK;
 
@@ -485,11 +555,14 @@ enum
 	NETTYPE_ALL = NETTYPE_IPV4|NETTYPE_IPV6
 };
 
-typedef struct
+typedef struct NETADDR
 {
 	unsigned int type;
 	unsigned char ip[16];
 	unsigned short port;
+
+	bool operator==(const NETADDR &other) const;
+	bool operator!=(const NETADDR &other) const { return !(*this == other); }
 } NETADDR;
 
 /*
@@ -1043,6 +1116,18 @@ void str_timestamp(char *buffer, int buffer_size);
 */
 typedef int (*FS_LISTDIR_CALLBACK)(const char *name, int is_dir, int dir_type, void *user);
 int fs_listdir(const char *dir, FS_LISTDIR_CALLBACK cb, int type, void *user);
+
+/*
+	Function: fs_makedir_rec_for
+		Recursively create directories for a file
+
+	Parameters:
+		path - File for which to create directories
+
+	Returns:
+		Returns 0 on success. Negative value on failure.
+*/
+int fs_makedir_rec_for(const char *path);
 
 /*
 	Function: fs_makedir
