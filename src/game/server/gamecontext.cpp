@@ -1737,7 +1737,7 @@ void CGameContext::OnSnap(int ClientID)
 	CTuningParams StandardTuning;
 	if(ClientID == -1 && Server()->DemoRecorder_IsRecording() && mem_comp(&StandardTuning, &m_Tuning, sizeof(CTuningParams)) != 0)
 	{
-		CMsgPacker Msg(NETMSGTYPE_SV_TUNEPARAMS, true);
+		CMsgPacker Msg(NETMSGTYPE_SV_TUNEPARAMS);
 		int *pParams = (int *)&m_Tuning;
 		for(unsigned i = 0; i < sizeof(m_Tuning)/sizeof(int); i++)
 			Msg.AddInt(pParams[i]);

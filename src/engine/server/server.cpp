@@ -310,6 +310,7 @@ CServer::CServer() : m_DemoRecorder(&m_SnapshotDelta)
 	m_ServerInfoFirstRequest = 0;
 	m_ServerInfoNumRequests = 0;
 	m_ServerInfoHighLoad = false;
+	m_ServerInfoNeedsUpdate = false;
 
 	Init();
 }
@@ -771,6 +772,20 @@ void CServer::DoSnapshot()
 	GameServer()->OnPostSnap();
 }
 
+int CServer::ClientRejoinCallback(int ClientID, void *pUser)
+{
+	CServer *pThis = (CServer *)pUser;
+
+	pThis->m_aClients[ClientID].m_Authed = AUTHED_NO;
+	pThis->m_aClients[ClientID].m_pRconCmdToSend = 0;
+
+	pThis->m_aClients[ClientID].Reset();
+
+	pThis->SendMap(ClientID);
+
+	return 0;
+}
+
 int CServer::NewClientNoAuthCallback(int ClientID, void *pUser)
 {
 	CServer *pThis = (CServer *)pUser;
@@ -790,7 +805,7 @@ int CServer::NewClientNoAuthCallback(int ClientID, void *pUser)
 	return 0;
 }
 
-int CServer::NewClientCallback(int ClientID, void *pUser)
+int CServer::NewClientCallback(int ClientID, void *pUser, bool Sixup)
 {
 	CServer *pThis = (CServer *)pUser;
 	pThis->m_aClients[ClientID].m_State = CClient::STATE_AUTH;
@@ -1025,6 +1040,7 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 				str_format(aBuf, sizeof(aBuf), "player has entered the game. ClientID=%x addr=%s", ClientID, aAddrStr);
 				Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "server", aBuf);
 				m_aClients[ClientID].m_State = CClient::STATE_INGAME;
+				SendServerInfo(m_NetServer.ClientAddr(ClientID), -1, SERVERINFO_EXTENDED, false);
 				GameServer()->OnClientEnter(ClientID);
 			}
 		}
@@ -1674,7 +1690,7 @@ void CServer::PumpNetwork(bool PacketWaiting)
 					{
 						Type = SERVERINFO_64_LEGACY;
 					}
-					else if(Type != -1)
+					if(Type != -1)
 					{
 						int Token = ((unsigned char *)Packet.m_pData)[sizeof(SERVERBROWSE_GETINFO)];
 						Token |= ExtraToken << 8;
@@ -1801,16 +1817,21 @@ int CServer::Run()
 		BindAddr.port = g_Config.m_SvPort;
 	}
 
-	if(!m_NetServer.Open(BindAddr, &m_ServerBan, g_Config.m_SvMaxClients, g_Config.m_SvMaxClientsPerIP, 0))
+	int Port = g_Config.m_SvPort;
+	for(BindAddr.port = Port != 0 ? Port : 8303; !m_NetServer.Open(BindAddr, &m_ServerBan, g_Config.m_SvMaxClients, g_Config.m_SvMaxClientsPerIP); BindAddr.port++)
 	{
-		dbg_msg("server", "couldn't open socket. port %d might already be in use", g_Config.m_SvPort);
-		return -1;
+		if(Port != 0 || BindAddr.port >= 8310)
+		{
+			dbg_msg("server", "couldn't open socket. port %d might already be in use", BindAddr.port);
+			return -1;
+		}
 	}
+
 
 	IEngine *pEngine = Kernel()->RequestInterface<IEngine>();
 	m_pRegister = CreateRegister(m_pConsole, pEngine, g_Config.m_SvPort, m_NetServer.GetGlobalToken());
 
-	m_NetServer.SetCallbacks(NewClientCallback, NewClientNoAuthCallback, DelClientCallback, this);
+	m_NetServer.SetCallbacks(NewClientCallback, NewClientNoAuthCallback, ClientRejoinCallback, DelClientCallback, this);
 
 	m_Econ.Init(Console(), &m_ServerBan);
 
@@ -1828,55 +1849,47 @@ int CServer::Run()
 
 	// start game
 	{
-		int64 ReportTime = time_get();
-		int ReportInterval = 3;
-
 		bool NonActive = false;
 		bool PacketWaiting = false;
 
-		m_Lastheartbeat = 0;
 		m_GameStartTime = time_get();
 
-		if(g_Config.m_Debug)
-		{
-			str_format(aBuf, sizeof(aBuf), "baseline memory usage %dk", mem_stats()->allocated/1024);
-			Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "server", aBuf);
-		}
-
+		UpdateServerInfo();
 		while(m_RunServer)
 		{
 			if(NonActive)
 				PumpNetwork(PacketWaiting);
 
-			int64 t = time_get();
+			set_new_tick();
+
+			int64_t t = time_get();
 			int NewTicks = 0;
 
-			// load new map TODO: don't poll this
-			if(str_comp(g_Config.m_SvMap, m_aCurrentMap) != 0 || m_MapReload)
+			// load new map
+			if(m_MapReload || m_CurrentGameTick >= 0x6FFFFFFF) // force reload to make sure the ticks stay within a valid range
 			{
-				m_MapReload = 0;
-
 				// load map
 				if(LoadMap(g_Config.m_SvMap))
 				{
 					// new map loaded
 					GameServer()->OnShutdown();
 
-					for(int c = 0; c < MAX_CLIENTS; c++)
+					for(int ClientID = 0; ClientID < MAX_CLIENTS; ClientID++)
 					{
-						if(m_aClients[c].m_State <= CClient::STATE_AUTH)
+						if(m_aClients[ClientID].m_State <= CClient::STATE_AUTH)
 							continue;
 
-						SendMap(c);
-						m_aClients[c].Reset();
-						m_aClients[c].m_State = CClient::STATE_CONNECTING;
+						SendMap(ClientID);
+						m_aClients[ClientID].Reset();
+						m_aClients[ClientID].m_State = CClient::STATE_CONNECTING;
 					}
 
 					m_GameStartTime = time_get();
 					m_CurrentGameTick = 0;
+					m_ServerInfoFirstRequest = 0;
 					Kernel()->ReregisterInterface(GameServer());
 					GameServer()->OnInit();
-					UpdateServerInfo();
+					UpdateServerInfo(true);
 				}
 				else
 				{
@@ -1886,22 +1899,23 @@ int CServer::Run()
 				}
 			}
 
-			while(t > TickStartTime(m_CurrentGameTick+1))
+			while(t > TickStartTime(m_CurrentGameTick + 1))
 			{
 				m_CurrentGameTick++;
 				NewTicks++;
 
 				// apply new input
-				for(int c = 0; c < MAX_CLIENTS; c++)
+				for(int c = 0; c < g_Config.m_SvMaxClients; c++)
 				{
-					if(m_aClients[c].m_State == CClient::STATE_EMPTY)
+					if(m_aClients[c].m_State != CClient::STATE_INGAME)
 						continue;
-					for(int i = 0; i < 200; i++)
+					bool ClientHadInput = false;
+					for(auto &Input : m_aClients[c].m_aInputs)
 					{
-						if(m_aClients[c].m_aInputs[i].m_GameTick == Tick())
+						if(Input.m_GameTick == Tick())
 						{
-							if(m_aClients[c].m_State == CClient::STATE_INGAME)
-								GameServer()->OnClientPredictedInput(c, m_aClients[c].m_aInputs[i].m_aData);
+							GameServer()->OnClientPredictedInput(c, Input.m_aData);
+							ClientHadInput = true;
 							break;
 						}
 					}
@@ -1913,7 +1927,7 @@ int CServer::Run()
 			// snap game
 			if(NewTicks)
 			{
-				if(g_Config.m_SvHighBandwidth || (m_CurrentGameTick%2) == 0)
+				if(g_Config.m_SvHighBandwidth || (m_CurrentGameTick % 2) == 0)
 					DoSnapshot();
 
 				UpdateClientRconCommands();
@@ -1939,31 +1953,6 @@ int CServer::Run()
 				}
 			}
 
-			if(ReportTime < time_get())
-			{
-				if(g_Config.m_Debug)
-				{
-					/*
-					static NETSTATS prev_stats;
-					NETSTATS stats;
-					netserver_stats(net, &stats);
-
-					perf_next();
-
-					if(config.dbg_pref)
-						perf_dump(&rootscope);
-
-					dbg_msg("server", "send=%8d recv=%8d",
-						(stats.send_bytes - prev_stats.send_bytes)/reportinterval,
-						(stats.recv_bytes - prev_stats.recv_bytes)/reportinterval);
-
-					prev_stats = stats;
-					*/
-				}
-
-				ReportTime += time_freq()*ReportInterval;
-			}
-
 			// wait for incoming data
 			if(NonActive)
 			{
@@ -1987,6 +1976,7 @@ int CServer::Run()
 			{
 				m_ReloadedWhenEmpty = false;
 
+				set_new_tick();
 				t = time_get();
 				int x = (TickStartTime(m_CurrentGameTick + 1) - t) * 1000000 / time_freq() + 1;
 
@@ -2187,6 +2177,8 @@ void CServer::RegisterCommands()
 	m_pMap = Kernel()->RequestInterface<IEngineMap>();
 	m_pStorage = Kernel()->RequestInterface<IStorage>();
 
+	HttpInit(m_pStorage);
+
 	// register console commands
 	Console()->Register("kick", "i?r", CFGFLAG_SERVER, ConKick, this, "Kick player with specified id for any reason");
 	Console()->Register("status", "", CFGFLAG_SERVER, ConStatus, this, "List players");
@@ -2246,7 +2238,6 @@ int main(int argc, const char **argv) // ignore_convention
 		}
 	}
 #endif
-
 	bool UseDefaultConfig = false;
 	for(int i = 1; i < argc; i++) // ignore_convention
 	{

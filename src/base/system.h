@@ -11,6 +11,13 @@
 #include "detect.h"
 #include <stdlib.h>
 
+#ifdef CONF_PLATFORM_LINUX
+#include <netinet/in.h>
+#include <sys/socket.h>
+#endif
+
+#include <chrono>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -506,26 +513,41 @@ __extension__ typedef long long int64;
 #else
 typedef long long int64;
 #endif
-/*
-	Function: time_get
-		Fetches a sample from a high resolution timer.
+void set_new_tick();
 
-	Returns:
-		Current value of the timer.
+/**
+ * Fetches a sample from a high resolution timer.
+ *
+ * @ingroup Time
+ *
+ * @return Current value of the timer.
+ *
+ * @remark To know how fast the timer is ticking, see @link time_freq @endlink.
+ *
+ * @see time_freq
+ */
+int64_t time_get_impl();
 
-	Remarks:
-		To know how fast the timer is ticking, see <time_freq>.
-*/
-int64 time_get();
+/**
+ * Fetches a sample from a high resolution timer.
+ *
+ * @ingroup Time
+ *
+ * @return Current value of the timer.
+ *
+ * @remark To know how fast the timer is ticking, see @link time_freq @endlink.
+ * @remark Uses @link time_get_impl @endlink to fetch the sample.
+ *
+ * @see time_freq time_get_impl
+ */
+int64_t time_get();
 
-/*
-	Function: time_freq
-		Returns the frequency of the high resolution timer.
-
-	Returns:
-		Returns the frequency of the high resolution timer.
-*/
-int64 time_freq();
+/**
+ * @ingroup Time
+ *
+ * @return The frequency of the high resolution timer.
+ */
+int64_t time_freq();
 
 /*
 	Function: time_timestamp
@@ -536,13 +558,27 @@ int64 time_freq();
 */
 int time_timestamp();
 
+std::chrono::nanoseconds time_get_nanoseconds();
 /* Group: Network General */
+#define VLEN 128
+#define PACKETSIZE 1400
 typedef struct
 {
-	int type;
-	int ipv4sock;
-	int ipv6sock;
-} NETSOCKET;
+#ifdef CONF_PLATFORM_LINUX
+	int pos;
+	int size;
+	struct mmsghdr msgs[VLEN];
+	struct iovec iovecs[VLEN];
+	char bufs[VLEN][PACKETSIZE];
+	char sockaddrs[VLEN][128];
+#else
+	char buf[PACKETSIZE];
+#endif
+} NETSOCKET_BUFFER;
+
+void net_buffer_init(NETSOCKET_BUFFER *buffer);
+void net_buffer_reinit(NETSOCKET_BUFFER *buffer);
+void net_buffer_simple(NETSOCKET_BUFFER *buffer, char **buf, int *size);
 
 enum
 {
@@ -554,6 +590,18 @@ enum
 	NETTYPE_LINK_BROADCAST = 4,
 	NETTYPE_ALL = NETTYPE_IPV4|NETTYPE_IPV6
 };
+
+struct NETSOCKET_INTERNAL
+{
+	int type;
+	int ipv4sock;
+	int ipv6sock;
+
+	NETSOCKET_BUFFER buffer;
+};
+static NETSOCKET_INTERNAL invalid_socket = {NETTYPE_INVALID, -1, -1, -1};
+
+typedef struct NETSOCKET_INTERNAL *NETSOCKET;
 
 typedef struct NETADDR
 {
@@ -603,6 +651,20 @@ int net_host_lookup(const char *hostname, NETADDR *addr, int types);
 */
 int net_addr_comp(const NETADDR *a, const NETADDR *b);
 
+/**
+ * Compares two network addresses ignoring port.
+ *
+ * @ingroup Network-General
+ *
+ * @param a Address to compare
+ * @param b Address to compare to.
+ *
+ * @return `< 0` - Address a is less than address b
+ * @return `0` - Address a is equal to address b
+ * @return `> 0` - Address a is greater than address b
+ */
+int net_addr_comp_noport(const NETADDR *a, const NETADDR *b);
+
 /*
 	Function: net_addr_str
 		Turns a network address into a representive string.
@@ -631,6 +693,19 @@ void net_addr_str(const NETADDR *addr, char *string, int max_length, int add_por
 		string - String to parse.
 */
 int net_addr_from_str(NETADDR *addr, const char *string);
+
+/*
+	Function: net_socket_type
+		Determine a socket's type.
+
+	Parameters:
+		sock - Socket whose type should be determined.
+
+	Returns:
+		The socket type, a bitset of `NETTYPE_IPV4`, `NETTYPE_IPV6` and
+		`NETTYPE_WEBSOCKET_IPV4`.
+*/
+int net_socket_type(NETSOCKET sock);
 
 /* Group: Network UDP */
 
@@ -678,7 +753,7 @@ int net_udp_send(NETSOCKET sock, const NETADDR *addr, const void *data, int size
 		On success it returns the number of bytes recived. Returns -1
 		on error.
 */
-int net_udp_recv(NETSOCKET sock, NETADDR *addr, void *data, int maxsize);
+int net_udp_recv(NETSOCKET sock, NETADDR *addr, unsigned char **data);
 
 /*
 	Function: net_udp_close
