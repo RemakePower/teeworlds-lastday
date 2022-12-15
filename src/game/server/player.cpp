@@ -130,6 +130,10 @@ void CPlayer::Tick()
 		++m_TeamChangeTick;
  	}
 
+	if(m_pCharacter && m_pCharacter->IsGrounded())
+		m_Sit = m_PlayerFlags&PLAYERFLAG_AIM;
+	else m_Sit = false;
+
 	HandleTuningParams();
 }
 
@@ -186,6 +190,17 @@ void CPlayer::Snap(int SnappingClient)
 
 	if(m_ClientID == SnappingClient)
 		pPlayerInfo->m_Local = 1;
+
+	CNetObj_DDNetPlayer *pDDNetPlayer = static_cast<CNetObj_DDNetPlayer *>(Server()->SnapNewItem(NETOBJTYPE_DDNETPLAYER, id, sizeof(CNetObj_DDNetPlayer)));
+	if(!pDDNetPlayer)
+		return;
+
+	IServer::CClientInfo Info;
+	Server()->GetClientInfo(m_ClientID, &Info);
+	pDDNetPlayer->m_AuthLevel = Info.m_Authed;
+	pDDNetPlayer->m_Flags = 0;
+	if(m_Sit)
+		pDDNetPlayer->m_Flags |= EXPLAYERFLAG_AFK;
 
 	if(m_ClientID == SnappingClient && m_Team == TEAM_SPECTATORS)
 	{

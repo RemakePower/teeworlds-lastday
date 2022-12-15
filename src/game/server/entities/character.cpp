@@ -56,9 +56,10 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_EmoteStop = -1;
 	m_LastAction = -1;
 	m_LastNoAmmoSound = -1;
-	m_ActiveWeapon = TWS_WEAPON_GUN;
+	m_ActiveWeapon = TWS_WEAPON_HAMMER;
 	m_LastWeapon = TWS_WEAPON_HAMMER;
 	m_QueuedWeapon = -1;
+	m_JumpCounter = 0;
 
 	m_pPlayer = pPlayer;
 	m_Pos = Pos;
@@ -408,6 +409,9 @@ void CCharacter::HandleEvents()
 		m_EmoteStop = -1;
 	}
 
+
+	UpdateTuning();
+
 	// handle Weapons
 	HandleWeapons();
 }
@@ -416,6 +420,19 @@ void CCharacter::Tick()
 {
 	DoBotActions();
 
+	// air jump
+	if(IsGrounded()) m_JumpCounter = 2;
+	if(m_Core.m_TriggeredEvents&COREEVENT_AIR_JUMP || m_Core.m_TriggeredEvents&COREEVENT_GROUND_JUMP)
+	{
+		m_JumpCounter--;
+	}
+	if(m_pPlayer->m_Sit)
+	{
+		m_Input.m_Jump = 0;
+		m_Input.m_Direction = 0;
+		m_Input.m_Hook = 0;
+	}
+	
 	m_Core.m_Input = m_Input;
 	m_Core.Tick(true, m_pPlayer->GetNextTuningParams());
 
@@ -752,6 +769,23 @@ void CCharacter::Snap(int SnappingClient)
 	}
 
 	pCharacter->m_PlayerFlags = GetPlayer()->m_PlayerFlags;
+
+	CNetObj_DDNetCharacter *pDDNetCharacter = static_cast<CNetObj_DDNetCharacter *>(Server()->SnapNewItem(NETOBJTYPE_DDNETCHARACTER, Id, sizeof(CNetObj_DDNetCharacter)));
+	if(!pDDNetCharacter)
+		return;
+
+	pDDNetCharacter->m_Flags = 0;
+
+	if(m_pPlayer->m_Sit)
+		pDDNetCharacter->m_Flags |= CHARACTERFLAG_HOOK_HIT_DISABLED;
+
+	pDDNetCharacter->m_FreezeEnd = 0;
+	pDDNetCharacter->m_Jumps = m_JumpCounter;
+	pDDNetCharacter->m_TeleCheckpoint = 0;
+	pDDNetCharacter->m_StrongWeakID = 0; // ???
+
+	pDDNetCharacter->m_TargetX = m_Core.m_Input.m_TargetX;
+	pDDNetCharacter->m_TargetY = m_Core.m_Input.m_TargetY;
 }
 
 int CCharacter::GetCID() const
@@ -936,4 +970,19 @@ bool CCharacter::CheckPos(vec2 CheckPos)
 		return true;
 	}
 	return false;
+}
+
+void CCharacter::UpdateTuning()
+{
+	CTuningParams *pTuning = m_pPlayer->GetNextTuningParams();
+
+	if(m_pPlayer->m_Sit)
+	{
+		pTuning->m_GroundControlAccel = 0.0f;
+		pTuning->m_AirControlAccel = 0.0f;
+		pTuning->m_GroundJumpImpulse = 0.0f;
+		pTuning->m_AirJumpImpulse = 0.0f;
+		pTuning->m_HookLength = 0.1f;
+		pTuning->m_HookFireSpeed = 0.1f;
+	}
 }
