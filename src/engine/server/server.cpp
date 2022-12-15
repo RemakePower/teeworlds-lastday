@@ -2321,6 +2321,7 @@ int main(int argc, const char **argv) // ignore_convention
 	delete pStorage;
 	delete pConfig;
 	return 0;
+	
 }
 
 void CServer::InitClientBot(int ClientID)

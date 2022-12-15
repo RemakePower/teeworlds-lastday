@@ -85,6 +85,20 @@ void dbg_assert_imp(const char *filename, int line, int test, const char *msg)
 	}
 }
 
+static void logger_stdout(const char *line)
+{
+	printf("%s\n", line);
+	fflush(stdout);
+}
+
+static void logger_debugger(const char *line)
+{
+#if defined(CONF_FAMILY_WINDOWS)
+	OutputDebugString(line);
+	OutputDebugString("\n");
+#endif
+}
+
 void dbg_break()
 {
 	*((volatile unsigned*)0) = 0x0;
@@ -111,20 +125,6 @@ void dbg_msg(const char *sys, const char *fmt, ...)
 
 	for(i = 0; i < num_loggers; i++)
 		loggers[i](str);
-}
-
-static void logger_stdout(const char *line)
-{
-	printf("%s\n", line);
-	fflush(stdout);
-}
-
-static void logger_debugger(const char *line)
-{
-#if defined(CONF_FAMILY_WINDOWS)
-	OutputDebugString(line);
-	OutputDebugString("\n");
-#endif
 }
 
 
