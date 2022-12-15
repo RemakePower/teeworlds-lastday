@@ -221,6 +221,7 @@ function build(settings)
 	-- build the small libraries
 	json = Compile(settings, "src/engine/external/json-parser/json.c")
 	md5 = Compile(settings, Collect("src/engine/external/md5/*.c"))
+	sqlite3 = Compile(settings, Collect("src/engine/external/sqlite3/*.c"))
 
 	-- build game components
 	engine_settings = settings:Copy()
@@ -232,6 +233,7 @@ function build(settings)
 			launcher_settings.link.frameworks:Add("Cocoa")
 		end
 		server_settings.link.libs:Add("ssl")
+		server_settings.link.libs:Add("curl")
 		server_settings.link.libs:Add("crypto")
 
 	elseif family == "windows" then
@@ -257,7 +259,7 @@ function build(settings)
 		end
 	end
 	
-	engine = Compile(engine_settings, Collect("src/engine/shared/*.cpp", "src/base/*.c", "src/base/*.cpp"))
+	engine = Compile(engine_settings, Collect("src/engine/shared/*.cpp", "src/base/*.cpp"))
 	server = Compile(server_settings, Collect("src/engine/server/*.cpp"))
 	teeuniverses = Compile(server_settings, Collect("src/teeuniverses/*.cpp", "src/teeuniverses/components/*.cpp", "src/teeuniverses/system/*.cpp"))
 
@@ -271,7 +273,7 @@ function build(settings)
 
 	-- build server
 	server_exe = Link(server_settings, "teeworlds_srv", engine, server,
-		game_shared, game_server, zlib, md5, server_link_other, json, teeuniverses)
+		game_shared, game_server, zlib, md5, sqlite3, server_link_other, json, teeuniverses)
 
 	serverlaunch = {}
 	if platform == "macosx" then

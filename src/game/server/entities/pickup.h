@@ -16,8 +16,8 @@ public:
 
 	vec2 GetPos(float Time);
 
-	virtual void Tick();
-	virtual void Snap(int SnappingClient);
+	void Tick() override;
+	void Snap(int SnappingClient) override;
 
 private:
 	vec2 m_Direction;

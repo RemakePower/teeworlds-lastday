@@ -16,8 +16,6 @@ public:
 	CPlayer(CGameContext *pGameServer, int ClientID, bool Bot=false, int BotPower = 0);
 	~CPlayer();
 
-	void Init(int CID);
-
 	void TryRespawn();
 	void Respawn();
 	void SetTeam(int Team, bool DoChatMsg=true);
@@ -126,6 +124,8 @@ private:
 public:
 	CTuningParams* GetNextTuningParams() { return &m_NextTuningParams; };
 	Resource m_Resource;
+
+	bool m_Sit;
 
 	// Bot
 	int m_BotPower;

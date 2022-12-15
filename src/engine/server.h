@@ -31,6 +31,7 @@ public:
 	{
 		const char *m_pName;
 		int m_Latency;
+		int m_Authed;
 		bool m_CustClt;
 	};
 
@@ -171,6 +172,8 @@ public:
 	virtual void SetClientLanguage(int ClientID, const char* pLanguage) = 0;
 	virtual int* GetIdMap(int ClientID) = 0;
 	virtual void SetCustClt(int ClientID) = 0;
+	
+	virtual void ExpireServerInfo() = 0;
 };
 
 class IGameServer : public IInterface

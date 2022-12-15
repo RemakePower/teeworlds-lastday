@@ -155,14 +155,14 @@ int CConsole::ParseArgs(CResult *pResult, const char *pFormat)
 			{
 				pResult->AddArgument(pStr);
 
-				if(Command == 'r') // rest of the string
-					break;
-				else if(Command == 'i') // validate int
+				if(Command == 'i') // validate int
 					pStr = str_skip_to_whitespace(pStr);
 				else if(Command == 'f') // validate float
 					pStr = str_skip_to_whitespace(pStr);
 				else if(Command == 's') // validate string
 					pStr = str_skip_to_whitespace(pStr);
+				else if(Command == 'r') // rest of the string
+					break;
 
 				if(pStr[0] != 0) // check for end of string
 				{

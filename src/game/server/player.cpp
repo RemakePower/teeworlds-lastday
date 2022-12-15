@@ -130,6 +130,10 @@ void CPlayer::Tick()
 		++m_TeamChangeTick;
  	}
 
+	if(m_pCharacter && m_pCharacter->IsGrounded())
+		m_Sit = m_PlayerFlags&PLAYERFLAG_AIM;
+	else m_Sit = false;
+
 	HandleTuningParams();
 }
 
@@ -187,6 +191,17 @@ void CPlayer::Snap(int SnappingClient)
 	if(m_ClientID == SnappingClient)
 		pPlayerInfo->m_Local = 1;
 
+	CNetObj_DDNetPlayer *pDDNetPlayer = static_cast<CNetObj_DDNetPlayer *>(Server()->SnapNewItem(NETOBJTYPE_DDNETPLAYER, id, sizeof(CNetObj_DDNetPlayer)));
+	if(!pDDNetPlayer)
+		return;
+
+	IServer::CClientInfo Info;
+	Server()->GetClientInfo(m_ClientID, &Info);
+	pDDNetPlayer->m_AuthLevel = Info.m_Authed;
+	pDDNetPlayer->m_Flags = 0;
+	if(m_Sit)
+		pDDNetPlayer->m_Flags |= EXPLAYERFLAG_AFK;
+
 	if(m_ClientID == SnappingClient && m_Team == TEAM_SPECTATORS)
 	{
 		CNetObj_SpectatorInfo *pSpectatorInfo = static_cast<CNetObj_SpectatorInfo *>(Server()->SnapNewItem(NETOBJTYPE_SPECTATORINFO, m_ClientID, sizeof(CNetObj_SpectatorInfo)));
@@ -225,17 +240,6 @@ void CPlayer::OnDisconnect(const char *pReason)
 	if(Server()->ClientIngame(m_ClientID))
 	{
 		char aBuf[512];
-		if(pReason && *pReason)
-		{
-			str_format(aBuf, sizeof(aBuf), "'%s' has left the game (%s)", Server()->ClientName(m_ClientID), pReason);
-			GameServer()->SendChatTarget_Locazition(-1, _("'{STR}' has left the game ({STR})"), Server()->ClientName(m_ClientID), pReason);
-		}
-		else
-		{
-			str_format(aBuf, sizeof(aBuf), "'%s' has left the game", Server()->ClientName(m_ClientID));
-			GameServer()->SendChatTarget_Locazition(-1, _("'{STR}' has left the game"), Server()->ClientName(m_ClientID));
-		}
-
 		str_format(aBuf, sizeof(aBuf), "leave player='%d:%s'", m_ClientID, Server()->ClientName(m_ClientID));
 		GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "game", aBuf);
 	}

@@ -60,9 +60,9 @@ public:
 	bool IsGameOver() const { return m_GameOverTick != -1; }
 
 	CGameController(class CGameContext *pGameServer);
-	virtual ~CGameController();
+	~CGameController();
 
-	virtual void DoWincheck();
+	void DoWincheck();
 
 	void TogglePause();
 
@@ -77,11 +77,11 @@ public:
 	/*
 
 	*/
-	virtual bool CanBeMovedOnBalance(int ClientID);
+	bool CanBeMovedOnBalance(int ClientID);
 
-	virtual void Tick();
+	void Tick();
 
-	virtual void Snap(int SnappingClient);
+	void Snap(int SnappingClient);
 
 	/*
 		Function: on_entity
@@ -95,7 +95,7 @@ public:
 		Returns:
 			bool?
 	*/
-	virtual bool OnEntity(int Index, vec2 Pos);
+	bool OnEntity(int Index, vec2 Pos);
 
 	/*
 		Function: on_CCharacter_spawn
@@ -104,7 +104,7 @@ public:
 		Arguments:
 			chr - The CCharacter that was spawned.
 	*/
-	virtual void OnCharacterSpawn(class CCharacter *pChr);
+	void OnCharacterSpawn(class CCharacter *pChr);
 
 	/*
 		Function: on_CCharacter_death
@@ -116,45 +116,29 @@ public:
 			weapon - What weapon that killed it. Can be -1 for undefined
 				weapon when switching team or player suicides.
 	*/
-	virtual int OnCharacterDeath(class CCharacter *pVictim, class CPlayer *pKiller, int Weapon);
+	int OnCharacterDeath(class CCharacter *pVictim, class CPlayer *pKiller, int Weapon);
 
 
-	virtual void OnPlayerInfoChange(class CPlayer *pP);
+	void OnPlayerInfoChange(class CPlayer *pP);
 
 	//
-	virtual vec2 GetSpawnPos();
+	vec2 GetSpawnPos();
 	bool IsCanSpawn(vec2 Pos);
 	void InitSpawnPos();
 
 	/*
 
 	*/
-	virtual const char *GetTeamName(int Team);
-	virtual int GetAutoTeam(int NotThisID);
-	virtual bool CanJoinTeam(int Team, int NotThisID);
+	const char *GetTeamName(int Team);
+	int GetAutoTeam(int NotThisID);
+	bool CanJoinTeam(int Team, int NotThisID);
 	bool CanChangeTeam(CPlayer *pPplayer, int JoinTeam);
 	int ClampTeam(int Team);
 
-	virtual void PostReset();
+	void PostReset();
 
 	double GetTime();
 
-	// MakeItem
-	class CItem
-	{
-	public:
-		CItem();
-		char m_aName[64];
-		int m_GiveID;
-		int m_GiveNum;
-		Resource m_NeedResource;
-	};
-
-	const char* GetResourceName(int ID);
-	void OnItemMake(const char *pMakeItem, int ClientID);
-	void ReturnItem(CItem Item, int ClientID);
-	bool FindItem(const char *pMakeItem, CItem *ItemInfo);
-	void ShowMakeList(int ClientID);
 	// Status
 	void ShowStatus(int ClientID);
 /** Bot **/

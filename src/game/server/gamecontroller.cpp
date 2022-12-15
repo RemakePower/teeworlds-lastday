@@ -6,8 +6,6 @@
 
 #include <game/generated/protocol.h>
 
-#include <engine/external/json-parser/json.h>
-
 #include "entities/pickup.h"
 
 #include "gamecontroller.h"
@@ -376,6 +374,14 @@ void CGameController::Snap(int SnappingClient)
 
 	pGameInfoObj->m_RoundNum = 0;
 	pGameInfoObj->m_RoundCurrent = 1;
+	
+	CNetObj_GameInfoEx* pGameInfoEx = (CNetObj_GameInfoEx*)Server()->SnapNewItem(NETOBJTYPE_GAMEINFOEX, 0, sizeof(CNetObj_GameInfoEx));
+	if(!pGameInfoEx)
+		return;
+
+	pGameInfoEx->m_Flags = GAMEINFOFLAG_GAMETYPE_PLUS | GAMEINFOFLAG_ALLOW_EYE_WHEEL | GAMEINFOFLAG_ALLOW_HOOK_COLL | GAMEINFOFLAG_ALLOW_ZOOM | GAMEINFOFLAG_PREDICT_VANILLA;
+	pGameInfoEx->m_Flags2 = GAMEINFOFLAG2_GAMETYPE_CITY | GAMEINFOFLAG2_ALLOW_X_SKINS | GAMEINFOFLAG2_HUD_DDRACE | GAMEINFOFLAG2_HUD_HEALTH_ARMOR | GAMEINFOFLAG2_HUD_AMMO;
+	pGameInfoEx->m_Version = GAMEINFO_CURVERSION;
 }
 
 int CGameController::GetAutoTeam(int NotThisID)
@@ -471,292 +477,6 @@ double CGameController::GetTime()
 	return static_cast<double>(Server()->Tick() - m_RoundStartTick)/Server()->TickSpeed();
 }
 
-const char* CGameController::GetResourceName(int ID)
-{
-	switch (ID)
-	{
-		case RESOURCE_METAL: return "Metal";
-		case RESOURCE_WOOD: return "Wood";
-	}
-}
-/*********************MAKE ITEM*********************/ 
-// TODO: Move this to item make module
-CGameController::CItem::CItem()
-{
-	m_GiveID = 0;
-	m_GiveNum = 0;
-	m_NeedResource.ResetResource();
-}
-
-void CGameController::OnItemMake(const char *pMakeItem, int ClientID)
-{
-	CItem ItemInfo;
-	if(!FindItem(pMakeItem, &ItemInfo))
-	{
-		GameServer()->SendChatTarget_Locazition(ClientID, _("No this item!"));
-		ShowMakeList(ClientID);
-		return;
-	}
-	
-	CPlayer *pPlayer = GameServer()->m_apPlayers[ClientID];
-
-	if(!pPlayer)
-		return;
-
-	if(!pPlayer->GetCharacter())
-		return;
-
-	const char *pLanguageCode = pPlayer->GetLanguage();
-
-	Resource *pPResource = &pPlayer->m_Resource;
-	bool CanMake = true;
-	for(int i = 0; i < NUM_RESOURCES;i ++)
-	{
-		if(pPResource->GetResource(i) < ItemInfo.m_NeedResource.GetResource(i))
-		{
-			CanMake = false;
-			break;
-		}
-	}
-
-	//dbg_msg("item", "make %s, need %d metal and %d wood, this player have %d metal, and %d wood", pMakeItem,
-	//	 ItemInfo.m_NeedResource.m_Metal, ItemInfo.m_NeedResource.m_Wood, pPResource->m_Metal, pPResource->m_Wood);
-
-	if(!CanMake)
-	{
-		std::string Buffer;
-		Buffer.clear();
-		
-		bool First=true;	
-		for(int i = 0; i < NUM_RESOURCES;i ++)
-		{
-			if(ItemInfo.m_NeedResource.GetResource(i))
-			{
-				if(!First)
-					Buffer.append(", ");
-				else First = false;
-				Buffer.append(std::to_string(ItemInfo.m_NeedResource.GetResource(i)));
-				Buffer.append(" ");
-				Buffer.append(GameServer()->Localize(pLanguageCode, GetResourceName(i)));
-			}
-		}
-
-		GameServer()->SendChatTarget_Locazition(ClientID, _("This item requires {STR}."), Buffer.c_str());
-		return;
-	}
-
-	bool CanMakeGun=true;
-	if(ItemInfo.m_GiveID <= ITEM_RIFLE)
-	{
-		CCharacter *pChr = pPlayer->GetCharacter();
-
-		switch (ItemInfo.m_GiveID)
-		{
-			case ITEM_SHOTGUN: if(pChr->GetWeaponStat()[WEAPON_SHOTGUN].m_Got) CanMakeGun = false;break;
-			case ITEM_GRENADE: if(pChr->GetWeaponStat()[WEAPON_GRENADE].m_Got) CanMakeGun = false;break;
-			case ITEM_RIFLE: if(pChr->GetWeaponStat()[WEAPON_RIFLE].m_Got) CanMakeGun = false;break;
-		}
-	}
-
-	if(!CanMakeGun)
-	{
-		GameServer()->SendChatTarget_Locazition(ClientID, _("You had {STR}"), 
-			GameServer()->Localize(pLanguageCode, pMakeItem));
-		return;
-	}
-
-	GameServer()->SendChatTarget_Locazition(ClientID, _("Making {STR}..."), 
-		GameServer()->Localize(pLanguageCode, pMakeItem));
-
-	ReturnItem(ItemInfo, ClientID);
-	
-}
-
-void CGameController::ReturnItem(CItem Item, int ClientID)
-{
-	CPlayer *pPlayer = GameServer()->m_apPlayers[ClientID];
-	if(!pPlayer)
-		return;
-
-
-	const char *pLanguageCode = pPlayer->GetLanguage();
-
-	if(Item.m_GiveID <= ITEM_RIFLE)
-	{
-		CCharacter *pChr = pPlayer->GetCharacter();
-		if(!pChr)
-			return;
-
-		switch (Item.m_GiveID)
-		{
-			case ITEM_GUN: pChr->GetWeaponStat()[WEAPON_GUN].m_Got = true;break;
-			case ITEM_SHOTGUN: pChr->GetWeaponStat()[WEAPON_SHOTGUN].m_Got = true;break;
-			case ITEM_GRENADE: pChr->GetWeaponStat()[WEAPON_GRENADE].m_Got = true;break;
-			case ITEM_RIFLE: pChr->GetWeaponStat()[WEAPON_RIFLE].m_Got = true;break;
-		}	
-	}
-
-	if(Item.m_GiveNum)
-		GameServer()->SendChatTarget_Locazition(ClientID, _("Make finish, you get {INT} {STR}"), 
-			Item.m_GiveNum, Item.m_aName);
-	else GameServer()->SendChatTarget_Locazition(ClientID, _("Make finish, you get {STR}"), 
-			Item.m_aName);
-	
-	for(int i = 0; i < NUM_RESOURCES;i ++)
-	{
-		int Need = Item.m_NeedResource.GetResource(i);
-		int Have = pPlayer->m_Resource.GetResource(i);
-		pPlayer->m_Resource.SetResource(i, Have - Need);
-	}
-}
-
-// Find Item, if it in the json.return the FOUND(and the Item info)
-bool CGameController::FindItem(const char *pMakeItem, CItem *ItemInfo)
-{
-	// read file data into buffer
-	const char *pFilename = "./data/item.json";
-	IOHANDLE File = GameServer()->Storage()->OpenFile(pFilename, IOFLAG_READ, IStorage::TYPE_ALL);
-	if(!File)
-	{
-		dbg_msg("Item", "can't open 'data/item.json'");
-		return false;
-	}
-	
-	int FileSize = (int)io_length(File);
-	char *pFileData = new char[FileSize+1];
-	io_read(File, pFileData, FileSize);
-	pFileData[FileSize] = 0;
-	io_close(File);
-
-	// parse json data
-	json_settings JsonSettings;
-	mem_zero(&JsonSettings, sizeof(JsonSettings));
-	char aError[256];
-	json_value *pJsonData = json_parse_ex(&JsonSettings, pFileData, aError);
-	if(pJsonData == 0)
-	{
-		delete[] pFileData;
-		return false;
-	}
-
-	const json_value &rStart = (*pJsonData)["items"];
-	bool Found = false;
-	if(rStart.type == json_array)
-	{
-		for(unsigned i = 0; i < rStart.u.array.length; ++i)
-		{
-			if(str_comp((const char *)rStart[i]["name"], pMakeItem) == 0)
-			{
-				str_copy(ItemInfo->m_aName, (const char *)rStart[i]["name"], sizeof(ItemInfo->m_aName));
-				ItemInfo->m_GiveID = (long)rStart[i]["give_id"];
-				ItemInfo->m_GiveNum = (long)rStart[i]["give_num"];
-				ItemInfo->m_NeedResource.m_Metal = (long)rStart[i]["metal"];
-				ItemInfo->m_NeedResource.m_Wood = (long)rStart[i]["wood"];
-				Found = true;
-				break;
-			}
-		}
-	}
-
-	// clean up
-	json_value_free(pJsonData);
-	delete[] pFileData;
-
-	return Found;
-}
-
-void CGameController::ShowMakeList(int ClientID)
-{
-	// read file data into buffer
-	const char *pFilename = "./data/item.json";
-	IOHANDLE File = GameServer()->Storage()->OpenFile(pFilename, IOFLAG_READ, IStorage::TYPE_ALL);
-	if(!File)
-	{
-		dbg_msg("Item", "can't open 'data/item.json'");
-		return;
-	}
-	
-	int FileSize = (int)io_length(File);
-	char *pFileData = new char[FileSize+1];
-	io_read(File, pFileData, FileSize);
-	pFileData[FileSize] = 0;
-	io_close(File);
-
-	// parse json data
-	json_settings JsonSettings;
-	mem_zero(&JsonSettings, sizeof(JsonSettings));
-	char aError[256];
-	json_value *pJsonData = json_parse_ex(&JsonSettings, pFileData, aError);
-	if(pJsonData == 0)
-	{
-		delete[] pFileData;
-		return;
-	}
-
-	const json_value &rStart = (*pJsonData)["items"];
-	bool Found = false;
-
-	std::string Buffer;
-	if(rStart.type == json_array)
-	{
-		bool First = true;
-		for(unsigned i = 0; i < rStart.u.array.length; ++i)
-		{
-			if(!First)
-				Buffer.append(", ");
-			else First = false;
-			Buffer.append((const char *)rStart[i]["name"]);
-		}
-	}
-
-	// clean up
-	json_value_free(pJsonData);
-	delete[] pFileData;
-
-	GameServer()->SendChatTarget_Locazition(ClientID, _("You can make: {STR}"), Buffer.c_str());
-
-	return;
-}
-/* Item Make End*/
-
-static char* format_int64_with_commas(char commas, int64 n)
-{
-	char _number_array[64] = { '\0' };
-	str_format(_number_array, sizeof(_number_array), "%lld", n); // %ll
-
-	const char* _number_pointer = _number_array;
-	int _number_of_digits = 0;
-	while (*(_number_pointer + _number_of_digits++));
-	--_number_of_digits;
-
-	/*
-	*	count the number of digits
-	*	calculate the position for the first comma separator
-	*	calculate the final length of the number with commas
-	*
-	*	the starting position is a repeating sequence 123123... which depends on the number of digits
-	*	the length of the number with commas is the sequence 111222333444...
-	*/
-	const int _starting_separator_position = _number_of_digits < 4 ? 0 : _number_of_digits % 3 == 0 ? 3 : _number_of_digits % 3;
-	const int _formatted_number_length = _number_of_digits + _number_of_digits / 3 - (_number_of_digits % 3 == 0 ? 1 : 0);
-
-	// create formatted number array based on calculated information.
-	char* _formatted_number = new char[20 * 3 + 1];
-
-	// place all the commas
-	for (int i = _starting_separator_position; i < _formatted_number_length - 3; i += 4)
-		_formatted_number[i] = commas;
-
-	// place the digits
-	for (int i = 0, j = 0; i < _formatted_number_length; i++)
-		if (_formatted_number[i] != commas)
-			_formatted_number[i] = _number_pointer[j++];
-
-	/* close the string */
-	_formatted_number[_formatted_number_length] = '\0';
-	return _formatted_number;
-}
-
 void CGameController::ShowStatus(int ClientID)
 {
 	CPlayer *pPlayer = GameServer()->m_apPlayers[ClientID];
@@ -776,16 +496,22 @@ void CGameController::ShowStatus(int ClientID)
 	bool First=true;	
 	for(int i = 0; i < NUM_RESOURCES;i ++)
 	{
-		if(!First)
-			Buffer.append(", ");
-		else First = false;
-		Buffer.append(GameServer()->Localize(pLanguageCode, GetResourceName(i)));
-		Buffer.append(": ");
-		Buffer.append(format_int64_with_commas(',', pPResource->GetResource(i)));
-		Buffer.append(" ");
+		if(pPResource->GetResource(i))
+		{
+			if(!First)
+				Buffer.append(", ");
+			else First = false;
+			Buffer.append(GameServer()->Localize(pLanguageCode, GetResourceName(i)));
+			Buffer.append(": ");
+			Buffer.append(format_int64_with_commas(',', pPResource->GetResource(i)));
+			Buffer.append(" ");
+		}
 	}
 
-	GameServer()->SendChatTarget(ClientID, Buffer.c_str());
+	if(Buffer.length())
+	{
+		GameServer()->SendChatTarget(ClientID, Buffer.c_str());
+	}else GameServer()->SendChatTarget_Locazition(ClientID, _("You don't have any things!"));
 }
 
 void CGameController::OnCreateBot()
@@ -804,7 +530,7 @@ int CGameController::RandomPower()
 	int Power = 0;
 	for(int i = 0;i < PowerNum;i ++)
 	{
-		Power |= 1<<random_int(0, NUM_BOTPOWERS);
+		Power |= 1<<random_int(0, NUM_BOTPOWERS-1);
 	}
 	return Power;
 }

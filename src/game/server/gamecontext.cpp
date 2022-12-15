@@ -13,6 +13,7 @@
 
 #include <teeuniverses/components/localization.h>
 
+#include "lastday/item/make.h"
 enum
 {
 	RESET,
@@ -37,6 +38,8 @@ void CGameContext::Construct(int Resetting)
 
 	if(Resetting==NO_RESET)
 		m_pVoteOptionHeap = new CHeap();
+		
+	m_pMakeSystem = new CItemMake(this);
 }
 
 CGameContext::CGameContext(int Resetting)
@@ -591,9 +594,6 @@ void CGameContext::OnClientEnter(int ClientID)
 	//world.insert_entity(&players[client_id]);
 	m_apPlayers[ClientID]->Respawn();
 	char aBuf[512];
-	str_format(aBuf, sizeof(aBuf), "'%s' entered and joined the %s", Server()->ClientName(ClientID), m_pController->GetTeamName(m_apPlayers[ClientID]->GetTeam()));
-	SendChatTarget_Locazition(-1, _("'{STR}' entered and joined the game"), Server()->ClientName(ClientID));
-
 	str_format(aBuf, sizeof(aBuf), "team_join player='%d:%s' team=%d", ClientID, Server()->ClientName(ClientID), m_apPlayers[ClientID]->GetTeam());
 	Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
 
@@ -761,14 +761,14 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			char aDesc[VOTE_DESC_LENGTH] = {0};
 			char aCmd[VOTE_CMD_LENGTH] = {0};
 			CNetMsg_Cl_CallVote *pMsg = (CNetMsg_Cl_CallVote *)pRawMsg;
-			const char *pReason = pMsg->m_Reason[0] ? pMsg->m_Reason : "No reason given";
+			const char *pReason = pMsg->m_pReason[0] ? pMsg->m_pReason : "No reason given";
 
-			if(str_comp_nocase(pMsg->m_Type, "option") == 0)
+			if(str_comp_nocase(pMsg->m_pType, "option") == 0)
 			{
 				CVoteOptionServer *pOption = m_pVoteOptionFirst;
 				while(pOption)
 				{
-					if(str_comp_nocase(pMsg->m_Value, pOption->m_aDescription) == 0)
+					if(str_comp_nocase(pMsg->m_pValue, pOption->m_aDescription) == 0)
 					{
 						SendChatTarget_Locazition(-1, _("'{STR}' called vote to change server option '{STR}' ({STR})"),
 									Server()->ClientName(ClientID), pOption->m_aDescription,
@@ -783,11 +783,11 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
 				if(!pOption)
 				{
-					(ClientID, _("'{STR}' isn't an option on this server"), pMsg->m_Value);
+					(ClientID, _("'{STR}' isn't an option on this server"), pMsg->m_pValue);
 					return;
 				}
 			}
-			else if(str_comp_nocase(pMsg->m_Type, "kick") == 0)
+			else if(str_comp_nocase(pMsg->m_pType, "kick") == 0)
 			{
 				if(!g_Config.m_SvVoteKick)
 				{
@@ -809,7 +809,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					}
 				}
 
-				int KickID = str_toint(pMsg->m_Value);
+				int KickID = str_toint(pMsg->m_pValue);
 				if(KickID < 0 || KickID >= MAX_CLIENTS || !m_apPlayers[KickID])
 				{
 					SendChatTarget_Locazition(ClientID, _("Invalid client id to kick"));
@@ -842,7 +842,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					str_format(aCmd, sizeof(aCmd), "ban %s %d Banned by vote", aAddrStr, g_Config.m_SvVoteKickBantime);
 				}
 			}
-			else if(str_comp_nocase(pMsg->m_Type, "spectate") == 0)
+			else if(str_comp_nocase(pMsg->m_pType, "spectate") == 0)
 			{
 				if(!g_Config.m_SvVoteSpectate)
 				{
@@ -850,7 +850,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					return;
 				}
 
-				int SpectateID = str_toint(pMsg->m_Value);
+				int SpectateID = str_toint(pMsg->m_pValue);
 				if(SpectateID < 0 || SpectateID >= MAX_CLIENTS || !m_apPlayers[SpectateID] || m_apPlayers[SpectateID]->GetTeam() == TEAM_SPECTATORS)
 				{
 					SendChatTarget_Locazition(ClientID, _("Invalid client id to move"));
@@ -1517,19 +1517,43 @@ void CGameContext::ConLanguage(IConsole::IResult *pResult, void *pUserData)
 	return;
 }
 
-void CGameContext::ConMake(IConsole::IResult *pResult, void *pUserData)
+void CGameContext::ConItem(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
-	
-	const char *pMakeItem = pResult->NumArguments() ? pResult->GetString(0) : 0x0;
+
 	int ClientID = pResult->GetClientID();
-	if(!pMakeItem)
+	
+	const char *pParamName = pResult->GetString(0);
+	const char *pCommand = pResult->GetString(1);
+
+	if(str_comp(pParamName, "help") == 0)
 	{
-		pSelf->SendChatTarget_Locazition(ClientID, _("No any item name input"));
-		pSelf->m_pController->ShowMakeList(ClientID);
-		return;
-	}
-	pSelf->m_pController->OnItemMake(pMakeItem, ClientID);
+		if(!pCommand[0])
+		{		
+			pSelf->SendChatTarget(ClientID, "=====================");
+			pSelf->SendChatTarget_Locazition(ClientID, _("Use [/item help <itemname>] get item need resource"));
+			pSelf->SendChatTarget_Locazition(ClientID, _("Use [/item make <itemname>] make item"));
+			pSelf->SendChatTarget_Locazition(ClientID, _("Use [/item list] get item list"));
+		}
+		else
+		{
+			pSelf->m_pMakeSystem->ShowNeed(pCommand, ClientID);
+		}
+	}else if(str_comp(pParamName, "make") == 0)
+	{
+		if(!pCommand[0])
+		{
+			pSelf->SendChatTarget_Locazition(ClientID, _("No any item name input"));
+			pSelf->SendChatTarget_Locazition(ClientID, _("Use [/item help]"));
+		}else 
+		{
+			pSelf->m_pMakeSystem->MakeItem(pCommand, ClientID);
+		}
+	}else if(str_comp(pParamName, "list") == 0)
+	{
+		pSelf->m_pMakeSystem->ShowMakeList(ClientID);
+	}else pSelf->SendChatTarget_Locazition(ClientID, _("Use [/item help]"));
+
 }
 
 void CGameContext::ConStatus(IConsole::IResult *pResult, void *pUserData)
@@ -1624,7 +1648,7 @@ void CGameContext::OnConsoleInit()
 	Console()->Register("about", "", CFGFLAG_CHAT, ConAbout, this, "Show information about the mod");
 	Console()->Register("language", "?s", CFGFLAG_CHAT, ConLanguage, this, "change language");
 
-	Console()->Register("make", "?s", CFGFLAG_CHAT, ConMake, this, "make item");
+	Console()->Register("item", "?s?r", CFGFLAG_CHAT, ConItem, this, "item");
 	Console()->Register("status", "", CFGFLAG_CHAT, ConStatus, this, "show status");
 	Console()->Register("me", "", CFGFLAG_CHAT, ConStatus, this, "show status");
 
@@ -1761,21 +1785,9 @@ void CGameContext::AddResource(int ClientID, int ResourceID, int Num)
 
 	const char *pLanguageCode = pPlayer->GetLanguage();
 
-	SendChatTarget_Locazition(ClientID, _("You got {INT} {STR}"), Num, m_pController->GetResourceName(ResourceID));
+	SendChatTarget_Locazition(ClientID, _("You got {INT} {STR}"), Num, GetResourceName(ResourceID));
 
 	SendEmoticon(ClientID, EMOTICON_SUSHI);	
-}
-
-const char *CGameContext::GetAmmoType(int WeaponID)
-{
-	switch (WeaponID)
-	{
-		case WEAPON_GUN: return "gun ammo";
-		case WEAPON_SHOTGUN: return "shotgun ammo";
-		case WEAPON_GRENADE: return "grenade ammo";
-		case WEAPON_RIFLE: return "rifle ammo";
-		default: return "";
-	}
 }
 
 int CGameContext::GetBotNum() const
