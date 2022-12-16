@@ -1635,7 +1635,7 @@ void CServer::UpdateRegisterServerInfo()
 
 void CServer::UpdateServerInfo(bool Resend)
 {
-	if(!m_RunServer)
+	if(!m_pRegister)
 		return;
 
 	UpdateRegisterServerInfo();
