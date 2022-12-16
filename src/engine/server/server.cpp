@@ -866,19 +866,22 @@ void CServer::SendCapabilities(int ClientID)
 
 void CServer::SendMap(int ClientID)
 {
-	CMsgPacker Msg(NETMSG_MAP_DETAILS, true);
-	Msg.AddString(GetMapName(), 0);
-	Msg.AddRaw(&m_CurrentMapSha256.data, sizeof(m_CurrentMapSha256.data));
-	Msg.AddInt(m_CurrentMapCrc);
-	Msg.AddInt(m_CurrentMapSize);
-	Msg.AddString("", 0); // HTTPS map download URL
-	SendMsg(&Msg, MSGFLAG_VITAL, ClientID);
-
-	CMsgPacker Msg(NETMSG_MAP_CHANGE, true);
-	Msg.AddString(GetMapName(), 0);
-	Msg.AddInt(m_CurrentMapCrc);
-	Msg.AddInt(m_CurrentMapSize);
-	SendMsg(&Msg, MSGFLAG_VITAL|MSGFLAG_FLUSH, ClientID);
+	{
+		CMsgPacker Msg(NETMSG_MAP_DETAILS, true);
+		Msg.AddString(GetMapName(), 0);
+		Msg.AddRaw(&m_CurrentMapSha256.data, sizeof(m_CurrentMapSha256.data));
+		Msg.AddInt(m_CurrentMapCrc);
+		Msg.AddInt(m_CurrentMapSize);
+		Msg.AddString("", 0); // HTTPS map download URL
+		SendMsg(&Msg, MSGFLAG_VITAL, ClientID);
+	}
+	{
+		CMsgPacker Msg(NETMSG_MAP_CHANGE, true);
+		Msg.AddString(GetMapName(), 0);
+		Msg.AddInt(m_CurrentMapCrc);
+		Msg.AddInt(m_CurrentMapSize);
+		SendMsg(&Msg, MSGFLAG_VITAL|MSGFLAG_FLUSH, ClientID);
+	}
 }
 
 void CServer::SendConnectionReady(int ClientID)
