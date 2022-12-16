@@ -10,7 +10,7 @@
 #include <engine/shared/packer.h>
 #include <engine/shared/uuid_manager.h>
 
-#include <bits/shared_ptr.h>
+#include <bits/stdc++.h>
 
 #include <mastersrv/mastersrv.h>
 
