@@ -479,7 +479,6 @@ CRegister::CRegister(IConsole *pConsole, IEngine *pEngine, int ServerPort, unsig
 	str_format(m_aConnlessTokenHex, sizeof(m_aConnlessTokenHex), "%08x", bytes_be_to_uint(aTokenBytes));
 
 	m_pConsole->Chain("sv_register", ConchainOnConfigChange, this);
-	m_pConsole->Chain("sv_sixup", ConchainOnConfigChange, this);
 }
 
 void CRegister::Update()

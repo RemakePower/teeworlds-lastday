@@ -164,7 +164,7 @@ bool CItemMake::FindItem(const char *pMakeItem, CItemData *ItemInfo)
 		return false;
 	}
 
-	const json_value &rStart = (*pJsonData)["items"];
+	const json_value &rStart = (*pJsonData)["json"];
 	bool Found = false;
 	if(rStart.type == json_array)
 	{
@@ -261,7 +261,7 @@ void CItemMake::ShowMakeList(int ClientID)
 		return;
 	}
 
-	const json_value &rStart = (*pJsonData)["items"];
+	const json_value &rStart = (*pJsonData)["json"];
 	bool Found = false;
 
 	std::string Buffer;
@@ -276,6 +276,8 @@ void CItemMake::ShowMakeList(int ClientID)
 			Buffer.append((const char *)rStart[i]["name"]);
 		}
 	}
+
+	dbg_msg("make", Buffer.c_str());
 
 	// clean up
 	json_value_free(pJsonData);
