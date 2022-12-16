@@ -312,6 +312,8 @@ CServer::CServer() : m_DemoRecorder(&m_SnapshotDelta)
 	m_ServerInfoHighLoad = false;
 	m_ServerInfoNeedsUpdate = false;
 
+	m_pRegister = nullptr;
+
 	Init();
 }
 
@@ -1633,6 +1635,8 @@ void CServer::UpdateRegisterServerInfo()
 
 void CServer::UpdateServerInfo(bool Resend)
 {
+	if(!m_RunServer)
+		return;
 
 	UpdateRegisterServerInfo();
 

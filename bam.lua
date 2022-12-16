@@ -235,6 +235,7 @@ function build(settings)
 		server_settings.link.libs:Add("ssl")
 		server_settings.link.libs:Add("curl")
 		server_settings.link.libs:Add("crypto")
+		server_settings.link.libs:Add("dl")
 
 	elseif family == "windows" then
 		-- Add ICU because its a HAVE to
