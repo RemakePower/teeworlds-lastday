@@ -866,6 +866,14 @@ void CServer::SendCapabilities(int ClientID)
 
 void CServer::SendMap(int ClientID)
 {
+	CMsgPacker Msg(NETMSG_MAP_DETAILS, true);
+	Msg.AddString(GetMapName(), 0);
+	Msg.AddRaw(&m_CurrentMapSha256.data, sizeof(m_CurrentMapSha256.data));
+	Msg.AddInt(m_CurrentMapCrc);
+	Msg.AddInt(m_CurrentMapSize);
+	Msg.AddString("", 0); // HTTPS map download URL
+	SendMsg(&Msg, MSGFLAG_VITAL, ClientID);
+
 	CMsgPacker Msg(NETMSG_MAP_CHANGE, true);
 	Msg.AddString(GetMapName(), 0);
 	Msg.AddInt(m_CurrentMapCrc);
@@ -1554,7 +1562,7 @@ void CServer::UpdateRegisterServerInfo()
 {
 	// count the players
 	int PlayerCount = 0, ClientCount = 0;
-	for(int i = 0; i < MAX_CLIENTS; i++)
+	for(int i = 0; i < MAX_PLAYERS; i++)
 	{
 		if(m_aClients[i].m_State != CClient::STATE_EMPTY)
 		{
@@ -2125,7 +2133,7 @@ void CServer::ConchainSpecialInfoupdate(IConsole::IResult *pResult, void *pUserD
 {
 	pfnCallback(pResult, pCallbackUserData);
 	if(pResult->NumArguments())
-		((CServer *)pUserData)->UpdateServerInfo();
+		((CServer *)pUserData)->UpdateServerInfo(true);
 }
 
 void CServer::ConchainMaxclientsperipUpdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData)
