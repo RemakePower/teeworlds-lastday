@@ -123,7 +123,6 @@ public:
 
 	//
 	vec2 GetSpawnPos();
-	bool IsCanSpawn(vec2 Pos);
 	void InitSpawnPos();
 
 	/*
