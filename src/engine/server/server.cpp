@@ -1052,6 +1052,7 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 				m_aClients[ClientID].m_State = CClient::STATE_INGAME;
 				SendServerInfo(m_NetServer.ClientAddr(ClientID), -1, SERVERINFO_EXTENDED, false);
 				GameServer()->OnClientEnter(ClientID);
+				ExpireServerInfo();
 			}
 		}
 		else if(Msg == NETMSG_INPUT)
