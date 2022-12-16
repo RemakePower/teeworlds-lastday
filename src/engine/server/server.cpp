@@ -846,6 +846,8 @@ int CServer::DelClientCallback(int ClientID, const char *pReason, void *pUser)
 	pThis->m_aClients[ClientID].m_pRconCmdToSend = 0;
 	pThis->m_aClients[ClientID].m_CustClt = 0;
 	pThis->m_aClients[ClientID].m_Snapshots.PurgeAll();
+	
+	pThis->ExpireServerInfo();
 	return 0;
 }
 
@@ -1040,6 +1042,7 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 				m_aClients[ClientID].m_State = CClient::STATE_READY;
 				GameServer()->OnClientConnected(ClientID);
 				SendConnectionReady(ClientID);
+				ExpireServerInfo();
 			}
 		}
 		else if(Msg == NETMSG_ENTERGAME)
@@ -1055,7 +1058,6 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 				m_aClients[ClientID].m_State = CClient::STATE_INGAME;
 				SendServerInfo(m_NetServer.ClientAddr(ClientID), -1, SERVERINFO_EXTENDED, false);
 				GameServer()->OnClientEnter(ClientID);
-				ExpireServerInfo();
 			}
 		}
 		else if(Msg == NETMSG_INPUT)

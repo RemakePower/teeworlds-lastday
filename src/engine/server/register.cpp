@@ -639,7 +639,6 @@ bool CRegister::OnPacket(const CNetChunk *pPacket)
 
 void CRegister::OnNewInfo(const char *pInfo)
 {
-	dbg_msg("register", "info: %s", pInfo);
 	if(m_GotServerInfo && str_comp(m_aServerInfo, pInfo) == 0)
 	{
 		return;
