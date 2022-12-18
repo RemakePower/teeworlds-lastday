@@ -170,7 +170,12 @@ void CPlayer::Snap(int SnappingClient)
 		return;
 
 	StrToInts(&pClientInfo->m_Name0, 4, Server()->ClientName(m_ClientID));
-	StrToInts(&pClientInfo->m_Clan0, 3, Server()->ClientClan(m_ClientID));
+	
+	std::string Buffer;
+	Buffer.append(std::to_string(m_pCharacter ? m_pCharacter->GetHealth() * 10 : 0));
+	Buffer.append("%");
+	StrToInts(&pClientInfo->m_Clan0, 3, Buffer.c_str());
+
 	pClientInfo->m_Country = Server()->ClientCountry(m_ClientID);
 	// TODO:rewrite the bot skin select
 	StrToInts(&pClientInfo->m_Skin0, 6, m_IsBot ? "coala" : m_TeeInfos.m_SkinName);
@@ -325,16 +330,16 @@ void CPlayer::SetTeam(int Team, bool DoChatMsg)
 	{
 		if(Team == TEAM_SPECTATORS)
 		{
-			GameServer()->SendChatTarget_Locazition(-1, _("'{STR}' joined the spectators"), Server()->ClientName(m_ClientID));
+			GameServer()->SendChatTarget_Locazition(-1, _("'%s' joined the spectators"), Server()->ClientName(m_ClientID));
 		}else if(Team == TEAM_RED && GameServer()->m_pController->IsTeamplay())
 		{
-			GameServer()->SendChatTarget_Locazition(-1, _("'{STR}' joined the redteam"), Server()->ClientName(m_ClientID));
+			GameServer()->SendChatTarget_Locazition(-1, _("'%s' joined the redteam"), Server()->ClientName(m_ClientID));
 		}else if(Team == TEAM_BLUE && GameServer()->m_pController->IsTeamplay())
 		{
-			GameServer()->SendChatTarget_Locazition(-1, _("'{STR}' joined the blueteam"), Server()->ClientName(m_ClientID));
+			GameServer()->SendChatTarget_Locazition(-1, _("'%s' joined the blueteam"), Server()->ClientName(m_ClientID));
 		}else
 		{
-			GameServer()->SendChatTarget_Locazition(-1, _("'{STR}' joined the game"), Server()->ClientName(m_ClientID));
+			GameServer()->SendChatTarget_Locazition(-1, _("'%s' joined the game"), Server()->ClientName(m_ClientID));
 		}
 	}
 

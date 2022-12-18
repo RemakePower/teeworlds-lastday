@@ -591,16 +591,6 @@ enum
 	NETTYPE_ALL = NETTYPE_IPV4|NETTYPE_IPV6
 };
 
-struct NETSOCKET_INTERNAL
-{
-	int type;
-	int ipv4sock;
-	int ipv6sock;
-
-	NETSOCKET_BUFFER buffer;
-};
-static NETSOCKET_INTERNAL invalid_socket = {NETTYPE_INVALID, -1, -1, -1};
-
 typedef struct NETSOCKET_INTERNAL *NETSOCKET;
 
 typedef struct NETADDR

@@ -41,50 +41,6 @@
             "value": "激光"
         },
         {
-            "key": "Account already exists.",
-            "value": "该账号已存在"
-        },
-        {
-            "key": "A minimum of 6 characters is required",
-            "value": "至少需要6个字符"
-        },
-        {
-            "key": "=====Registered=====",
-            "value": "=====已注册====="
-        },
-        {
-            "key": "Username: {STR}",
-            "value": "用户名: {STR}" 
-        },
-        {
-            "key": "Password: {STR}",
-            "value": "密码: {STR}"
-        },
-        {
-            "key": "Please use {STR} <username> <password>",
-            "value": "请使用{STR} <用户名> <密码>"
-        },
-        {
-            "key": "You are logged in",
-            "value": "你已经登录了"
-        },
-        {
-            "key": "You are now logged in",
-            "value": "你现在登录了"
-        },
-        {
-            "key": "Account already in use",
-            "value": "账号已被登录"
-        },
-        {
-            "key": "Error password",
-            "value": "错误的密码"
-        },
-        {
-            "key": "This account does not exist",
-            "value": "没有这个账号"
-        },
-        {
     		"key": "Language successfully switched to English",
     		"value": "语言成功切换为中文"
     	},
@@ -93,20 +49,20 @@
             "value": "未知语言或没有输入语言代码"
         },
         {
-            "key": "Available languages: {STR}",
-            "value": "可用语言: {STR}"
+            "key": "Available languages: %s",
+            "value": "可用语言: %s"
         },
         {
-            "key": "'{STR}' entered and joined the game",
-            "value": "'{STR}' 进入服务器并加入游戏"
+            "key": "'%s' entered and joined the game",
+            "value": "'%s' 进入服务器并加入游戏"
         },
         {
-            "key": "'{STR}' has left the game ({STR})",
-            "value": "'{STR}' 离开了游戏 ({STR})"
+            "key": "'%s' has left the game (%s)",
+            "value": "'%s' 离开了游戏 (%s)"
         },
         {
-            "key": "'{STR}' has left the game",
-            "value": "'{STR}' 离开了游戏"
+            "key": "'%s' has left the game",
+            "value": "'%s' 离开了游戏"
         },
         {
             "key": "Spectators aren't allowed to start a vote.",
@@ -129,12 +85,12 @@
             "value": "投票否决"
         },
         {
-            "key":  "admin forced server option '{STR}' ({STR})",
-            "value":  "管理员修改了服务器设置 '{STR}' ({STR})"
+            "key":  "admin forced server option '%s' (%s)",
+            "value":  "管理员修改了服务器设置 '%s' (%s)"
         },
         {
-            "key": "admin moved '{STR}' to spectator ({STR})",
-            "value": "管理员将 '{STR}' 移到旁观 ({STR})"
+            "key": "admin moved '%s' to spectator (%s)",
+            "value": "管理员将 '%s' 移到旁观 (%s)"
         },
         {
             "key": "admin forced vote yes",
@@ -145,24 +101,24 @@
             "value": "管理员强制否决投票"
         },
         {
-            "key": "You must wait {INT} seconds before making another vote",
-            "value": "你必须等待 {INT} 秒才能再次提出另一个投票"
+            "key": "You must wait %d seconds before making another vote",
+            "value": "你必须等待 %d 秒才能再次提出另一个投票"
         },
         {
-            "key": "'{STR}' called vote to change server option '{STR}' ({STR})",
-            "value": "'{STR}' 提议修改服务器设置 '{STR}' ({STR})"
+            "key": "'%s' called vote to change server option '%s' (%s)",
+            "value": "'%s' 提议修改服务器设置 '%s' (%s)"
         },
         {
-            "key": "'{STR}' isn't an option on this server",
-            "value": "'{STR}' 在此服务器上并不是一个设置"
+            "key": "'%s' isn't an option on this server",
+            "value": "'%s' 在此服务器上并不是一个设置"
         },
         {
             "key": "Server does not allow voting to kick players",
             "value": "服务器不允许投票踢出玩家"
         },
         {
-            "key": "Kick voting requires {INT} players on the server",
-            "value": "在这个服务器上开始踢出的投票需要{INT}名玩家"
+            "key": "Kick voting requires %d players on the server",
+            "value": "在这个服务器上开始踢出的投票需要%d名玩家"
         },
         {
             "key": "Invalid client id to kick",
@@ -177,12 +133,12 @@
             "value": "你不能踢出管理员"
         },
         {
-            "key": "'{STR}' called for vote to kick you",
-            "value": "'{STR}' 提议踢出你"
+            "key": "'%s' called for vote to kick you",
+            "value": "'%s' 提议踢出你"
         },
         {
-            "key": "'{STR}' called for vote to kick '{STR}' ({STR})",
-            "value": "'{STR}' 提议踢出 '{STR}' ({STR})"
+            "key": "'%s' called for vote to kick '%s' (%s)",
+            "value": "'%s' 提议踢出 '%s' (%s)"
         },
         {
             "key": "Server does not allow voting to move players to spectators",
@@ -197,8 +153,8 @@
             "value": "你不能移动你自己"
         },
         {
-            "key": "'{STR}' called for vote to move '{STR}' to spectators ({STR})",
-            "value": "'{STR}' 提议将 '{STR}' 移到旁观 ({STR})"
+            "key": "'%s' called for vote to move '%s' to spectators (%s)",
+            "value": "'%s' 提议将 '%s' 移到旁观 (%s)"
         },
         {
             "key": "Teams are locked",
@@ -221,36 +177,36 @@
             "value": "队伍人数必须均衡，请加入另一个队伍"
         },
         {
-            "key": "Only {INT} active players are allowed",
-            "value": "只允许 {INT} 名玩家游玩"
+            "key": "Only %d active players are allowed",
+            "value": "只允许 %d 名玩家游玩"
         },
         {
             "key": "Invalid spectator id used",
             "value": "无效的旁观者客户端ID"
         },
         {
-            "key": "'{STR}' changed name to '{STR}'",
-            "value": "'{STR}' 改名为 '{STR}'"
+            "key": "'%s' changed name to '%s'",
+            "value": "'%s' 改名为 '%s'"
         },
         {
-            "key": "'{STR}' joined the spectators",
-            "value": "'{STR}' 加入了旁观"
+            "key": "'%s' joined the spectators",
+            "value": "'%s' 加入了旁观"
         },
         {
-            "key": "'{STR}' joined the blueteam",
-            "value": "'{STR}' 加入了蓝队"
+            "key": "'%s' joined the blueteam",
+            "value": "'%s' 加入了蓝队"
         },
         {
-            "key": "'{STR}' joined the redteam",
-            "value": "'{STR}' 加入了红队"
+            "key": "'%s' joined the redteam",
+            "value": "'%s' 加入了红队"
         },
         {
-            "key": "'{STR}' joined the game",
-            "value": "'{STR}' 加入了游戏"
+            "key": "'%s' joined the game",
+            "value": "'%s' 加入了游戏"
         },
         {
-            "key": "Thanks {STR}",
-            "value": "感谢 {STR}"
+            "key": "Thanks %s",
+            "value": "感谢 %s"
         },
         {
             "key": "Use [/item help]",
@@ -277,32 +233,32 @@
             "value": "没有这个物品!"
         },
         {
-            "key": "{STR} requires {STR}.",
-            "value": "{STR}需要{STR}."
+            "key": "%s requires %s.",
+            "value": "%s需要%s."
         },
         {
-            "key": "You had {STR}",
-            "value": "你已经有了{STR}"
+            "key": "You had %s",
+            "value": "你已经有了%s"
         },
         {
-            "key": "Making {STR}...",
-            "value": "制造{STR}中..."
+            "key": "Making %s...",
+            "value": "制造%s中..."
         },
         {
-            "key": "Make finish, you get {STR}",
-            "value": "制造完成, 你得到了 {STR}"
+            "key": "Make finish, you get %s",
+            "value": "制造完成, 你得到了 %s"
         },
         {
-            "key": "Make finish, you get {INT} {STR}",
-            "value": "制造完成, 你得到了{INT}{STR}"
+            "key": "Make finish, you get %d %s",
+            "value": "制造完成, 你得到了%d%s"
         },
         {
-            "key": "You can make: {STR}",
-            "value": "你可以制作:{STR}"
+            "key": "You can make: %s",
+            "value": "你可以制作:%s"
         },
         {
-            "key": "You got {INT} {STR}",
-            "value": "你得到了{INT}{STR}"
+            "key": "You got %d %s",
+            "value": "你得到了%d%s"
         },
         {
             "key": "You don't have any things!",

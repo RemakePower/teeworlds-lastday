@@ -2284,14 +2284,6 @@ int main(int argc, const char **argv) // ignore_convention
 	IStorage *pStorage = CreateStorage("Teeworlds", IStorage::STORAGETYPE_SERVER, argc, argv); // ignore_convention
 	IConfig *pConfig = CreateConfig();
 
-	pServer->m_pLocalization = new CLocalization(pStorage);
-	pServer->m_pLocalization->InitConfig(0, NULL);
-	if(!pServer->m_pLocalization->Init())
-	{
-		dbg_msg("localization", "could not initialize localization");
-		return -1;
-	}
-
 	{
 		bool RegisterFail = false;
 
@@ -2316,6 +2308,13 @@ int main(int argc, const char **argv) // ignore_convention
 
 	// execute autoexec file
 	pConsole->ExecuteFile("autoexec.cfg");
+
+	pServer->m_pLocalization = new CLocalization(pStorage);
+	if(!pServer->m_pLocalization->Init())
+	{
+		dbg_msg("localization", "could not initialize localization");
+		return -1;
+	}
 
 	// parse the command line arguments
 	if(argc > 1) // ignore_convention

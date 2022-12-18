@@ -42,6 +42,7 @@ public:
 	void HandleWeapons();
 	void HandleNinja();
 	void HandleEvents();
+	void HandleInput();
 
 	void OnPredictedInput(CNetObj_PlayerInput *pNewInput);
 	void OnDirectInput(CNetObj_PlayerInput *pNewInput);
@@ -138,11 +139,20 @@ private:
 private:
 	void UpdateTuning();
 	int m_JumpCounter;
+	int m_SitTick;
+
+	int m_FreezeStartTick;
+	int m_FreezeEndTick;
+
 public:
 	CCharacterCore *GetCore() {return &m_Core;}
 	WeaponStat *GetWeaponStat() {return m_aWeapons;}
 	int GetActiveWeapon() {return m_ActiveWeapon; }
+	int GetHealth() const {return m_Health; }
 	int GetCID() const;
+
+	void Freeze(float Seconds);
+
 /** Weapon Public for weapon system*/
 	NinjaInfo *GetNinjaInfo() {return &m_Ninja;}
 	void SetReloadTimer(int ReloadTimer) { m_ReloadTimer = ReloadTimer;}

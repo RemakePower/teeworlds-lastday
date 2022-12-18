@@ -218,7 +218,7 @@ function build(settings)
 		settings.cc.includes:Add("src/engine/external/zlib")
 	end
 
-	-- build the small libraries
+	-- build the small libraries(json-parser only for http serverlist)
 	json = Compile(settings, "src/engine/external/json-parser/json.c")
 	md5 = Compile(settings, Collect("src/engine/external/md5/*.c"))
 	sqlite3 = Compile(settings, Collect("src/engine/external/sqlite3/*.c"))
