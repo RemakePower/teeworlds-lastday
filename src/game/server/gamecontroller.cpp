@@ -59,9 +59,9 @@ void CGameController::InitSpawnPos()
 	CMapItemLayerTilemap *pTileMap = GameServer()->Layers()->GameLayer();
 	CTile *pTiles = GameServer()->m_pTiles;
 
-	for(int y = 0; y < pTileMap->m_Height; y++)
+	for(int y = 0; y < pTileMap->m_Height; y+=2)
 	{
-		for(int x = 0; x < pTileMap->m_Width; x++)
+		for(int x = 0; x < pTileMap->m_Width; x+=2)
 		{
 			int Index = pTiles[y*pTileMap->m_Width+x].m_Index;
 
