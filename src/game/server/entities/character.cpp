@@ -61,6 +61,9 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_QueuedWeapon = -1;
 	m_JumpCounter = 0;
 
+	m_FreezeStartTick = 0;
+	m_FreezeEndTick = 0;
+
 	m_pPlayer = pPlayer;
 	m_Pos = Pos;
 
@@ -235,6 +238,9 @@ void CCharacter::FireWeapon()
 	if(m_ReloadTimer != 0)
 		return;
 
+	if(m_FreezeEndTick >= Server()->Tick())
+		return;
+
 	DoWeaponSwitch();
 	vec2 Direction = normalize(vec2(m_LatestInput.m_TargetX, m_LatestInput.m_TargetY));
 
@@ -245,7 +251,6 @@ void CCharacter::FireWeapon()
 
 	if(m_pPlayer->m_IsBot)
 		FullAuto = true;
-
 
 	// check if we gonna fire
 	bool WillFire = false;
@@ -409,16 +414,13 @@ void CCharacter::HandleEvents()
 		m_EmoteStop = -1;
 	}
 
-
 	UpdateTuning();
-
-	// handle Weapons
-	HandleWeapons();
 }
 
-void CCharacter::Tick()
+void CCharacter::HandleInput()
 {
-	DoBotActions();
+	// handle Weapons
+	HandleWeapons();
 
 	// air jump
 	if(IsGrounded()) m_JumpCounter = 2;
@@ -428,11 +430,33 @@ void CCharacter::Tick()
 	}
 	if(m_pPlayer->m_Sit)
 	{
+		m_SitTick++;
+		if(m_SitTick >= SERVER_TICK_SPEED * 4)
+		{
+			if(!IncreaseHealth(1)) IncreaseArmor(1);
+			GameServer()->CreateSoundGlobal(SOUND_PICKUP_HEALTH, GetCID());
+			m_SitTick = 0;
+		}
+
+		m_Input.m_Jump = 0;
+		m_Input.m_Direction = 0;
+		m_Input.m_Hook = 0;
+	}else m_SitTick = 0;
+
+	if(m_FreezeEndTick >= Server()->Tick())
+	{
 		m_Input.m_Jump = 0;
 		m_Input.m_Direction = 0;
 		m_Input.m_Hook = 0;
 	}
-	
+}
+
+void CCharacter::Tick()
+{
+	DoBotActions();
+
+	HandleInput();
+
 	m_Core.m_Input = m_Input;
 	m_Core.Tick(true, m_pPlayer->GetNextTuningParams());
 
@@ -779,7 +803,24 @@ void CCharacter::Snap(int SnappingClient)
 	if(m_pPlayer->m_Sit)
 		pDDNetCharacter->m_Flags |= CHARACTERFLAG_HOOK_HIT_DISABLED;
 
-	pDDNetCharacter->m_FreezeEnd = 0;
+	switch (g_Weapons.m_aWeapons[m_ActiveWeapon]->GetShowType())
+	{
+		case WEAPON_HAMMER: pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_HAMMER; break;
+		case WEAPON_GUN: pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_GUN; break;
+		case WEAPON_SHOTGUN: pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_SHOTGUN; break;
+		case WEAPON_GRENADE: pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_GRENADE; break;
+		case WEAPON_RIFLE: pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_LASER; break;
+		case WEAPON_NINJA: pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_NINJA; break;
+	}
+
+	pDDNetCharacter->m_FreezeStart = 0;
+	pDDNetCharacter->m_FreezeEnd =	0;
+	if(m_FreezeEndTick >= Server()->Tick())
+	{
+		pDDNetCharacter->m_Flags |= CHARACTERFLAG_IN_FREEZE;
+		pDDNetCharacter->m_FreezeStart = m_FreezeStartTick;
+		pDDNetCharacter->m_FreezeEnd =	m_FreezeEndTick;
+	}
 	pDDNetCharacter->m_Jumps = m_JumpCounter;
 	pDDNetCharacter->m_TeleCheckpoint = 0;
 	pDDNetCharacter->m_StrongWeakID = 0; // ???
@@ -791,6 +832,14 @@ void CCharacter::Snap(int SnappingClient)
 int CCharacter::GetCID() const
 {
 	return m_pPlayer->GetCID();
+}
+
+void CCharacter::Freeze(float Seconds)
+{
+	if(!m_Alive)
+		return;
+	m_FreezeStartTick = Server()->Tick();
+	m_FreezeEndTick = m_FreezeStartTick + Server()->TickSpeed() * Seconds;
 }
 
 void CCharacter::DoBotActions()
@@ -976,7 +1025,7 @@ void CCharacter::UpdateTuning()
 {
 	CTuningParams *pTuning = m_pPlayer->GetNextTuningParams();
 
-	if(m_pPlayer->m_Sit)
+	if(m_pPlayer->m_Sit || m_FreezeEndTick >= Server()->Tick())
 	{
 		pTuning->m_GroundControlAccel = 0.0f;
 		pTuning->m_AirControlAccel = 0.0f;

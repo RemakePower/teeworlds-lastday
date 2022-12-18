@@ -174,7 +174,6 @@ public:
 	void SetClientLanguage(int ClientID, const char *pLanguage);
 
 	const char* Localize(const char *pLanguageCode, const char* pText) const;
-	const char* Format(const char* pText, ...) const;
 
 
 

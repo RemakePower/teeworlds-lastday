@@ -514,7 +514,7 @@ void CRegister::OnConfigChange()
 	{
 		aOldProtocolEnabled[i] = m_aProtocolEnabled[i];
 	}
-	const char *pProtocols = std::to_string(g_Config.m_SvRegister).c_str();
+	const char *pProtocols = g_Config.m_SvRegister;
 	if(str_comp(pProtocols, "1") == 0)
 	{
 		for(auto &Enabled : m_aProtocolEnabled)

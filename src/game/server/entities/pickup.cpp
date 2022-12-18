@@ -107,7 +107,7 @@ void CPickup::Tick()
 				if(pChr->GetWeaponStat()[m_Subtype].m_Got)
 				{
 					pChr->GetWeaponStat()[m_Subtype].m_Ammo += m_Num;
-					GameServer()->SendChatTarget_Locazition(pChr->GetCID(), _("You got {INT} {STR}"),
+					GameServer()->SendChatTarget_Locazition(pChr->GetCID(), _("You got %d %s"),
 						m_Num, GetAmmoType(m_Subtype));
 					GameServer()->CreateSound(m_Pos, SOUND_PICKUP_SHOTGUN);
 					Destroy = true;

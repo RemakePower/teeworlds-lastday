@@ -300,35 +300,29 @@ void CLocalization::Format_V(dynamic_string& Buffer, const char* pLanguageCode, 
 	while(pText[Iter])
 	{
 		if(ParamTypeStart >= 0)
-		{
-			if(pText[Iter] != '}')
-			{
-				Iter = str_utf8_forward(pText, Iter);
-				continue;
-			}
-			
+		{	
 			// we get data from an argument parsing arguments
-			if(str_comp_num("STR", pText + ParamTypeStart, 3) == 0) // string
+			if(str_comp_num("%s", pText + ParamTypeStart, 2) == 0) // string
 			{
 				const char* pVarArgValue = va_arg(VarArgsIter, const char*);
 				const char* pTranslatedValue = pLanguage->Localize(pVarArgValue);
 				BufferIter = Buffer.append_at(BufferIter, (pTranslatedValue ? pTranslatedValue : pVarArgValue));
 			}
-			else if(str_comp_num("INT", pText + ParamTypeStart, 3) == 0) // intiger
+			else if(str_comp_num("%d", pText + ParamTypeStart, 2) == 0) // intiger
 			{
 				char aBuf[128];
 				const int pVarArgValue = va_arg(VarArgsIter, int);
 				str_format(aBuf, sizeof(aBuf), "%d", pVarArgValue); // %ll
 				BufferIter = Buffer.append_at(BufferIter, aBuf);
 			}
-			else if(str_comp_num("FLOAT", pText + ParamTypeStart, 5) == 0) // float
+			else if(str_comp_num("%f", pText + ParamTypeStart, 2) == 0) // float
 			{
 				char aBuf[128];
 				const float pVarArgValue = va_arg(VarArgsIter, float);
 				str_format(aBuf, sizeof(aBuf), "%f", pVarArgValue); // %f
 				BufferIter = Buffer.append_at(BufferIter, aBuf);
 			}
-			else if(str_comp_num("VAL", pText + ParamTypeStart, 5) == 0) // value
+			else if(str_comp_num("%v", pText + ParamTypeStart, 2) == 0) // value
 			{
 				const int64 pVarArgValue = va_arg(VarArgsIter, int64);
 				char* aBuffer = format_integer_with_commas(',', pVarArgValue);
@@ -343,10 +337,9 @@ void CLocalization::Format_V(dynamic_string& Buffer, const char* pLanguageCode, 
 		// parameter parsing start
 		else
 		{
-			if(pText[Iter] == '{')
+			if(pText[Iter] == '%')
 			{
 				BufferIter = Buffer.append_at_num(BufferIter, pText+Start, Iter-Start);
-				Iter++;
 				ParamTypeStart = Iter;
 			}
 		}

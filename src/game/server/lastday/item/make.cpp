@@ -72,12 +72,12 @@ void CItemMake::MakeItem(const char *pMakeItem, int ClientID)
 
 	if(!CanMake)
 	{
-		GameServer()->SendChatTarget_Locazition(ClientID, _("You had {STR}"), 
+		GameServer()->SendChatTarget_Locazition(ClientID, _("You had %s"), 
 			GameServer()->Localize(pLanguageCode, pMakeItem));
 		return;
 	}
 
-	GameServer()->SendChatTarget_Locazition(ClientID, _("Making {STR}..."), 
+	GameServer()->SendChatTarget_Locazition(ClientID, _("Making %s..."), 
 		GameServer()->Localize(pLanguageCode, pMakeItem));
 
 	ReturnItem(ItemInfo, ClientID);
@@ -122,9 +122,9 @@ void CItemMake::ReturnItem(CItemData Item, int ClientID)
 	}
 
 	if(Item.m_GiveNum)
-		GameServer()->SendChatTarget_Locazition(ClientID, _("Make finish, you get {INT} {STR}"), 
+		GameServer()->SendChatTarget_Locazition(ClientID, _("Make finish, you get %d %s"), 
 			Item.m_GiveNum, Item.m_aName);
-	else GameServer()->SendChatTarget_Locazition(ClientID, _("Make finish, you get {STR}"), 
+	else GameServer()->SendChatTarget_Locazition(ClientID, _("Make finish, you get %s"), 
 			Item.m_aName);
 	
 	for(int i = 0; i < NUM_RESOURCES;i ++)
@@ -217,7 +217,7 @@ void CItemMake::ShowNeed(CItemData ItemInfo, int ClientID)
 		}
 	}
 
-	GameServer()->SendChatTarget_Locazition(ClientID, _("{STR} requires {STR}."), ItemInfo.m_aName, Buffer.c_str());
+	GameServer()->SendChatTarget_Locazition(ClientID, _("%s requires %s."), ItemInfo.m_aName, Buffer.c_str());
 }
 
 // Public
@@ -283,7 +283,7 @@ void CItemMake::ShowMakeList(int ClientID)
 	json_value_free(pJsonData);
 	delete[] pFileData;
 
-	GameServer()->SendChatTarget_Locazition(ClientID, _("You can make: {STR}"), Buffer.c_str());
+	GameServer()->SendChatTarget_Locazition(ClientID, _("You can make: %s"), Buffer.c_str());
 
 	return;
 }
