@@ -8,7 +8,7 @@ def create_enum_table(names, num):
 	lines = []
 	lines += ["enum", "{"]
 	for name in names:
-		lines += [f"\t%s,"%name]
+		lines += ["\t%s,"%name]
 	lines += [f"\t{num}", "};"]
 	return lines
 
