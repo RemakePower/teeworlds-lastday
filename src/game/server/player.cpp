@@ -136,7 +136,7 @@ void CPlayer::Tick()
 
 	if(m_Menu && m_pCharacter)
 	{
-		if(!(Server()->Tick() % 5))
+		if(m_MenuCloseTick == 100)
 			GameServer()->Menu()->ShowMenu(m_ClientID, m_MenuLine);
 		if(m_MenuCloseTick)
 		{

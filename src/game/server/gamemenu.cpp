@@ -82,14 +82,14 @@ void CMenu::ShowMenu(int ClientID, int Line)
     MenuBuffer.append(Localize("Menu"));
     MenuBuffer.append("===");
     MenuBuffer.append("\n");
-    while (Line < 0)
+    if (Line < 0)
     {
-        Line += m_DataTemp.size();
+        Line = m_DataTemp.size()-1 - Line%m_DataTemp.size();
     }
 
-    while (Line >= m_DataTemp.size())
+    if (Line >= m_DataTemp.size())
     {
-        Line -= m_DataTemp.size();
+        Line = 0 + Line%m_DataTemp.size();
     }
 
 
@@ -98,19 +98,24 @@ void CMenu::ShowMenu(int ClientID, int Line)
         int j = Line;
         for(int i = 0;i < 6; i++)
         {
-            while (j < 0)
-            {
-                j += 6;
-            }
+            if(j < 0)
+                j = m_DataTemp.size()-1;
 
-            while (j >= m_DataTemp.size())
-            {
-                j -= 6;
-            }
+            if(j >= m_DataTemp.size())
+                j = 0;
 
             const char* Buffer = m_DataTemp[j].c_str();
-            MenuBuffer.append(Buffer);
+            if(j == Line)
+                MenuBuffer.append("[");
+            MenuBuffer.append(Localize(Buffer));
+            if(j == Line)
+                MenuBuffer.append("]");
             MenuBuffer.append("\n");
+
+            if(j == Line)
+            {
+                pPlayer->m_SelectOption = Buffer;
+            }
 
             j++;
         }
