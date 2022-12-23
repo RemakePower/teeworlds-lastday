@@ -1,7 +1,7 @@
 #ifndef GAME_SERVER_LASTDAY_WEAPONS_NINJA_H
 #define GAME_SERVER_LASTDAY_WEAPONS_NINJA_H
 
-#include <game/server/lastday/Components/Weapon/WeaponCore/weapon.h>
+#include <game/server/LastDay/Components/Weapon/WeaponCore/weapon.h>
 
 class CWeaponNinja : public CWeapon
 {

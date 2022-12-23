@@ -4,7 +4,7 @@
 #define GAME_SERVER_PLAYER_H
 
 // this include should perhaps be removed
-#include "entities/character.h"
+#include "LastDay/Entities/Character/character.h"
 #include "gamecontext.h"
 
 // player object
