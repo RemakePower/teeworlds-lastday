@@ -1,5 +1,5 @@
 #include "game/server/define.h"
-#include "resource.h"
+#include "ItemData.h"
 
 int64 Resource::GetResource(int ID)
 {
@@ -27,4 +27,12 @@ void Resource::ResetResource()
 {
     m_Metal = 0;
     m_Wood = 0;
+}
+
+CItemData::CItemData()
+{
+	m_GiveType = 0;
+	m_GiveID = 0;
+	m_GiveNum = 0;
+	m_NeedResource.ResetResource();
 }

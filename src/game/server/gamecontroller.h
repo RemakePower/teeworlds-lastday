@@ -15,9 +15,9 @@ typedef unsigned __int64 uint64_t;
 #endif
 
 #include <base/tl/array.h>
-#include "lastday/item/resource.h"
+#include "LastDay/Components/Item/ItemData.h"
 
-#include "lastday/weapons-core/weapon.h"
+#include "LastDay/Components/Weapon/WeaponCore/weapon.h"
 
 struct WeaponInit;
 

@@ -1,7 +1,7 @@
 #ifndef GAME_SERVER_LASTDAY_WEAPONS_GUN_H
 #define GAME_SERVER_LASTDAY_WEAPONS_GUN_H
 
-#include <game/server/lastday/weapons-core/weapon.h>
+#include <game/server/LastDay/Components/Weapon/WeaponCore/weapon.h>
 
 class CWeaponGun : public CWeapon
 {

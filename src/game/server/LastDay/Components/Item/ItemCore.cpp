@@ -2,23 +2,15 @@
 #include <engine/external/json-parser/json.h>
 #include <game/server/gamecontext.h>
 #include <game/server/define.h>
-#include "make.h"
+#include "ItemCore.h"
 
-CItemMake::CItemData::CItemData()
-{
-	m_GiveType = 0;
-	m_GiveID = 0;
-	m_GiveNum = 0;
-	m_NeedResource.ResetResource();
-}
-
-CItemMake::CItemMake(CGameContext *pGameServer)
+CItemCore::CItemCore(CGameContext *pGameServer)
 {
 	m_pGameServer = pGameServer;
 }
 
 // Public Make
-void CItemMake::MakeItem(const char *pMakeItem, int ClientID)
+void CItemCore::MakeItem(const char *pMakeItem, int ClientID)
 {
 	CItemData ItemInfo;
 	if(!FindItem(pMakeItem, &ItemInfo))
@@ -84,7 +76,7 @@ void CItemMake::MakeItem(const char *pMakeItem, int ClientID)
 	
 }
 
-void CItemMake::ReturnItem(CItemData Item, int ClientID)
+void CItemCore::ReturnItem(CItemData Item, int ClientID)
 {
 	CPlayer *pPlayer = GameServer()->m_apPlayers[ClientID];
 	if(!pPlayer)
@@ -136,7 +128,7 @@ void CItemMake::ReturnItem(CItemData Item, int ClientID)
 }
 
 // Find Item, if it in the json.return the FOUND(and the Item info)
-bool CItemMake::FindItem(const char *pMakeItem, CItemData *ItemInfo)
+bool CItemCore::FindItem(const char *pMakeItem, CItemData *ItemInfo)
 {
 	// read file data into buffer
 	const char *pFilename = "./data/json/make.json";
@@ -191,7 +183,7 @@ bool CItemMake::FindItem(const char *pMakeItem, CItemData *ItemInfo)
 	return Found;
 }
 
-void CItemMake::ShowNeed(CItemData ItemInfo, int ClientID)
+void CItemCore::ShowNeed(CItemData ItemInfo, int ClientID)
 {
 	CPlayer *pPlayer = GameServer()->m_apPlayers[ClientID];
 	if(!pPlayer)
@@ -221,7 +213,7 @@ void CItemMake::ShowNeed(CItemData ItemInfo, int ClientID)
 }
 
 // Public
-void CItemMake::ShowNeed(const char *pMakeItem, int ClientID)
+void CItemCore::ShowNeed(const char *pMakeItem, int ClientID)
 {
 	CItemData ItemInfo;
 	if(!FindItem(pMakeItem, &ItemInfo))
@@ -233,7 +225,7 @@ void CItemMake::ShowNeed(const char *pMakeItem, int ClientID)
 	ShowNeed(ItemInfo, ClientID);
 }
 
-void CItemMake::ShowMakeList(int ClientID)
+void CItemCore::ShowMakeList(int ClientID)
 {
 	// read file data into buffer
 	const char *pFilename = "./data/json/make.json";

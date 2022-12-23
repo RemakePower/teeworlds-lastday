@@ -211,7 +211,7 @@ public:
 	void AddResource(int ClientID, int ResourceID, int Num=1);
 
 	// MakeItem
-	class CItemMake *m_pMakeSystem;
+	class CItemCore *m_pMakeSystem;
 
 	//Bot Start
 	int GetBotNum() const;
