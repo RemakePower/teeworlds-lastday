@@ -1,12 +1,7 @@
 #include "weapon.h"
 
 
-#include <game/server/lastday/weapons/hammer.h>
-#include <game/server/lastday/weapons/gun.h>
-#include <game/server/lastday/weapons/shotgun.h>
-#include <game/server/lastday/weapons/grenade.h>
-#include <game/server/lastday/weapons/rifle.h>
-#include <game/server/lastday/weapons/ninja.h>
+#include <game/server/lastday/Components/Weapon/WeaponData/weaponlist.h>
 
 void WeaponInit::InitWeapons(CGameContext *pGameServer)
 {

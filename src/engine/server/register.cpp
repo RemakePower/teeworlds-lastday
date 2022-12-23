@@ -568,7 +568,7 @@ void CRegister::OnConfigChange()
 	char aHeader[128];
 	while((pRegisterExtra = str_next_token(pRegisterExtra, ",", aHeader, sizeof(aHeader))))
 	{
-		if(m_NumExtraHeaders == (int)std::size(m_aaExtraHeaders))
+		if(m_NumExtraHeaders == (int)std::size_t(m_aaExtraHeaders))
 		{
 			dbg_msg("register", "reached maximum of %d extra headers, dropping '%s' and all further headers", m_NumExtraHeaders, aHeader);
 			break;

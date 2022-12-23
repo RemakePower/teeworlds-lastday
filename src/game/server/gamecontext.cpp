@@ -13,7 +13,7 @@
 
 #include <teeuniverses/components/localization.h>
 
-#include "lastday/item/make.h"
+#include "lastday/Components/Item/ItemCore.h"
 enum
 {
 	RESET,
@@ -39,7 +39,7 @@ void CGameContext::Construct(int Resetting)
 	if(Resetting==NO_RESET)
 		m_pVoteOptionHeap = new CHeap();
 		
-	m_pMakeSystem = new CItemMake(this);
+	m_pMakeSystem = new CItemCore(this);
 }
 
 CGameContext::CGameContext(int Resetting)

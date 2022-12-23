@@ -1,7 +1,7 @@
 #ifndef GAME_SERVER_LASTDAY_WEAPONS_GRENADE_H
 #define GAME_SERVER_LASTDAY_WEAPONS_GRENADE_H
 
-#include <game/server/lastday/weapons-core/weapon.h>
+#include <game/server/lastday/Components/Weapon/WeaponCore/weapon.h>
 
 class CWeaponGrenade : public CWeapon
 {
