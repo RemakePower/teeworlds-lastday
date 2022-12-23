@@ -136,16 +136,16 @@ void CPlayer::Tick()
 
 	if(m_Menu && m_pCharacter)
 	{
-		GameServer()->Menu()->ShowMenu(m_ClientID, m_MenuLine);
+		if(!(Server()->Tick() % 5))
+			GameServer()->Menu()->ShowMenu(m_ClientID, m_MenuLine);
 		if(m_MenuCloseTick)
 		{
 			m_MenuCloseTick--;
 		}else CloseMenu();
 
-		if(m_pCharacter->GetInput()->m_Fire&1)
+		if(m_pCharacter->GetInput()->m_Fire&1 && !(m_pCharacter->GetPrevInput()->m_Fire&1))
 		{
 			GameServer()->Menu()->UseOptions(m_ClientID);
-			CloseMenu();
 		}
 	}
 
@@ -187,7 +187,7 @@ void CPlayer::Snap(int SnappingClient)
 	StrToInts(&pClientInfo->m_Name0, 4, Server()->ClientName(m_ClientID));
 	
 	std::string Buffer;
-	Buffer.append(std::to_string(m_pCharacter ? m_pCharacter->GetHealth() * 10 : 0));
+	Buffer.append(std::to_string(m_pCharacter ? (int)(m_pCharacter->GetHealth() / (float)m_pCharacter->GetMaxHealth() * 100) : 0));
 	Buffer.append("%");
 	StrToInts(&pClientInfo->m_Clan0, 3, Buffer.c_str());
 
@@ -404,6 +404,7 @@ void CPlayer::SetLanguage(const char* pLanguage)
 void CPlayer::OpenMenu()
 {
 	m_Menu = 1;
+	m_MenuPage = MENUPAGE_MAIN;
 	m_MenuCloseTick = 100;
 }
 
@@ -412,4 +413,10 @@ void CPlayer::CloseMenu()
 	m_Menu = 0;
 	m_MenuLine = 0;
 	GameServer()->SendBroadcast(" ", m_ClientID);
+}
+
+void CPlayer::SetMenuPage(int Page)
+{
+	m_MenuPage = Page;
+	m_MenuCloseTick = 100;
 }

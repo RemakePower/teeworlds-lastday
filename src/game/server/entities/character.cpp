@@ -42,6 +42,7 @@ CCharacter::CCharacter(CGameWorld *pWorld)
 : CEntity(pWorld, CGameWorld::ENTTYPE_CHARACTER)
 {
 	m_ProximityRadius = ms_PhysSize;
+	m_MaxHealth = 10;
 	m_Health = 0;
 	m_Armor = 0;
 }
@@ -939,18 +940,21 @@ void CCharacter::DoBotActions()
 			}else if(pTarget->m_Pos.x - m_Pos.x < -448.0f)
 			{
 				m_Botinfo.m_Direction = -1;
-			}else if(pTarget->m_Pos.x - m_Pos.x < 480.0f && pTarget->m_Pos.x - m_Pos.x > 0.0f)
+			}else if(!GameServer()->Collision()->IntersectLine(pTarget->m_Pos, m_Pos, NULL, NULL))
 			{
-				m_Botinfo.m_Direction = -1;
-			}else if(pTarget->m_Pos.x - m_Pos.x > -480.0f && pTarget->m_Pos.x - m_Pos.x < 0.0f)
-			{
-				m_Botinfo.m_Direction = 1;
+				if(pTarget->m_Pos.x - m_Pos.x < 480.0f && pTarget->m_Pos.x - m_Pos.x > 0.0f)
+				{
+					m_Botinfo.m_Direction = -1;
+				}else if(pTarget->m_Pos.x - m_Pos.x > -480.0f && pTarget->m_Pos.x - m_Pos.x < 0.0f)
+				{
+					m_Botinfo.m_Direction = 1;
+				}
 			}else m_Botinfo.m_Direction = 0;
 		}
 		//Attack
 		if(m_pPlayer->m_BotPower&BOTPOWER_HAMMER)
 		{
-			if(distance(pTarget->m_Pos, m_Pos) < m_ProximityRadius + 40.0f && !(random_int(0, 50) % 50))
+			if(distance(pTarget->m_Pos, m_Pos) < m_ProximityRadius + 40.0f && random_int(0, 25) == 25)
 			{
 				m_ActiveWeapon = WEAPON_HAMMER;
 				m_Input.m_Fire = 1;

@@ -132,6 +132,7 @@ public:
 	inline bool GetMenuStatus() const { return m_Menu; }
 	void OpenMenu();
 	void CloseMenu();
+	void SetMenuPage(int Page);
 	int GetMenuPage() const {return m_MenuPage;}
 	int m_MenuLine;
 	int m_MenuCloseTick;

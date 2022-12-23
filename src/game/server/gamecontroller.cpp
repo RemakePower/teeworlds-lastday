@@ -493,25 +493,21 @@ void CGameController::ShowStatus(int ClientID)
 	std::string Buffer;
 	Buffer.clear();
 	
-	bool First=true;	
 	for(int i = 0; i < NUM_RESOURCES;i ++)
 	{
 		if(pPResource->GetResource(i))
 		{
-			if(!First)
-				Buffer.append(", ");
-			else First = false;
 			Buffer.append(GameServer()->Localize(pLanguageCode, GetResourceName(i)));
 			Buffer.append(": ");
 			Buffer.append(format_int64_with_commas(',', pPResource->GetResource(i)));
-			Buffer.append(" ");
+			Buffer.append("\n");
 		}
 	}
 
 	if(Buffer.length())
 	{
-		GameServer()->SendChatTarget(ClientID, Buffer.c_str());
-	}else GameServer()->SendChatTarget_Locazition(ClientID, _("You don't have any things!"));
+		GameServer()->SendBroadcast(Buffer.c_str(), ClientID);
+	}else GameServer()->SendBroadcast_VL("You don't have any things!", ClientID);
 }
 
 void CGameController::OnCreateBot()

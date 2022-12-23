@@ -20,7 +20,7 @@ public:
 
 	typedef void (*MenuCallback)(int ClientID, void *pUserData);
 	
-    void Register(const char *pName, int Pages, MenuCallback pfnFunc, void *pUser);
+    void Register(const char *pName, int Pages, MenuCallback pfnFunc, void *pUser, bool CloseMenu);
 
     void ShowMenu(int ClientID, int Line);
     void UseOptions(int ClientID);
@@ -33,6 +33,7 @@ private:
 		int m_Page;
 		MenuCallback m_pfnCallback;
 		void *m_pUserData;
+		bool m_CloseMenu;
 	};
 
 	array<COptions*> m_apOptions;

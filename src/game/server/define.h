@@ -78,7 +78,8 @@ enum BotPower
 enum MenuPages
 {
     MENUPAGE_MAIN=0,
-    MENUPAGE_MAKE,
+    MENUPAGE_NOTMAIN,
+    MENUPAGE_ITEM,
 };
 
 #endif

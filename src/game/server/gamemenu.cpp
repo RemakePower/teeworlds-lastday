@@ -20,25 +20,29 @@ void CMenu::GetData(int Page)
     {
         if(m_apOptions[i]->m_Page == Page)
             m_DataTemp.add(m_apOptions[i]->m_pName);
+        else if(Page != MENUPAGE_MAIN && m_apOptions[i]->m_Page == MENUPAGE_NOTMAIN)
+            m_DataTemp.add(m_apOptions[i]->m_pName);
     }
 }
 
 int CMenu::FindOption(const char *pName, int Pages)
 {
-    dbg_msg(pName, pName);
 	for(int i = 0;i < m_apOptions.size();i ++)
 	{
-		if(m_apOptions[i]->m_Page == Pages)
-		{
-			if(str_comp_nocase(m_apOptions[i]->m_pName, pName) == 0)
-				return i;
-		}
+        if(str_comp_nocase(m_apOptions[i]->m_pName, pName) == 0)
+        {
+            if(m_apOptions[i]->m_Page == Pages)
+                return i;
+            else if(Pages != MENUPAGE_MAIN && m_apOptions[i]->m_Page == MENUPAGE_NOTMAIN)
+                return i;
+            
+        }
 	}
 
 	return -1;
 }
 
-void CMenu::Register(const char *pName, int Pages, MenuCallback pfnFunc, void *pUser)
+void CMenu::Register(const char *pName, int Pages, MenuCallback pfnFunc, void *pUser, bool CloseMenu)
 {
 	int OptionID = FindOption(pName, Pages);
     if(OptionID > -1)
@@ -51,6 +55,7 @@ void CMenu::Register(const char *pName, int Pages, MenuCallback pfnFunc, void *p
 	pOption->m_pName = pName;
 	pOption->m_Page = Pages;
     pOption->m_pUserData = pUser;
+    pOption->m_CloseMenu = CloseMenu;
 
     m_apOptions.add(pOption);
 }
@@ -149,5 +154,7 @@ void CMenu::UseOptions(int ClientID)
     int OptionID = FindOption(pPlayer->m_SelectOption, pPlayer->GetMenuPage());
 
     dbg_assert(OptionID > -1 && OptionID < m_apOptions.size(), "no this option, but a player use it");
+    if(m_apOptions[OptionID]->m_CloseMenu)
+        pPlayer->CloseMenu();
     m_apOptions[OptionID]->m_pfnCallback(ClientID, m_apOptions[OptionID]->m_pUserData);
 }

@@ -468,13 +468,6 @@ void CGameContext::OnTick()
 	// check tuning
 	CheckPureTuning();
 
-	// copy tuning
-	m_World.m_Core.m_Tuning = m_Tuning;
-	m_World.Tick();
-
-	//if(world.paused) // make sure that the game object always updates
-	m_pController->Tick();
-
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
 		if(m_apPlayers[i])
@@ -483,6 +476,13 @@ void CGameContext::OnTick()
 			m_apPlayers[i]->PostTick();
 		}
 	}
+
+	// copy tuning
+	m_World.m_Core.m_Tuning = m_Tuning;
+	m_World.Tick();
+
+	//if(world.paused) // make sure that the game object always updates
+	m_pController->Tick();
 
 	// update voting
 	if(m_VoteCloseTime)
@@ -1506,6 +1506,20 @@ void CGameContext::MenuStatus(int ClientID, void *pUserData)
 	pSelf->m_pController->ShowStatus(ClientID);
 }
 
+void CGameContext::MenuBack(int ClientID, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+
+	pSelf->m_apPlayers[ClientID]->SetMenuPage(MENUPAGE_MAIN);
+}
+
+void CGameContext::MenuItem(int ClientID, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+
+	pSelf->m_apPlayers[ClientID]->SetMenuPage(MENUPAGE_ITEM);
+}
+
 void CGameContext::SetClientLanguage(int ClientID, const char *pLanguage)
 {
 	Server()->SetClientLanguage(ClientID, pLanguage);
@@ -1548,7 +1562,9 @@ void CGameContext::ConsoleOutputCallback_Chat(const char *pLine, void *pUser)
 
 void CGameContext::OnMenuOptionsInit()
 {
-	Menu()->Register("Player Status", MENUPAGE_MAIN, MenuStatus, this);
+	Menu()->Register("Player Status", MENUPAGE_MAIN, MenuStatus, this, true);
+	Menu()->Register("Make Item", MENUPAGE_MAIN, MenuItem, this, false);
+	Menu()->Register("Back", MENUPAGE_NOTMAIN, MenuBack, this, false);
 }
 
 void CGameContext::OnConsoleInit()

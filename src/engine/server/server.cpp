@@ -1318,7 +1318,7 @@ void CServer::CacheServerInfo(CCache *pCache, int Type, bool SendClients)
 
 	// count the players
 	int PlayerCount = 0, ClientCount = 0;
-	for(int i = 0; i < MAX_CLIENTS; i++)
+	for(int i = 0; i < MAX_PLAYERS; i++)
 	{
 		if(m_aClients[i].m_State != CClient::STATE_EMPTY)
 		{
