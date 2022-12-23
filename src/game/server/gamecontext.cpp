@@ -599,6 +599,12 @@ void CGameContext::OnClientEnter(int ClientID)
 
 	SendChatTarget_Locazition(-1, "Survivor '%s' is coming", Server()->ClientName(ClientID));
 
+
+	SendChatTarget_Locazition(ClientID, "===Welcome to last day===");
+	SendChatTarget_Locazition(ClientID, "Bind </menu> to your key");
+	SendChatTarget_Locazition(ClientID, "No change team, change team button is change sit");
+
+
 	m_VoteUpdate = true;
 }
 
@@ -1525,6 +1531,21 @@ void CGameContext::ConStatus(IConsole::IResult *pResult, void *pUserData)
 	pSelf->m_pController->ShowStatus(ClientID);
 }
 
+void CGameContext::ConMenu(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	
+	int ClientID = pResult->GetClientID();
+	CPlayer *pPlayer = pSelf->m_apPlayers[ClientID];
+
+	if(pPlayer)
+	{
+		if(pPlayer->GetMenuStatus())// opening menu
+			pSelf->m_apPlayers[ClientID]->CloseMenu();
+		else pSelf->m_apPlayers[ClientID]->OpenMenu();
+	}
+}
+
 void CGameContext::SetClientLanguage(int ClientID, const char *pLanguage)
 {
 	Server()->SetClientLanguage(ClientID, pLanguage);
@@ -1596,6 +1617,7 @@ void CGameContext::OnConsoleInit()
 	Console()->Register("item", "?s?r", CFGFLAG_CHAT, ConItem, this, "item");
 	Console()->Register("status", "", CFGFLAG_CHAT, ConStatus, this, "show status");
 	Console()->Register("me", "", CFGFLAG_CHAT, ConStatus, this, "show status");
+	Console()->Register("menu", "", CFGFLAG_CHAT, ConMenu, this, "show menu");
 
 	Console()->Chain("sv_motd", ConchainSpecialMotdupdate, this);
 }

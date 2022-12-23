@@ -193,6 +193,18 @@
             "value": "幸存者'%s'来了"
         },
         {
+            "key": "===Welcome to last day===",
+            "value": "===欢迎来到最后一日==="
+        },
+        {
+            "key": "Bind </menu> to your key",
+            "value": "请绑定/menu到你的按键"
+        },
+        {
+            "key": "No change team, change team button is change sit",
+            "value": "无法切换队伍,切换队伍按钮是切换坐下"
+        },
+        {
             "key": "Thanks %s",
             "value": "感谢 %s"
         },

@@ -138,7 +138,6 @@ private:
 
 private:
 	void UpdateTuning();
-	int m_JumpCounter;
 	int m_SitTick;
 
 	int m_FreezeStartTick;

@@ -59,7 +59,6 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_ActiveWeapon = TWS_WEAPON_HAMMER;
 	m_LastWeapon = TWS_WEAPON_HAMMER;
 	m_QueuedWeapon = -1;
-	m_JumpCounter = 0;
 
 	m_FreezeStartTick = 0;
 	m_FreezeEndTick = 0;
@@ -422,12 +421,6 @@ void CCharacter::HandleInput()
 	// handle Weapons
 	HandleWeapons();
 
-	// air jump
-	if(IsGrounded()) m_JumpCounter = 2;
-	if(m_Core.m_TriggeredEvents&COREEVENT_AIR_JUMP || m_Core.m_TriggeredEvents&COREEVENT_GROUND_JUMP)
-	{
-		m_JumpCounter--;
-	}
 	if(m_pPlayer->m_Sit)
 	{
 		m_SitTick++;
@@ -800,9 +793,6 @@ void CCharacter::Snap(int SnappingClient)
 
 	pDDNetCharacter->m_Flags = 0;
 
-	if(m_pPlayer->m_Sit)
-		pDDNetCharacter->m_Flags |= CHARACTERFLAG_HOOK_HIT_DISABLED;
-
 	switch (g_Weapons.m_aWeapons[m_ActiveWeapon]->GetShowType())
 	{
 		case WEAPON_HAMMER: pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_HAMMER; break;
@@ -815,15 +805,22 @@ void CCharacter::Snap(int SnappingClient)
 
 	pDDNetCharacter->m_FreezeStart = 0;
 	pDDNetCharacter->m_FreezeEnd =	0;
+
+	pDDNetCharacter->m_Jumps = m_Core.m_MaxJumps;
+	pDDNetCharacter->m_JumpedTotal = m_Core.m_JumpCounter;
+	pDDNetCharacter->m_TeleCheckpoint = 0;
+	pDDNetCharacter->m_StrongWeakID = 0; // ???
+
 	if(m_FreezeEndTick >= Server()->Tick())
 	{
 		pDDNetCharacter->m_Flags |= CHARACTERFLAG_IN_FREEZE;
 		pDDNetCharacter->m_FreezeStart = m_FreezeStartTick;
 		pDDNetCharacter->m_FreezeEnd =	m_FreezeEndTick;
+		pDDNetCharacter->m_Jumps = 0;
 	}
-	pDDNetCharacter->m_Jumps = m_JumpCounter;
-	pDDNetCharacter->m_TeleCheckpoint = 0;
-	pDDNetCharacter->m_StrongWeakID = 0; // ???
+
+	if(m_pPlayer->m_Sit)
+		pDDNetCharacter->m_Jumps = 0;
 
 	pDDNetCharacter->m_TargetX = m_Core.m_Input.m_TargetX;
 	pDDNetCharacter->m_TargetY = m_Core.m_Input.m_TargetY;

@@ -123,10 +123,18 @@ private:
 
 public:
 	CTuningParams* GetNextTuningParams() { return &m_NextTuningParams; };
+
+private:
+	bool m_Menu;
+
+public:
+	inline bool GetMenuStatus() const { return m_Menu; }
+	void OpenMenu();
+	void CloseMenu();
+
 	Resource m_Resource;
 
 	bool m_Sit;
-
 	// Bot
 	int m_BotPower;
 	bool m_IsBot;

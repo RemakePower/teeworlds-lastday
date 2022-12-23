@@ -381,3 +381,13 @@ void CPlayer::SetLanguage(const char* pLanguage)
 {
 	str_copy(m_aLanguage, pLanguage, sizeof(m_aLanguage));
 }
+
+void CPlayer::OpenMenu()
+{
+	m_Menu = 1;
+}
+
+void CPlayer::CloseMenu()
+{
+	m_Menu = 0;
+}
