@@ -13,7 +13,7 @@
 
 #include <teeuniverses/components/localization.h>
 
-#include "lastday/Components/Item/ItemCore.h"
+#include "LastDay/Components/Item/ItemCore.h"
 enum
 {
 	RESET,

@@ -1,7 +1,7 @@
 #include "weapon.h"
 
 
-#include <game/server/lastday/Components/Weapon/WeaponData/weaponlist.h>
+#include <game/server/LastDay/Components/Weapon/WeaponData/weaponlist.h>
 
 void WeaponInit::InitWeapons(CGameContext *pGameServer)
 {

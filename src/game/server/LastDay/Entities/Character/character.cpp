@@ -5,7 +5,7 @@
 #include <game/server/gamecontext.h>
 #include <game/mapitems.h>
 
-#include "pickup.h"
+#include <game/server/LastDay/Entities/Pickup/pickup.h>
 #include "character.h"
 
 //input count
