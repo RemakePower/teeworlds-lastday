@@ -130,10 +130,6 @@ void CPlayer::Tick()
 		++m_TeamChangeTick;
  	}
 
-	if(m_pCharacter && m_pCharacter->IsGrounded())
-		m_Sit = m_PlayerFlags&PLAYERFLAG_AIM;
-	else m_Sit = false;
-
 	HandleTuningParams();
 }
 

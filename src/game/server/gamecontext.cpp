@@ -597,7 +597,7 @@ void CGameContext::OnClientEnter(int ClientID)
 	str_format(aBuf, sizeof(aBuf), "team_join player='%d:%s' team=%d", ClientID, Server()->ClientName(ClientID), m_apPlayers[ClientID]->GetTeam());
 	Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
 
-	SendChatTarget_Locazition(-1, "A player join the game");
+	SendChatTarget_Locazition(-1, "Survivor '%s' is coming", Server()->ClientName(ClientID));
 
 	m_VoteUpdate = true;
 }
@@ -897,50 +897,9 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				m_VoteUpdate = true;
 			}
 		}
-		else if (MsgID == NETMSGTYPE_CL_SETTEAM && !m_World.m_Paused)
+		else if (MsgID == NETMSGTYPE_CL_SETTEAM)
 		{
-			CNetMsg_Cl_SetTeam *pMsg = (CNetMsg_Cl_SetTeam *)pRawMsg;
-
-			if(pPlayer->GetTeam() == pMsg->m_Team || (g_Config.m_SvSpamprotection && pPlayer->m_LastSetTeam && pPlayer->m_LastSetTeam+Server()->TickSpeed()*3 > Server()->Tick()))
-				return;
-
-			if(pMsg->m_Team != TEAM_SPECTATORS && m_LockTeams)
-			{
-				pPlayer->m_LastSetTeam = Server()->Tick();
-				SendBroadcast_VL(_("Teams are locked"), ClientID);
-				return;
-			}
-
-			if(pPlayer->m_TeamChangeTick > Server()->Tick())
-			{
-				pPlayer->m_LastSetTeam = Server()->Tick();
-				int TimeLeft = (pPlayer->m_TeamChangeTick - Server()->Tick())/Server()->TickSpeed();
-				char aBuf[128];
-				char aTime[128];
-				str_format(aTime, sizeof(aTime), "%02d:%02d", TimeLeft/60, TimeLeft%60);
-				str_format(aBuf, sizeof(aBuf), "Time to wait before changing team: %s", aTime);
-				SendBroadcast_VL(_("Time to wait before changing team: %s"), ClientID, aTime);
-				return;
-			}
-
-			// Switch team on given client and kill/respawn him
-			if(m_pController->CanJoinTeam(pMsg->m_Team, ClientID))
-			{
-				if(m_pController->CanChangeTeam(pPlayer, pMsg->m_Team))
-				{
-					pPlayer->m_LastSetTeam = Server()->Tick();
-					if(pPlayer->GetTeam() == TEAM_SPECTATORS || pMsg->m_Team == TEAM_SPECTATORS)
-						m_VoteUpdate = true;
-					pPlayer->SetTeam(pMsg->m_Team);
-					pPlayer->m_TeamChangeTick = Server()->Tick();
-				}
-				else
-					SendBroadcast_VL(_("Teams must be balanced, please join other team"), ClientID);
-			}
-			else
-			{
-				SendBroadcast_VL(_("Only %d active players are allowed"), ClientID, &ClientID);
-			}
+			pPlayer->m_Sit = !pPlayer->m_Sit;
 		}
 		else if (MsgID == NETMSGTYPE_CL_SETSPECTATORMODE && !m_World.m_Paused)
 		{

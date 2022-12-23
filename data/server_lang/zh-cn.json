@@ -189,20 +189,8 @@
             "value": "'%s' 改名为 '%s'"
         },
         {
-            "key": "'%s' joined the spectators",
-            "value": "'%s' 加入了旁观"
-        },
-        {
-            "key": "'%s' joined the blueteam",
-            "value": "'%s' 加入了蓝队"
-        },
-        {
-            "key": "'%s' joined the redteam",
-            "value": "'%s' 加入了红队"
-        },
-        {
-            "key": "'%s' joined the game",
-            "value": "'%s' 加入了游戏"
+            "key": "Survivor '%s' is coming",
+            "value": "幸存者'%s'来了"
         },
         {
             "key": "Thanks %s",

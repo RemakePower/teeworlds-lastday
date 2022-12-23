@@ -81,6 +81,7 @@ class CGameContext : public IGameServer
 
 	static void ConItem(IConsole::IResult *pResult, void *pUserData);
 	static void ConStatus(IConsole::IResult *pResult, void *pUserData);
+	static void ConMenu(IConsole::IResult *pResult, void *pUserData);
 
 
 	CGameContext(int Resetting);
