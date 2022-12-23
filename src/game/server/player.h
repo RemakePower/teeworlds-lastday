@@ -126,11 +126,16 @@ public:
 
 private:
 	bool m_Menu;
+	int m_MenuPage;
 
 public:
 	inline bool GetMenuStatus() const { return m_Menu; }
 	void OpenMenu();
 	void CloseMenu();
+	int GetMenuPage() const {return m_MenuPage;}
+	int m_MenuLine;
+	int m_MenuCloseTick;
+	const char *m_SelectOption;
 
 	Resource m_Resource;
 

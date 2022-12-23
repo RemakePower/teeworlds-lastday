@@ -20,6 +20,10 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, bool Bot, int BotPower
 	m_Team = 0;
 	m_IsBot = Bot;
 	m_BotPower = BotPower;
+	m_Menu = 0;
+	m_MenuPage = 0;
+	m_MenuLine = 0;
+	m_MenuCloseTick = 100;
 	m_SpectatorID = SPEC_FREEVIEW;
 	m_LastActionTick = Server()->Tick();
 	m_TeamChangeTick = Server()->Tick();
@@ -129,6 +133,21 @@ void CPlayer::Tick()
 		++m_LastActionTick;
 		++m_TeamChangeTick;
  	}
+
+	if(m_Menu && m_pCharacter)
+	{
+		GameServer()->Menu()->ShowMenu(m_ClientID, m_MenuLine);
+		if(m_MenuCloseTick)
+		{
+			m_MenuCloseTick--;
+		}else CloseMenu();
+
+		if(m_pCharacter->GetInput()->m_Fire&1)
+		{
+			GameServer()->Menu()->UseOptions(m_ClientID);
+			CloseMenu();
+		}
+	}
 
 	HandleTuningParams();
 }
@@ -385,9 +404,12 @@ void CPlayer::SetLanguage(const char* pLanguage)
 void CPlayer::OpenMenu()
 {
 	m_Menu = 1;
+	m_MenuCloseTick = 100;
 }
 
 void CPlayer::CloseMenu()
 {
 	m_Menu = 0;
+	m_MenuLine = 0;
+	GameServer()->SendBroadcast(" ", m_ClientID);
 }

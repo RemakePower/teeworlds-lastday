@@ -201,35 +201,52 @@ void CCharacter::HandleWeaponSwitch()
 	int Next = CountInput(m_LatestPrevInput.m_NextWeapon, m_LatestInput.m_NextWeapon).m_Presses;
 	int Prev = CountInput(m_LatestPrevInput.m_PrevWeapon, m_LatestInput.m_PrevWeapon).m_Presses;
 
-	if(Next < 128) // make sure we only try sane stuff
+	if(m_pPlayer->GetMenuStatus())
 	{
-		while(Next) // Next Weapon selection
+		if(Next && Next < 128) // make sure we only try sane stuff
 		{
-			WantedWeapon = (WantedWeapon+1)%NUM_LASTDAY_WEAPONS;
-			if(m_aWeapons[WantedWeapon].m_Got)
-				Next--;
+			m_pPlayer->m_MenuLine++;
+			m_pPlayer->m_MenuCloseTick = 100;
+		}
+
+		if(Prev && Prev < 128) // make sure we only try sane stuff
+		{
+			m_pPlayer->m_MenuLine--;
+			m_pPlayer->m_MenuCloseTick = 100;
 		}
 	}
-
-	if(Prev < 128) // make sure we only try sane stuff
+	else
 	{
-		while(Prev) // Prev Weapon selection
+		if(Next < 128) // make sure we only try sane stuff
 		{
-			WantedWeapon = (WantedWeapon-1)<0?NUM_LASTDAY_WEAPONS-1:WantedWeapon-1;
-			if(m_aWeapons[WantedWeapon].m_Got)
-				Prev--;
+			while(Next) // Next Weapon selection
+			{
+				WantedWeapon = (WantedWeapon+1)%NUM_LASTDAY_WEAPONS;
+				if(m_aWeapons[WantedWeapon].m_Got)
+					Next--;
+			}
 		}
+
+		if(Prev < 128) // make sure we only try sane stuff
+		{
+			while(Prev) // Prev Weapon selection
+			{
+				WantedWeapon = (WantedWeapon-1)<0?NUM_LASTDAY_WEAPONS-1:WantedWeapon-1;
+				if(m_aWeapons[WantedWeapon].m_Got)
+					Prev--;
+			}
+		}
+
+		// Direct Weapon selection
+		if(m_LatestInput.m_WantedWeapon)
+			WantedWeapon = m_Input.m_WantedWeapon-1;
+
+		// check for insane values
+		if(WantedWeapon >= 0 && WantedWeapon < NUM_LASTDAY_WEAPONS && WantedWeapon != m_ActiveWeapon && m_aWeapons[WantedWeapon].m_Got)
+			m_QueuedWeapon = WantedWeapon;
+
+		DoWeaponSwitch();
 	}
-
-	// Direct Weapon selection
-	if(m_LatestInput.m_WantedWeapon)
-		WantedWeapon = m_Input.m_WantedWeapon-1;
-
-	// check for insane values
-	if(WantedWeapon >= 0 && WantedWeapon < NUM_LASTDAY_WEAPONS && WantedWeapon != m_ActiveWeapon && m_aWeapons[WantedWeapon].m_Got)
-		m_QueuedWeapon = WantedWeapon;
-
-	DoWeaponSwitch();
 }
 
 void CCharacter::FireWeapon()

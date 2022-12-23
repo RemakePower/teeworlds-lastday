@@ -146,6 +146,7 @@ private:
 public:
 	CCharacterCore *GetCore() {return &m_Core;}
 	WeaponStat *GetWeaponStat() {return m_aWeapons;}
+	CNetObj_PlayerInput *GetInput() {return &m_Input;}
 	int GetActiveWeapon() {return m_ActiveWeapon; }
 	int GetHealth() const {return m_Health; }
 	int GetCID() const;

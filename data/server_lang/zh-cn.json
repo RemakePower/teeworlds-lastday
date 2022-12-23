@@ -202,63 +202,31 @@
         },
         {
             "key": "No change team, change team button is change sit",
-            "value": "无法切换队伍,切换队伍按钮是切换坐下"
+            "value": "无切换队伍,切换队伍按钮是切换坐下"
+        },
+        {
+            "key": "Show clan plate can show health bar",
+            "value": "显示战队可以显示血量条"
+        },
+        {
+            "key": "Menu",
+            "value": "菜单"
+        },
+        {
+            "key": "Use <mouse1>(Fire) to use option",
+            "value": "使用<鼠标左键>(攻击)使用选项"
+        },
+        {
+            "key": "Make Item",
+            "value": "制作物品"
+        },
+        {
+            "key": "Player Status",
+            "value": "玩家信息"
         },
         {
             "key": "Thanks %s",
             "value": "感谢 %s"
-        },
-        {
-            "key": "Use [/item help]",
-            "value": "使用/item help"
-        },
-        {
-            "key": "Use [/item help <itemname>] get item need resource",
-            "value": "使用/item help <物品名>获取物品所需资源"
-        },
-        {
-            "key": "Use [/item make <itemname>] make item",
-            "value": "使用/item make <物品名>制造物品"
-        },
-        {
-            "key": "Use [/item list] get item list",
-            "value": "使用/item list获取物品列表"
-        },
-        {
-            "key": "No any item name input",
-            "value": "没有任何物品名称输入"
-        },
-        {
-            "key": "No this item!",
-            "value": "没有这个物品!"
-        },
-        {
-            "key": "%s requires %s.",
-            "value": "%s需要%s."
-        },
-        {
-            "key": "You had %s",
-            "value": "你已经有了%s"
-        },
-        {
-            "key": "Making %s...",
-            "value": "制造%s中..."
-        },
-        {
-            "key": "Make finish, you get %s",
-            "value": "制造完成, 你得到了 %s"
-        },
-        {
-            "key": "Make finish, you get %d %s",
-            "value": "制造完成, 你得到了%d%s"
-        },
-        {
-            "key": "You can make: %s",
-            "value": "你可以制作:%s"
-        },
-        {
-            "key": "You got %d %s",
-            "value": "你得到了%d%s"
         },
         {
             "key": "You don't have any things!",

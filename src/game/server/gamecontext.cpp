@@ -40,6 +40,7 @@ void CGameContext::Construct(int Resetting)
 		m_pVoteOptionHeap = new CHeap();
 		
 	m_pMakeSystem = new CItemMake(this);
+	m_pMenu = new CMenu(this);
 }
 
 CGameContext::CGameContext(int Resetting)
@@ -603,6 +604,7 @@ void CGameContext::OnClientEnter(int ClientID)
 	SendChatTarget_Locazition(ClientID, "===Welcome to last day===");
 	SendChatTarget_Locazition(ClientID, "Bind </menu> to your key");
 	SendChatTarget_Locazition(ClientID, "No change team, change team button is change sit");
+	SendChatTarget_Locazition(ClientID, "Show clan plate can show health bar");
 
 
 	m_VoteUpdate = true;
@@ -711,8 +713,6 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			// drop empty and autocreated spam messages (more than 16 characters per second)
 			if(Length == 0 || (pMsg->m_pMessage[0] != '/' && g_Config.m_SvSpamprotection && pPlayer->m_LastChat && pPlayer->m_LastChat+Server()->TickSpeed()*((15+Length)/16) > Server()->Tick()))
 				return;
-
-			pPlayer->m_LastChat = Server()->Tick();
 			
 			if(pMsg->m_pMessage[0] == '/' || pMsg->m_pMessage[0] == '\\')
 			{
@@ -737,6 +737,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			else
 			{
 				SendChat(ClientID, Team, pMsg->m_pMessage);
+				pPlayer->m_LastChat = Server()->Tick();
 			}
 		}
 		else if(MsgID == NETMSGTYPE_CL_CALLVOTE)
@@ -1483,54 +1484,6 @@ void CGameContext::ConLanguage(IConsole::IResult *pResult, void *pUserData)
 	return;
 }
 
-void CGameContext::ConItem(IConsole::IResult *pResult, void *pUserData)
-{
-	CGameContext *pSelf = (CGameContext *)pUserData;
-
-	int ClientID = pResult->GetClientID();
-	
-	const char *pParamName = pResult->GetString(0);
-	const char *pCommand = pResult->GetString(1);
-
-	if(str_comp(pParamName, "help") == 0)
-	{
-		if(!pCommand[0])
-		{		
-			pSelf->SendChatTarget(ClientID, "=====================");
-			pSelf->SendChatTarget_Locazition(ClientID, _("Use [/item help <itemname>] get item need resource"));
-			pSelf->SendChatTarget_Locazition(ClientID, _("Use [/item make <itemname>] make item"));
-			pSelf->SendChatTarget_Locazition(ClientID, _("Use [/item list] get item list"));
-		}
-		else
-		{
-			pSelf->m_pMakeSystem->ShowNeed(pCommand, ClientID);
-		}
-	}else if(str_comp(pParamName, "make") == 0)
-	{
-		if(!pCommand[0])
-		{
-			pSelf->SendChatTarget_Locazition(ClientID, _("No any item name input"));
-			pSelf->SendChatTarget_Locazition(ClientID, _("Use [/item help]"));
-		}else 
-		{
-			pSelf->m_pMakeSystem->MakeItem(pCommand, ClientID);
-		}
-	}else if(str_comp(pParamName, "list") == 0)
-	{
-		pSelf->m_pMakeSystem->ShowMakeList(ClientID);
-	}else pSelf->SendChatTarget_Locazition(ClientID, _("Use [/item help]"));
-
-}
-
-void CGameContext::ConStatus(IConsole::IResult *pResult, void *pUserData)
-{
-	CGameContext *pSelf = (CGameContext *)pUserData;
-	
-	int ClientID = pResult->GetClientID();
-
-	pSelf->m_pController->ShowStatus(ClientID);
-}
-
 void CGameContext::ConMenu(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
@@ -1544,6 +1497,13 @@ void CGameContext::ConMenu(IConsole::IResult *pResult, void *pUserData)
 			pSelf->m_apPlayers[ClientID]->CloseMenu();
 		else pSelf->m_apPlayers[ClientID]->OpenMenu();
 	}
+}
+
+void CGameContext::MenuStatus(int ClientID, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+
+	pSelf->m_pController->ShowStatus(ClientID);
 }
 
 void CGameContext::SetClientLanguage(int ClientID, const char *pLanguage)
@@ -1586,6 +1546,11 @@ void CGameContext::ConsoleOutputCallback_Chat(const char *pLine, void *pUser)
 	ReentryGuard--;
 }
 
+void CGameContext::OnMenuOptionsInit()
+{
+	Menu()->Register("Player Status", MENUPAGE_MAIN, MenuStatus, this);
+}
+
 void CGameContext::OnConsoleInit()
 {
 	m_pServer = Kernel()->RequestInterface<IServer>();
@@ -1614,9 +1579,6 @@ void CGameContext::OnConsoleInit()
 	Console()->Register("about", "", CFGFLAG_CHAT, ConAbout, this, "Show information about the mod");
 	Console()->Register("language", "?s", CFGFLAG_CHAT, ConLanguage, this, "change language");
 
-	Console()->Register("item", "?s?r", CFGFLAG_CHAT, ConItem, this, "item");
-	Console()->Register("status", "", CFGFLAG_CHAT, ConStatus, this, "show status");
-	Console()->Register("me", "", CFGFLAG_CHAT, ConStatus, this, "show status");
 	Console()->Register("menu", "", CFGFLAG_CHAT, ConMenu, this, "show menu");
 
 	Console()->Chain("sv_motd", ConchainSpecialMotdupdate, this);
@@ -1689,6 +1651,7 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 		}
 	}
 #endif
+	OnMenuOptionsInit();
 }
 
 void CGameContext::OnShutdown()

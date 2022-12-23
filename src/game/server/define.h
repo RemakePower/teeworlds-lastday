@@ -75,4 +75,10 @@ enum BotPower
     NUM_BOTPOWERS=4,
 };
 
+enum MenuPages
+{
+    MENUPAGE_MAIN=0,
+    MENUPAGE_MAKE,
+};
+
 #endif
