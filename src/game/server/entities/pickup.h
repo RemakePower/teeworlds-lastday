@@ -17,6 +17,7 @@ public:
 	vec2 GetPos(float Time);
 
 	void Tick() override;
+	void TickPaused() override;
 	void Snap(int SnappingClient) override;
 
 private:

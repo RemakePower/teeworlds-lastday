@@ -57,8 +57,16 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_EmoteStop = -1;
 	m_LastAction = -1;
 	m_LastNoAmmoSound = -1;
-	m_ActiveWeapon = TWS_WEAPON_HAMMER;
-	m_LastWeapon = TWS_WEAPON_HAMMER;
+	if(pPlayer->m_BotPower&WEAPON_HAMMER)
+	{
+		m_ActiveWeapon = TWS_WEAPON_HAMMER;
+		m_LastWeapon = TWS_WEAPON_HAMMER;
+	}
+	else
+	{
+		m_ActiveWeapon = TWS_WEAPON_GUN;
+		m_LastWeapon = TWS_WEAPON_GUN;
+	}
 	m_QueuedWeapon = -1;
 
 	m_FreezeStartTick = 0;

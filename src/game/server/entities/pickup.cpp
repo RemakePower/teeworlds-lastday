@@ -125,6 +125,14 @@ void CPickup::Tick()
 		if(Destroy)
 			GameServer()->m_World.DestroyEntity(this);
 	}
+
+	if((Server()->Tick() - m_StartTick)/Server()->TickSpeed() >= 60)
+		GameServer()->m_World.DestroyEntity(this);
+}
+
+void CPickup::TickPaused()
+{
+	m_StartTick++;
 }
 
 void CPickup::Snap(int SnappingClient)
