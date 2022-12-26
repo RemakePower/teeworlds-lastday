@@ -57,7 +57,7 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_EmoteStop = -1;
 	m_LastAction = -1;
 	m_LastNoAmmoSound = -1;
-	if(pPlayer->m_BotPower&WEAPON_HAMMER)
+	if(!pPlayer->m_IsBot || pPlayer->m_BotPower&WEAPON_HAMMER)
 	{
 		m_ActiveWeapon = TWS_WEAPON_HAMMER;
 		m_LastWeapon = TWS_WEAPON_HAMMER;
@@ -628,10 +628,6 @@ void CCharacter::Die(int Killer, int Weapon)
 
 		for(int i = TWS_WEAPON_GUN;i < TWS_WEAPON_NINJA;i ++ )
 		{
-			if(!m_aWeapons->m_Got)
-				continue;
-			// Create gun
-			new CPickup(GameWorld(), m_Pos, vec2(random_int(0, 1), random_int(0, 1)), PICKUP_GUN, i);
 			if(m_aWeapons->m_Ammo < 1)
 				continue;
 			// Create gun ammo
@@ -648,6 +644,17 @@ void CCharacter::Die(int Killer, int Weapon)
 		}
 		// close menu
 		m_pPlayer->CloseMenu();
+	}
+
+	if(!m_pPlayer->m_IsBot)
+	{
+		for(int i = TWS_WEAPON_GUN;i < TWS_WEAPON_NINJA;i ++ )
+		{
+			if(!m_aWeapons->m_Got)
+				continue;
+			// Create gun
+			new CPickup(GameWorld(), m_Pos, vec2(random_int(0, 1), random_int(0, 1)), PICKUP_GUN, i);
+		}
 	}
 
 	// a nice sound
