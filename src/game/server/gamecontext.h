@@ -83,7 +83,7 @@ class CGameContext : public IGameServer
 
 	static void ConMenu(IConsole::IResult *pResult, void *pUserData);
 
-	static void MenuStatus(int ClientID, void *pUserData);
+	static void MenuInventory(int ClientID, void *pUserData);
 	static void MenuItem(int ClientID, void *pUserData);
 
 

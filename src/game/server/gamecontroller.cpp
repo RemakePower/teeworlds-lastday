@@ -477,7 +477,7 @@ double CGameController::GetTime()
 	return static_cast<double>(Server()->Tick() - m_RoundStartTick)/Server()->TickSpeed();
 }
 
-void CGameController::ShowStatus(int ClientID)
+void CGameController::ShowInventory(int ClientID)
 {
 	CPlayer *pPlayer = GameServer()->m_apPlayers[ClientID];
 
@@ -492,7 +492,13 @@ void CGameController::ShowStatus(int ClientID)
 	Resource *pPResource = &pPlayer->m_Resource;
 	std::string Buffer;
 	Buffer.clear();
+
+	Buffer.append("===");
+	Buffer.append(GameServer()->Localize(pLanguageCode, "Inventory"));
+	Buffer.append("===");
+	Buffer.append("\n");
 	
+	bool Nothing = true;
 	for(int i = 0; i < NUM_RESOURCES;i ++)
 	{
 		if(pPResource->GetResource(i))
@@ -501,13 +507,14 @@ void CGameController::ShowStatus(int ClientID)
 			Buffer.append(": ");
 			Buffer.append(format_int64_with_commas(',', pPResource->GetResource(i)));
 			Buffer.append("\n");
+			Nothing = false;
 		}
 	}
+	Buffer.append("\n");
 
-	if(Buffer.length())
-	{
-		GameServer()->SendBroadcast(Buffer.c_str(), ClientID);
-	}else GameServer()->SendBroadcast_VL("You don't have any things!", ClientID);
+	if(Nothing)
+		Buffer.append(GameServer()->Localize(pLanguageCode, "You don't have any things!"));
+	GameServer()->SendMotd(ClientID, Buffer.c_str());
 }
 
 void CGameController::OnCreateBot()

@@ -1498,11 +1498,11 @@ void CGameContext::ConMenu(IConsole::IResult *pResult, void *pUserData)
 	}
 }
 
-void CGameContext::MenuStatus(int ClientID, void *pUserData)
+void CGameContext::MenuInventory(int ClientID, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
 
-	pSelf->m_pController->ShowStatus(ClientID);
+	pSelf->m_pController->ShowInventory(ClientID);
 }
 
 void CGameContext::MenuItem(int ClientID, void *pUserData)
@@ -1554,7 +1554,7 @@ void CGameContext::ConsoleOutputCallback_Chat(const char *pLine, void *pUser)
 
 void CGameContext::OnMenuOptionsInit()
 {
-	Menu()->Register("Player Status", MENUPAGE_MAIN, MenuStatus, this, true);
+	Menu()->Register("Player Inventory", MENUPAGE_MAIN, MenuInventory, this, true);
 	Menu()->Register("Make Item", MENUPAGE_MAIN, MenuItem, this, false);
 }
 
