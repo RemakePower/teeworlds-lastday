@@ -213,8 +213,8 @@
             "value": "使用<鼠标左键>(攻击)使用选项"
         },
         {
-            "key": "Use <mouse2>(Hook) to back main menu(or close menu)",
-            "value": "使用<鼠标右键>(钩子)来返回主菜单(或者关闭菜单)"
+            "key": "Use <mouse2>(Hook) to back main menu",
+            "value": "使用<鼠标右键>(钩子)来返回主菜单"
         },
         {
             "key": "Make Item",
