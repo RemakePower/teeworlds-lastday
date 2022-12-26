@@ -109,10 +109,10 @@ void CMenu::ShowMenu(int ClientID, int Line)
     }
 
 
-    if(m_DataTemp.size() > 6)
+    if(m_DataTemp.size() > 7)
     {
         int j = Line;
-        for(int i = 0;i < 6; i++)
+        for(int i = 0;i < 7; i++)
         {
             if(j < 0)
                 j = m_DataTemp.size()-1;
@@ -121,14 +121,14 @@ void CMenu::ShowMenu(int ClientID, int Line)
                 j = 0;
 
             const char* Buffer = m_DataTemp[j].c_str();
-            if(j == Line)
+            if(i == 3)
                 MenuBuffer.append("[");
             MenuBuffer.append(Localize(Buffer));
-            if(j == Line)
+            if(i == 3)
                 MenuBuffer.append("]");
             MenuBuffer.append("\n");
 
-            if(j == Line)
+            if(i == 3)
             {
                 pPlayer->m_SelectOption = Buffer;
             }
@@ -204,7 +204,12 @@ void CMenu::UseOptions(int ClientID)
     
     int OptionID = FindOption(pPlayer->m_SelectOption, pPlayer->GetMenuPage());
 
-    dbg_assert(OptionID > -1 && OptionID < m_apOptions.size(), "no this option, but a player use it");
+    if(OptionID == -1 || OptionID >= m_apOptions.size())
+    {
+        dbg_msg("gamemenu", "a player used option %s, but doesn't have this options", pPlayer->m_SelectOption);
+        dbg_assert(0, "no this option, but a player use it");
+    }
+    
     if(m_apOptions[OptionID]->m_CloseMenu)
         pPlayer->CloseMenu();
     if(m_apOptions[OptionID]->GetOptionType() == MENUOPTION_OPTIONS)
