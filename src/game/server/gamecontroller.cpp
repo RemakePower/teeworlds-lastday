@@ -541,7 +541,7 @@ int CGameController::RandomPower()
 void CGameController::CreateZombiePickup(vec2 Pos, vec2 Dir)
 {
 	int PickupType, PickupSubtype;
-	PickupType = random_int(0, NUM_PICKUPS-1);
+	PickupType = random_int(0, PICKUP_RESOURCE);
 	
 	if(PickupType == PICKUP_AMMO)
 	{
@@ -552,5 +552,5 @@ void CGameController::CreateZombiePickup(vec2 Pos, vec2 Dir)
 		PickupSubtype = random_int(RESOURCE_METAL, NUM_RESOURCES-1);
 	}
 
-	new CPickup(&GameServer()->m_World, Pos, Dir, PickupType, PickupSubtype);
+	new CPickup(&GameServer()->m_World, Pos, Dir, PickupType, PickupSubtype, random_int(1,3));
 }
