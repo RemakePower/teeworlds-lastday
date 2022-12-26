@@ -99,7 +99,7 @@ void CMenu::ShowMenu(int ClientID, int Line)
     MenuBuffer.append("\n");
     if (Line < 0)
     {
-        Line = m_DataTemp.size()-1 - Line%m_DataTemp.size();
+        Line = m_DataTemp.size()-1 + Line%m_DataTemp.size();
     }
 
     if (Line >= m_DataTemp.size())
