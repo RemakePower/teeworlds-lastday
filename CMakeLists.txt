@@ -273,6 +273,7 @@ if(UNIX)
   # Use -pthread instead of -lpthread to draw dependencies other than libpthread
   set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 endif()
+find_package(Threads)
 
 message(STATUS "******** LastDay ********")
 message(STATUS "Target OS: ${TARGET_OS} ${TARGET_BITS}bit")
