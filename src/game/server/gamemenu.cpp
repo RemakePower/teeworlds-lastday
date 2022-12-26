@@ -32,11 +32,7 @@ int CMenu::FindOption(const char *pName, int Pages)
 	{
         if(str_comp_nocase(m_apOptions[i]->m_pName, pName) == 0)
         {
-            if(m_apOptions[i]->m_Page == Pages)
-                return i;
-            else if(Pages != MENUPAGE_MAIN && m_apOptions[i]->m_Page == MENUPAGE_NOTMAIN)
-                return i;
-            
+            return i;
         }
 	}
 
