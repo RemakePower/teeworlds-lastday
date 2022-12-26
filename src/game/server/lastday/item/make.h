@@ -23,7 +23,6 @@ class CItemMake
 	array<CItemData*> m_apDatas;
 	void ReturnItem(CItemData Item, int ClientID);
 	bool InitItem();
-	void ShowNeed(CItemData ItemInfo, int ClientID);
 
 public:
     CItemMake(CGameContext *pGameServer);
