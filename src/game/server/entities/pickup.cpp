@@ -128,7 +128,11 @@ void CPickup::Tick()
 					GameServer()->SendChatTarget_Locazition(pChr->GetCID(), _("You got %d %s"),
 						5, GetAmmoType(m_Subtype));
 					GameServer()->CreateSound(m_Pos, SOUND_PICKUP_SHOTGUN);
-				}else pChr->GetWeaponStat()[m_Subtype].m_Got = true;
+				}else 
+				{
+					pChr->GetWeaponStat()[m_Subtype].m_Got = true;
+					GameServer()->CreateSound(m_Pos, SOUND_PICKUP_GRENADE);
+				}
 				Destroy = true;
 				break;
 			}
@@ -163,7 +167,7 @@ void CPickup::Snap(int SnappingClient)
 		pP->m_Type = POWERUP_WEAPON;
 		pP->m_Subtype = WEAPON_HAMMER;
 	}
-	else if(m_Type == PICKUP_RESOURCE)
+	else if(m_Type == PICKUP_AMMO)
 	{
 		int Degres = 0;
 
