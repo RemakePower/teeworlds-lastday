@@ -28,6 +28,7 @@ void CItemMake::MakeItem(const char *pMakeItem, int ClientID)
 	CItemData ItemInfo;
 	if(!FindItem(pMakeItem, &ItemInfo))
 	{
+		dbg_msg(pMakeItem, pMakeItem);
 		GameServer()->SendChatTarget_Locazition(ClientID, _("No this item!"));
 		return;
 	}
@@ -187,8 +188,11 @@ bool CItemMake::FindItem(const char *pName, CItemData *pData)
 			pData->m_GiveNum = m_apDatas[i]->m_GiveNum;
 			pData->m_GiveType = m_apDatas[i]->m_GiveType;
 			pData->m_NeedResource = m_apDatas[i]->m_NeedResource;
+			Found = true;
+			break;
 		}
 	}
+	return Found;
 }
 
 void CItemMake::ShowNeed(CItemData ItemInfo, int ClientID)
