@@ -28,6 +28,7 @@ typedef unsigned __int64 uint64_t;
 #include <stdint.h>
 #endif
 
+#include "gamemenu.h"
 /*
 	Tick
 		Game Context (CGameContext::tick)
@@ -58,6 +59,7 @@ class CGameContext : public IGameServer
 	CCollision m_Collision;
 	CNetObjHandler m_NetObjHandler;
 	CTuningParams m_Tuning;
+	CMenu *m_pMenu;
 
 	static void ConsoleOutputCallback_Chat(const char *pLine, void *pUser);
 
@@ -79,8 +81,10 @@ class CGameContext : public IGameServer
 	static void ConVote(IConsole::IResult *pResult, void *pUserData);
 	static void ConchainSpecialMotdupdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 
-	static void ConItem(IConsole::IResult *pResult, void *pUserData);
-	static void ConStatus(IConsole::IResult *pResult, void *pUserData);
+	static void ConMenu(IConsole::IResult *pResult, void *pUserData);
+
+	static void MenuInventory(int ClientID, void *pUserData);
+	static void MenuItem(int ClientID, void *pUserData);
 
 
 	CGameContext(int Resetting);
@@ -98,6 +102,7 @@ public:
 	class IConsole *Console() { return m_pConsole; }
 	CCollision *Collision() { return &m_Collision; }
 	CTuningParams *Tuning() { return &m_Tuning; }
+	CMenu *Menu() { return m_pMenu; }
 	class CLayers *Layers() override { return &m_Layers; }
 
 	CGameContext();
@@ -181,6 +186,8 @@ public:
 	void CheckPureTuning();
 	void SendTuningParams(int ClientID);
 
+	void OnMenuOptionsInit();
+
 	// engine events
 	void OnInit() override;
 	void OnConsoleInit() override;
@@ -212,6 +219,7 @@ public:
 
 	// MakeItem
 	class CItemMake *m_pMakeSystem;
+	void MakeItem(int ClientID, const char *pItemName);
 
 	//Bot Start
 	int GetBotNum() const;

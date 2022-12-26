@@ -42,10 +42,19 @@ enum ResourceList
     NUM_RESOURCES,
 };
 
+enum OptionType
+{
+    MENUOPTION_OPTIONS=0,
+    MENUOPTION_ITEMS,
+
+    NUM_MENUOPTIONS,
+};
+
 enum PickupType
 {
     PICKUP_AMMO=0,
     PICKUP_RESOURCE,
+    PICKUP_GUN,
     
     NUM_PICKUPS,
 };
@@ -73,6 +82,13 @@ enum BotPower
     //BOTPOWER_RIFLE=1<<6,
 
     NUM_BOTPOWERS=4,
+};
+
+enum MenuPages
+{
+    MENUPAGE_MAIN=0,
+    MENUPAGE_NOTMAIN,
+    MENUPAGE_ITEM,
 };
 
 #endif

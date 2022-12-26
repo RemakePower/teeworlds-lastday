@@ -39,6 +39,7 @@ void CGameContext::Construct(int Resetting)
 	if(Resetting==NO_RESET)
 		m_pVoteOptionHeap = new CHeap();
 		
+	m_pMenu = new CMenu(this);
 	m_pMakeSystem = new CItemMake(this);
 }
 
@@ -392,9 +393,9 @@ void CGameContext::StartVote(const char *pDesc, const char *pCommand, const char
 
 	// start vote
 	m_VoteCloseTime = time_get() + time_freq()*25;
-	str_copy(m_aVoteDescription, pDesc, sizeof(m_aVoteDescription));
-	str_copy(m_aVoteCommand, pCommand, sizeof(m_aVoteCommand));
-	str_copy(m_aVoteReason, pReason, sizeof(m_aVoteReason));
+	str_copy(m_aVoteDescription, pDesc);
+	str_copy(m_aVoteCommand, pCommand);
+	str_copy(m_aVoteReason, pReason);
 	SendVoteSet(-1);
 	m_VoteUpdate = true;
 }
@@ -467,13 +468,6 @@ void CGameContext::OnTick()
 	// check tuning
 	CheckPureTuning();
 
-	// copy tuning
-	m_World.m_Core.m_Tuning = m_Tuning;
-	m_World.Tick();
-
-	//if(world.paused) // make sure that the game object always updates
-	m_pController->Tick();
-
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
 		if(m_apPlayers[i])
@@ -482,6 +476,13 @@ void CGameContext::OnTick()
 			m_apPlayers[i]->PostTick();
 		}
 	}
+
+	// copy tuning
+	m_World.m_Core.m_Tuning = m_Tuning;
+	m_World.Tick();
+
+	//if(world.paused) // make sure that the game object always updates
+	m_pController->Tick();
 
 	// update voting
 	if(m_VoteCloseTime)
@@ -597,7 +598,14 @@ void CGameContext::OnClientEnter(int ClientID)
 	str_format(aBuf, sizeof(aBuf), "team_join player='%d:%s' team=%d", ClientID, Server()->ClientName(ClientID), m_apPlayers[ClientID]->GetTeam());
 	Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
 
-	SendChatTarget_Locazition(-1, "A player join the game");
+	SendChatTarget_Locazition(-1, "Survivor '%s' is coming", Server()->ClientName(ClientID));
+
+
+	SendChatTarget_Locazition(ClientID, "===Welcome to last day===");
+	SendChatTarget_Locazition(ClientID, "Bind </menu> to your key");
+	SendChatTarget_Locazition(ClientID, "No change team, change team button is change sit");
+	SendChatTarget_Locazition(ClientID, "Show clan plate can show health bar");
+
 
 	m_VoteUpdate = true;
 }
@@ -628,7 +636,6 @@ void CGameContext::OnClientConnected(int ClientID)
 
 void CGameContext::OnClientDrop(int ClientID, const char *pReason)
 {
-
 	AbortVoteKickOnDisconnect(ClientID);
 	m_apPlayers[ClientID]->OnDisconnect(pReason);
 	delete m_apPlayers[ClientID];
@@ -705,8 +712,6 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			// drop empty and autocreated spam messages (more than 16 characters per second)
 			if(Length == 0 || (pMsg->m_pMessage[0] != '/' && g_Config.m_SvSpamprotection && pPlayer->m_LastChat && pPlayer->m_LastChat+Server()->TickSpeed()*((15+Length)/16) > Server()->Tick()))
 				return;
-
-			pPlayer->m_LastChat = Server()->Tick();
 			
 			if(pMsg->m_pMessage[0] == '/' || pMsg->m_pMessage[0] == '\\')
 			{
@@ -731,6 +736,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			else
 			{
 				SendChat(ClientID, Team, pMsg->m_pMessage);
+				pPlayer->m_LastChat = Server()->Tick();
 			}
 		}
 		else if(MsgID == NETMSGTYPE_CL_CALLVOTE)
@@ -897,50 +903,9 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				m_VoteUpdate = true;
 			}
 		}
-		else if (MsgID == NETMSGTYPE_CL_SETTEAM && !m_World.m_Paused)
+		else if (MsgID == NETMSGTYPE_CL_SETTEAM)
 		{
-			CNetMsg_Cl_SetTeam *pMsg = (CNetMsg_Cl_SetTeam *)pRawMsg;
-
-			if(pPlayer->GetTeam() == pMsg->m_Team || (g_Config.m_SvSpamprotection && pPlayer->m_LastSetTeam && pPlayer->m_LastSetTeam+Server()->TickSpeed()*3 > Server()->Tick()))
-				return;
-
-			if(pMsg->m_Team != TEAM_SPECTATORS && m_LockTeams)
-			{
-				pPlayer->m_LastSetTeam = Server()->Tick();
-				SendBroadcast_VL(_("Teams are locked"), ClientID);
-				return;
-			}
-
-			if(pPlayer->m_TeamChangeTick > Server()->Tick())
-			{
-				pPlayer->m_LastSetTeam = Server()->Tick();
-				int TimeLeft = (pPlayer->m_TeamChangeTick - Server()->Tick())/Server()->TickSpeed();
-				char aBuf[128];
-				char aTime[128];
-				str_format(aTime, sizeof(aTime), "%02d:%02d", TimeLeft/60, TimeLeft%60);
-				str_format(aBuf, sizeof(aBuf), "Time to wait before changing team: %s", aTime);
-				SendBroadcast_VL(_("Time to wait before changing team: %s"), ClientID, aTime);
-				return;
-			}
-
-			// Switch team on given client and kill/respawn him
-			if(m_pController->CanJoinTeam(pMsg->m_Team, ClientID))
-			{
-				if(m_pController->CanChangeTeam(pPlayer, pMsg->m_Team))
-				{
-					pPlayer->m_LastSetTeam = Server()->Tick();
-					if(pPlayer->GetTeam() == TEAM_SPECTATORS || pMsg->m_Team == TEAM_SPECTATORS)
-						m_VoteUpdate = true;
-					pPlayer->SetTeam(pMsg->m_Team);
-					pPlayer->m_TeamChangeTick = Server()->Tick();
-				}
-				else
-					SendBroadcast_VL(_("Teams must be balanced, please join other team"), ClientID);
-			}
-			else
-			{
-				SendBroadcast_VL(_("Only %d active players are allowed"), ClientID, &ClientID);
-			}
+			pPlayer->m_Sit = !pPlayer->m_Sit;
 		}
 		else if (MsgID == NETMSGTYPE_CL_SETSPECTATORMODE && !m_World.m_Paused)
 		{
@@ -972,7 +937,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
 			// set infos
 			char aOldName[MAX_NAME_LENGTH];
-			str_copy(aOldName, Server()->ClientName(ClientID), sizeof(aOldName));
+			str_copy(aOldName, Server()->ClientName(ClientID));
 			Server()->SetClientName(ClientID, pMsg->m_pName);
 			if(str_comp(aOldName, Server()->ClientName(ClientID)) != 0)
 			{
@@ -980,7 +945,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			}
 			Server()->SetClientClan(ClientID, pMsg->m_pClan);
 			Server()->SetClientCountry(ClientID, pMsg->m_Country);
-			str_copy(pPlayer->m_TeeInfos.m_SkinName, pMsg->m_pSkin, sizeof(pPlayer->m_TeeInfos.m_SkinName));
+			str_copy(pPlayer->m_TeeInfos.m_SkinName, pMsg->m_pSkin);
 			pPlayer->m_TeeInfos.m_UseCustomColor = pMsg->m_UseCustomColor;
 			pPlayer->m_TeeInfos.m_ColorBody = pMsg->m_ColorBody;
 			pPlayer->m_TeeInfos.m_ColorFeet = pMsg->m_ColorFeet;
@@ -1020,7 +985,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			Server()->SetClientName(ClientID, pMsg->m_pName);
 			Server()->SetClientClan(ClientID, pMsg->m_pClan);
 			Server()->SetClientCountry(ClientID, pMsg->m_Country);
-			str_copy(pPlayer->m_TeeInfos.m_SkinName, pMsg->m_pSkin, sizeof(pPlayer->m_TeeInfos.m_SkinName));
+			str_copy(pPlayer->m_TeeInfos.m_SkinName, pMsg->m_pSkin);
 			pPlayer->m_TeeInfos.m_UseCustomColor = pMsg->m_UseCustomColor;
 			pPlayer->m_TeeInfos.m_ColorBody = pMsg->m_ColorBody;
 			pPlayer->m_TeeInfos.m_ColorFeet = pMsg->m_ColorFeet;
@@ -1251,7 +1216,7 @@ void CGameContext::ConAddVote(IConsole::IResult *pResult, void *pUserData)
 	if(!pSelf->m_pVoteOptionFirst)
 		pSelf->m_pVoteOptionFirst = pOption;
 
-	str_copy(pOption->m_aDescription, pDescription, sizeof(pOption->m_aDescription));
+	str_copy(pOption->m_aDescription, pDescription);
 	mem_copy(pOption->m_aCommand, pCommand, Len+1);
 	char aBuf[256];
 	str_format(aBuf, sizeof(aBuf), "added option '%s' '%s'", pOption->m_aDescription, pOption->m_aCommand);
@@ -1316,7 +1281,7 @@ void CGameContext::ConRemoveVote(IConsole::IResult *pResult, void *pUserData)
 		if(!pVoteOptionFirst)
 			pVoteOptionFirst = pDst;
 
-		str_copy(pDst->m_aDescription, pSrc->m_aDescription, sizeof(pDst->m_aDescription));
+		str_copy(pDst->m_aDescription, pSrc->m_aDescription);
 		mem_copy(pDst->m_aCommand, pSrc->m_aCommand, Len+1);
 	}
 
@@ -1451,7 +1416,7 @@ void CGameContext::ConAbout(IConsole::IResult *pResult, void *pUserData)
 
 	char aThanksList[256];
 
-	str_copy(aThanksList, "necropotame, kurosio, GutZuFusss, and ST-Chara", sizeof(aThanksList));
+	str_copy(aThanksList, "necropotame, kurosio, GutZuFusss, and ST-Chara");
 	// necropotame made this frame, ST-Chara and RemakePower now support it.Localization from Kurosio.
 
 	pSelf->SendChatTarget_Locazition(ClientID, "=====%s=====", MOD_NAME);
@@ -1474,13 +1439,13 @@ void CGameContext::ConLanguage(IConsole::IResult *pResult, void *pUserData)
 	if(pLanguageCode)
 	{
 		if(str_comp_nocase(pLanguageCode, "ua") == 0)
-			str_copy(aFinalLanguageCode, "uk", sizeof(aFinalLanguageCode));
+			str_copy(aFinalLanguageCode, "uk");
 		else
 		{
 			for(int i=0; i<pSelf->Server()->Localization()->m_pLanguages.size(); i++)
 			{
 				if(str_comp_nocase(pLanguageCode, pSelf->Server()->Localization()->m_pLanguages[i]->GetFilename()) == 0)
-					str_copy(aFinalLanguageCode, pLanguageCode, sizeof(aFinalLanguageCode));
+					str_copy(aFinalLanguageCode, pLanguageCode);
 			}
 		}
 	}
@@ -1518,52 +1483,33 @@ void CGameContext::ConLanguage(IConsole::IResult *pResult, void *pUserData)
 	return;
 }
 
-void CGameContext::ConItem(IConsole::IResult *pResult, void *pUserData)
+void CGameContext::ConMenu(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
-
-	int ClientID = pResult->GetClientID();
 	
-	const char *pParamName = pResult->GetString(0);
-	const char *pCommand = pResult->GetString(1);
+	int ClientID = pResult->GetClientID();
+	CPlayer *pPlayer = pSelf->m_apPlayers[ClientID];
 
-	if(str_comp(pParamName, "help") == 0)
+	if(pPlayer)
 	{
-		if(!pCommand[0])
-		{		
-			pSelf->SendChatTarget(ClientID, "=====================");
-			pSelf->SendChatTarget_Locazition(ClientID, _("Use [/item help <itemname>] get item need resource"));
-			pSelf->SendChatTarget_Locazition(ClientID, _("Use [/item make <itemname>] make item"));
-			pSelf->SendChatTarget_Locazition(ClientID, _("Use [/item list] get item list"));
-		}
-		else
-		{
-			pSelf->m_pMakeSystem->ShowNeed(pCommand, ClientID);
-		}
-	}else if(str_comp(pParamName, "make") == 0)
-	{
-		if(!pCommand[0])
-		{
-			pSelf->SendChatTarget_Locazition(ClientID, _("No any item name input"));
-			pSelf->SendChatTarget_Locazition(ClientID, _("Use [/item help]"));
-		}else 
-		{
-			pSelf->m_pMakeSystem->MakeItem(pCommand, ClientID);
-		}
-	}else if(str_comp(pParamName, "list") == 0)
-	{
-		pSelf->m_pMakeSystem->ShowMakeList(ClientID);
-	}else pSelf->SendChatTarget_Locazition(ClientID, _("Use [/item help]"));
-
+		if(pPlayer->GetMenuStatus())// opening menu
+			pSelf->m_apPlayers[ClientID]->CloseMenu();
+		else pSelf->m_apPlayers[ClientID]->OpenMenu();
+	}
 }
 
-void CGameContext::ConStatus(IConsole::IResult *pResult, void *pUserData)
+void CGameContext::MenuInventory(int ClientID, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
-	
-	int ClientID = pResult->GetClientID();
 
-	pSelf->m_pController->ShowStatus(ClientID);
+	pSelf->m_pController->ShowInventory(ClientID);
+}
+
+void CGameContext::MenuItem(int ClientID, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+
+	pSelf->m_apPlayers[ClientID]->SetMenuPage(MENUPAGE_ITEM);
 }
 
 void CGameContext::SetClientLanguage(int ClientID, const char *pLanguage)
@@ -1606,6 +1552,12 @@ void CGameContext::ConsoleOutputCallback_Chat(const char *pLine, void *pUser)
 	ReentryGuard--;
 }
 
+void CGameContext::OnMenuOptionsInit()
+{
+	Menu()->Register("Player Inventory", MENUPAGE_MAIN, MenuInventory, this, true);
+	Menu()->Register("Make Item", MENUPAGE_MAIN, MenuItem, this, false);
+}
+
 void CGameContext::OnConsoleInit()
 {
 	m_pServer = Kernel()->RequestInterface<IServer>();
@@ -1634,9 +1586,7 @@ void CGameContext::OnConsoleInit()
 	Console()->Register("about", "", CFGFLAG_CHAT, ConAbout, this, "Show information about the mod");
 	Console()->Register("language", "?s", CFGFLAG_CHAT, ConLanguage, this, "change language");
 
-	Console()->Register("item", "?s?r", CFGFLAG_CHAT, ConItem, this, "item");
-	Console()->Register("status", "", CFGFLAG_CHAT, ConStatus, this, "show status");
-	Console()->Register("me", "", CFGFLAG_CHAT, ConStatus, this, "show status");
+	Console()->Register("menu", "", CFGFLAG_CHAT, ConMenu, this, "show menu");
 
 	Console()->Chain("sv_motd", ConchainSpecialMotdupdate, this);
 }
@@ -1708,6 +1658,7 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 		}
 	}
 #endif
+	OnMenuOptionsInit();
 }
 
 void CGameContext::OnShutdown()
@@ -1774,6 +1725,11 @@ void CGameContext::AddResource(int ClientID, int ResourceID, int Num)
 	SendChatTarget_Locazition(ClientID, _("You got %d %s"), Num, GetResourceName(ResourceID));
 
 	SendEmoticon(ClientID, EMOTICON_SUSHI);	
+}
+
+void CGameContext::MakeItem(int ClientID, const char *pItemName)
+{
+	m_pMakeSystem->MakeItem(pItemName, ClientID);
 }
 
 int CGameContext::GetBotNum() const

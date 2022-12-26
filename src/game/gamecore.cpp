@@ -70,7 +70,9 @@ void CCharacterCore::Reset()
 	m_HookTick = 0;
 	m_HookState = HOOK_IDLE;
 	m_HookedPlayer = -1;
-	m_Jumped = 0;
+	m_MaxJumps = 3;
+	m_InfniteJumps = 0;
+	m_JumpCounter = 0;
 	m_TriggeredEvents = 0;
 }
 
@@ -116,17 +118,26 @@ void CCharacterCore::Tick(bool UseInput, const CTuningParams* pTuningParams)
 		{
 			if(!(m_Jumped&1))
 			{
-				if(Grounded)
+				if(Grounded && (!(m_Jumped & 2) || m_MaxJumps != 0))
 				{
 					m_TriggeredEvents |= COREEVENT_GROUND_JUMP;
 					m_Vel.y = -pTuningParams->m_GroundJumpImpulse;
-					m_Jumped |= 1;
+					if(m_MaxJumps > 1)
+					{
+						m_Jumped |= 1;
+					}
+					else
+					{
+						m_Jumped |= 3;
+					}
+					m_JumpCounter = 0;
 				}
 				else if(!(m_Jumped&2))
 				{
 					m_TriggeredEvents |= COREEVENT_AIR_JUMP;
 					m_Vel.y = -pTuningParams->m_AirJumpImpulse;
 					m_Jumped |= 3;
+					m_JumpCounter++;
 				}
 			}
 		}
@@ -166,7 +177,38 @@ void CCharacterCore::Tick(bool UseInput, const CTuningParams* pTuningParams)
 	// 1 bit = to keep track if a jump has been made on this input
 	// 2 bit = to keep track if a air-jump has been made
 	if(Grounded)
+	{
+		m_JumpCounter = 0;
 		m_Jumped &= ~2;
+	}
+
+	// following jump rules can be overridden by tiles, like Refill Jumps, Stopper and Wall Jump
+	if(m_MaxJumps == -1)
+	{
+		// The player has only one ground jump, so his feet are always dark
+		m_Jumped |= 2;
+	}
+	else if(m_MaxJumps == 0)
+	{
+		// The player has no jumps at all, so his feet are always dark
+		m_Jumped |= 2;
+	}
+	else if(m_MaxJumps == 1 && m_Jumped > 0)
+	{
+		// If the player has only one jump, each jump is the last one
+		m_Jumped |= 2;
+	}
+	else if(m_JumpCounter < m_MaxJumps - 1 && m_Jumped > 1)
+	{
+		// The player has not yet used up all his jumps, so his feet remain light
+		m_Jumped = 1;
+	}
+
+	if(m_InfniteJumps && m_Jumped > 1)
+	{
+		// infinite jumps
+		m_Jumped = 1;
+	}
 
 	// do hook
 	if(m_HookState == HOOK_IDLE)

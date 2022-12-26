@@ -53,12 +53,12 @@
             "value": "可用语言: %s"
         },
         {
-            "key": "'%s' entered and joined the game",
-            "value": "'%s' 进入服务器并加入游戏"
+            "key": "Survivor '%s' is coming",
+            "value": "幸存者'%s'来了"
         },
         {
-            "key": "'%s' has left the game (%s)",
-            "value": "'%s' 离开了游戏 (%s)"
+            "key": "Survivor '%s' left",
+            "value": "幸存者'%s'离开了"
         },
         {
             "key": "'%s' has left the game",
@@ -189,40 +189,48 @@
             "value": "'%s' 改名为 '%s'"
         },
         {
-            "key": "'%s' joined the spectators",
-            "value": "'%s' 加入了旁观"
+            "key": "===Welcome to last day===",
+            "value": "===欢迎来到最后一日==="
         },
         {
-            "key": "'%s' joined the blueteam",
-            "value": "'%s' 加入了蓝队"
+            "key": "Bind </menu> to your key",
+            "value": "请绑定/menu到你的按键"
         },
         {
-            "key": "'%s' joined the redteam",
-            "value": "'%s' 加入了红队"
+            "key": "No change team, change team button is change sit",
+            "value": "无切换队伍,切换队伍按钮是切换坐下"
         },
         {
-            "key": "'%s' joined the game",
-            "value": "'%s' 加入了游戏"
+            "key": "Show clan plate can show health bar",
+            "value": "显示战队可以显示血量条"
+        },
+        {
+            "key": "Menu",
+            "value": "菜单"
+        },
+        {
+            "key": "Use <mouse1>(Fire) to use option",
+            "value": "使用<鼠标左键>(攻击)使用选项"
+        },
+        {
+            "key": "Use <mouse2>(Hook) to back main menu",
+            "value": "使用<鼠标右键>(钩子)来返回主菜单"
+        },
+        {
+            "key": "Make Item",
+            "value": "制作物品"
+        },
+        {
+            "key": "Player Inventory",
+            "value": "玩家物品栏"
+        },
+        {
+            "key": "Back",
+            "value": "返回"
         },
         {
             "key": "Thanks %s",
             "value": "感谢 %s"
-        },
-        {
-            "key": "Use [/item help]",
-            "value": "使用/item help"
-        },
-        {
-            "key": "Use [/item help <itemname>] get item need resource",
-            "value": "使用/item help <物品名>获取物品所需资源"
-        },
-        {
-            "key": "Use [/item make <itemname>] make item",
-            "value": "使用/item make <物品名>制造物品"
-        },
-        {
-            "key": "Use [/item list] get item list",
-            "value": "使用/item list获取物品列表"
         },
         {
             "key": "No any item name input",
@@ -259,6 +267,14 @@
         {
             "key": "You got %d %s",
             "value": "你得到了%d%s"
+        },
+        {
+            "key": "Requires",
+            "value": "需要"
+        },
+        {
+            "key": "Inventory",
+            "value": "物品栏"
         },
         {
             "key": "You don't have any things!",

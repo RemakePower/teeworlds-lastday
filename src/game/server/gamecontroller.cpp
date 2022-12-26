@@ -59,9 +59,9 @@ void CGameController::InitSpawnPos()
 	CMapItemLayerTilemap *pTileMap = GameServer()->Layers()->GameLayer();
 	CTile *pTiles = GameServer()->m_pTiles;
 
-	for(int y = 0; y < pTileMap->m_Height; y++)
+	for(int y = 0; y < pTileMap->m_Height; y+=2)
 	{
-		for(int x = 0; x < pTileMap->m_Width; x++)
+		for(int x = 0; x < pTileMap->m_Width; x+=2)
 		{
 			int Index = pTiles[y*pTileMap->m_Width+x].m_Index;
 
@@ -477,7 +477,7 @@ double CGameController::GetTime()
 	return static_cast<double>(Server()->Tick() - m_RoundStartTick)/Server()->TickSpeed();
 }
 
-void CGameController::ShowStatus(int ClientID)
+void CGameController::ShowInventory(int ClientID)
 {
 	CPlayer *pPlayer = GameServer()->m_apPlayers[ClientID];
 
@@ -492,26 +492,29 @@ void CGameController::ShowStatus(int ClientID)
 	Resource *pPResource = &pPlayer->m_Resource;
 	std::string Buffer;
 	Buffer.clear();
+
+	Buffer.append("===");
+	Buffer.append(GameServer()->Localize(pLanguageCode, "Inventory"));
+	Buffer.append("===");
+	Buffer.append("\n");
 	
-	bool First=true;	
+	bool Nothing = true;
 	for(int i = 0; i < NUM_RESOURCES;i ++)
 	{
 		if(pPResource->GetResource(i))
 		{
-			if(!First)
-				Buffer.append(", ");
-			else First = false;
 			Buffer.append(GameServer()->Localize(pLanguageCode, GetResourceName(i)));
 			Buffer.append(": ");
 			Buffer.append(format_int64_with_commas(',', pPResource->GetResource(i)));
-			Buffer.append(" ");
+			Buffer.append("\n");
+			Nothing = false;
 		}
 	}
+	Buffer.append("\n");
 
-	if(Buffer.length())
-	{
-		GameServer()->SendChatTarget(ClientID, Buffer.c_str());
-	}else GameServer()->SendChatTarget_Locazition(ClientID, _("You don't have any things!"));
+	if(Nothing)
+		Buffer.append(GameServer()->Localize(pLanguageCode, "You don't have any things!"));
+	GameServer()->SendMotd(ClientID, Buffer.c_str());
 }
 
 void CGameController::OnCreateBot()

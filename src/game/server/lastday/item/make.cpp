@@ -1,10 +1,13 @@
-
-#include <engine/external/json-parser/json.h>
+#include <engine/external/nlohmann/json.hpp>
 #include <game/server/gamecontext.h>
 #include <game/server/define.h>
 #include "make.h"
 
-CItemMake::CItemData::CItemData()
+#include <fstream>
+
+using json = nlohmann::json;
+
+CItemData::CItemData()
 {
 	m_GiveType = 0;
 	m_GiveID = 0;
@@ -15,6 +18,8 @@ CItemMake::CItemData::CItemData()
 CItemMake::CItemMake(CGameContext *pGameServer)
 {
 	m_pGameServer = pGameServer;
+	m_apDatas.clear();
+	InitItem();
 }
 
 // Public Make
@@ -24,7 +29,6 @@ void CItemMake::MakeItem(const char *pMakeItem, int ClientID)
 	if(!FindItem(pMakeItem, &ItemInfo))
 	{
 		GameServer()->SendChatTarget_Locazition(ClientID, _("No this item!"));
-		ShowMakeList(ClientID);
 		return;
 	}
 	
@@ -136,59 +140,55 @@ void CItemMake::ReturnItem(CItemData Item, int ClientID)
 }
 
 // Find Item, if it in the json.return the FOUND(and the Item info)
-bool CItemMake::FindItem(const char *pMakeItem, CItemData *ItemInfo)
+bool CItemMake::InitItem()
 {
 	// read file data into buffer
 	const char *pFilename = "./data/json/make.json";
-	IOHANDLE File = GameServer()->Storage()->OpenFile(pFilename, IOFLAG_READ, IStorage::TYPE_ALL);
-	if(!File)
+	std::ifstream File(pFilename);
+
+	if(!File.is_open())
 	{
 		dbg_msg("Item", "can't open 'data/json/make.json'");
 		return false;
 	}
-	
-	int FileSize = (int)io_length(File);
-	char *pFileData = new char[FileSize+1];
-	io_read(File, pFileData, FileSize);
-	pFileData[FileSize] = 0;
-	io_close(File);
 
 	// parse json data
-	json_settings JsonSettings;
-	mem_zero(&JsonSettings, sizeof(JsonSettings));
-	char aError[256];
-	json_value *pJsonData = json_parse_ex(&JsonSettings, pFileData, aError);
-	if(pJsonData == 0)
-	{
-		delete[] pFileData;
-		return false;
-	}
+	json Data = json::parse(File);
 
-	const json_value &rStart = (*pJsonData)["json"];
-	bool Found = false;
-	if(rStart.type == json_array)
+	json rStart = Data["json"];
+	if(rStart.is_array())
 	{
-		for(unsigned i = 0; i < rStart.u.array.length; ++i)
+		for(unsigned i = 0; i < rStart.size(); ++i)
 		{
-			if(str_comp((const char *)rStart[i]["name"], pMakeItem) == 0)
-			{
-				str_copy(ItemInfo->m_aName, (const char *)rStart[i]["name"], sizeof(ItemInfo->m_aName));
-				ItemInfo->m_GiveType = (long)rStart[i]["give_type"];
-				ItemInfo->m_GiveID = (long)rStart[i]["give_id"];
-				ItemInfo->m_GiveNum = (long)rStart[i]["give_num"];
-				ItemInfo->m_NeedResource.m_Metal = (long)rStart[i]["metal"];
-				ItemInfo->m_NeedResource.m_Wood = (long)rStart[i]["wood"];
-				Found = true;
-				break;
-			}
+			CItemData *pData = new CItemData();
+			str_copy(pData->m_aName, rStart[i].value("name", " ").c_str());
+			pData->m_GiveType = rStart[i].value("give_type", -1);
+			pData->m_GiveID = rStart[i].value("give_id", -1);
+			pData->m_GiveNum = rStart[i].value("give_num", 0);
+			pData->m_NeedResource.m_Metal = rStart[i].value("metal", 0);
+			pData->m_NeedResource.m_Wood = rStart[i].value("wood", 0);
+			m_apDatas.add(pData);
+			GameServer()->Menu()->RegisterMake(pData->m_aName);
 		}
 	}
 
-	// clean up
-	json_value_free(pJsonData);
-	delete[] pFileData;
+	return true;
+}
 
-	return Found;
+bool CItemMake::FindItem(const char *pName, CItemData *pData)
+{
+	bool Found = false;
+	for(int i = 0;i < m_apDatas.size();i ++)
+	{
+		if(str_comp(m_apDatas[i]->m_aName, pName) == 0)
+		{
+			str_copy(pData->m_aName, m_apDatas[i]->m_aName);
+			pData->m_GiveID = m_apDatas[i]->m_GiveID;
+			pData->m_GiveNum = m_apDatas[i]->m_GiveNum;
+			pData->m_GiveType = m_apDatas[i]->m_GiveType;
+			pData->m_NeedResource = m_apDatas[i]->m_NeedResource;
+		}
+	}
 }
 
 void CItemMake::ShowNeed(CItemData ItemInfo, int ClientID)
@@ -221,69 +221,15 @@ void CItemMake::ShowNeed(CItemData ItemInfo, int ClientID)
 }
 
 // Public
-void CItemMake::ShowNeed(const char *pMakeItem, int ClientID)
+Resource *CItemMake::GetNeed(const char *pMakeItem, int ClientID)
 {
 	CItemData ItemInfo;
-	if(!FindItem(pMakeItem, &ItemInfo))
+	if(FindItem(pMakeItem, &ItemInfo))
 	{
 		GameServer()->SendChatTarget_Locazition(ClientID, _("No this item!"));
-		return;
+		return 0;
 	}
 
-	ShowNeed(ItemInfo, ClientID);
+	return &ItemInfo.m_NeedResource;
 }
 
-void CItemMake::ShowMakeList(int ClientID)
-{
-	// read file data into buffer
-	const char *pFilename = "./data/json/make.json";
-	IOHANDLE File = GameServer()->Storage()->OpenFile(pFilename, IOFLAG_READ, IStorage::TYPE_ALL);
-	if(!File)
-	{
-		dbg_msg("Item", "can't open 'data/json/make.json'");
-		return;
-	}
-	
-	int FileSize = (int)io_length(File);
-	char *pFileData = new char[FileSize+1];
-	io_read(File, pFileData, FileSize);
-	pFileData[FileSize] = 0;
-	io_close(File);
-
-	// parse json data
-	json_settings JsonSettings;
-	mem_zero(&JsonSettings, sizeof(JsonSettings));
-	char aError[256];
-	json_value *pJsonData = json_parse_ex(&JsonSettings, pFileData, aError);
-	if(pJsonData == 0)
-	{
-		delete[] pFileData;
-		return;
-	}
-
-	const json_value &rStart = (*pJsonData)["json"];
-	bool Found = false;
-
-	std::string Buffer;
-	if(rStart.type == json_array)
-	{
-		bool First = true;
-		for(unsigned i = 0; i < rStart.u.array.length; ++i)
-		{
-			if(!First)
-				Buffer.append(", ");
-			else First = false;
-			Buffer.append((const char *)rStart[i]["name"]);
-		}
-	}
-
-	dbg_msg("make", Buffer.c_str());
-
-	// clean up
-	json_value_free(pJsonData);
-	delete[] pFileData;
-
-	GameServer()->SendChatTarget_Locazition(ClientID, _("You can make: %s"), Buffer.c_str());
-
-	return;
-}

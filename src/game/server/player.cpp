@@ -20,6 +20,10 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, bool Bot, int BotPower
 	m_Team = 0;
 	m_IsBot = Bot;
 	m_BotPower = BotPower;
+	m_Menu = 0;
+	m_MenuPage = 0;
+	m_MenuLine = 0;
+	m_MenuNeedUpdate = 0;
 	m_SpectatorID = SPEC_FREEVIEW;
 	m_LastActionTick = Server()->Tick();
 	m_TeamChangeTick = Server()->Tick();
@@ -130,9 +134,25 @@ void CPlayer::Tick()
 		++m_TeamChangeTick;
  	}
 
-	if(m_pCharacter && m_pCharacter->IsGrounded())
-		m_Sit = m_PlayerFlags&PLAYERFLAG_AIM;
-	else m_Sit = false;
+	if(m_Menu && m_pCharacter)
+	{
+		if(m_MenuNeedUpdate)
+		{
+			GameServer()->Menu()->ShowMenu(m_ClientID, m_MenuLine);
+			m_MenuNeedUpdate = 0;
+		}
+
+		if(m_pCharacter->GetInput()->m_Fire&1 && !(m_pCharacter->GetPrevInput()->m_Fire&1))
+		{
+			GameServer()->Menu()->UseOptions(m_ClientID);
+		}
+
+		if(m_pCharacter->GetInput()->m_Hook&1 && !(m_pCharacter->GetPrevInput()->m_Hook&1))
+		{
+			m_MenuPage = MENUPAGE_MAIN;
+			m_MenuNeedUpdate = 1;
+		}
+	}
 
 	HandleTuningParams();
 }
@@ -172,7 +192,7 @@ void CPlayer::Snap(int SnappingClient)
 	StrToInts(&pClientInfo->m_Name0, 4, Server()->ClientName(m_ClientID));
 	
 	std::string Buffer;
-	Buffer.append(std::to_string(m_pCharacter ? m_pCharacter->GetHealth() * 10 : 0));
+	Buffer.append(std::to_string(m_pCharacter ? (int)(m_pCharacter->GetHealth() / (float)m_pCharacter->GetMaxHealth() * 100) : 0));
 	Buffer.append("%");
 	StrToInts(&pClientInfo->m_Clan0, 3, Buffer.c_str());
 
@@ -244,6 +264,7 @@ void CPlayer::OnDisconnect(const char *pReason)
 
 	if(Server()->ClientIngame(m_ClientID))
 	{
+		GameServer()->SendChatTarget_Locazition(-1, "Survivor '%s' left", Server()->ClientName(m_ClientID));
 		char aBuf[512];
 		str_format(aBuf, sizeof(aBuf), "leave player='%d:%s'", m_ClientID, Server()->ClientName(m_ClientID));
 		GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "game", aBuf);
@@ -384,4 +405,24 @@ const char* CPlayer::GetLanguage()
 void CPlayer::SetLanguage(const char* pLanguage)
 {
 	str_copy(m_aLanguage, pLanguage, sizeof(m_aLanguage));
+}
+
+void CPlayer::OpenMenu()
+{
+	m_Menu = 1;
+	m_MenuPage = MENUPAGE_MAIN;
+	m_MenuNeedUpdate = 1;
+}
+
+void CPlayer::CloseMenu()
+{
+	m_Menu = 0;
+	m_MenuLine = 0;
+	GameServer()->SendMotd(m_ClientID, "");
+}
+
+void CPlayer::SetMenuPage(int Page)
+{
+	m_MenuPage = Page;
+	m_MenuNeedUpdate = 1;
 }

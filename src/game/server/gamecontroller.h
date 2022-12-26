@@ -138,8 +138,8 @@ public:
 
 	double GetTime();
 
-	// Status
-	void ShowStatus(int ClientID);
+	// Inventory
+	void ShowInventory(int ClientID);
 /** Bot **/
 	void OnCreateBot();
 	int RandomPower();

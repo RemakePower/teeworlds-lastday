@@ -118,6 +118,7 @@ private:
 
 	int m_Health;
 	int m_Armor;
+	int m_MaxHealth;
 
 	// ninja
 	struct NinjaInfo
@@ -138,7 +139,6 @@ private:
 
 private:
 	void UpdateTuning();
-	int m_JumpCounter;
 	int m_SitTick;
 
 	int m_FreezeStartTick;
@@ -147,8 +147,11 @@ private:
 public:
 	CCharacterCore *GetCore() {return &m_Core;}
 	WeaponStat *GetWeaponStat() {return m_aWeapons;}
+	CNetObj_PlayerInput *GetInput() {return &m_Input;}
+	CNetObj_PlayerInput *GetPrevInput() {return &m_PrevInput;}
 	int GetActiveWeapon() {return m_ActiveWeapon; }
 	int GetHealth() const {return m_Health; }
+	int GetMaxHealth() const {return m_MaxHealth; }
 	int GetCID() const;
 
 	void Freeze(float Seconds);

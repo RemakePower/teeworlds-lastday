@@ -42,6 +42,7 @@ CCharacter::CCharacter(CGameWorld *pWorld)
 : CEntity(pWorld, CGameWorld::ENTTYPE_CHARACTER)
 {
 	m_ProximityRadius = ms_PhysSize;
+	m_MaxHealth = 10;
 	m_Health = 0;
 	m_Armor = 0;
 }
@@ -56,10 +57,17 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_EmoteStop = -1;
 	m_LastAction = -1;
 	m_LastNoAmmoSound = -1;
-	m_ActiveWeapon = TWS_WEAPON_HAMMER;
-	m_LastWeapon = TWS_WEAPON_HAMMER;
+	if(pPlayer->m_BotPower&WEAPON_HAMMER)
+	{
+		m_ActiveWeapon = TWS_WEAPON_HAMMER;
+		m_LastWeapon = TWS_WEAPON_HAMMER;
+	}
+	else
+	{
+		m_ActiveWeapon = TWS_WEAPON_GUN;
+		m_LastWeapon = TWS_WEAPON_GUN;
+	}
 	m_QueuedWeapon = -1;
-	m_JumpCounter = 0;
 
 	m_FreezeStartTick = 0;
 	m_FreezeEndTick = 0;
@@ -202,35 +210,52 @@ void CCharacter::HandleWeaponSwitch()
 	int Next = CountInput(m_LatestPrevInput.m_NextWeapon, m_LatestInput.m_NextWeapon).m_Presses;
 	int Prev = CountInput(m_LatestPrevInput.m_PrevWeapon, m_LatestInput.m_PrevWeapon).m_Presses;
 
-	if(Next < 128) // make sure we only try sane stuff
+	if(m_pPlayer->GetMenuStatus())
 	{
-		while(Next) // Next Weapon selection
+		if(Next && Next < 128) // make sure we only try sane stuff
 		{
-			WantedWeapon = (WantedWeapon+1)%NUM_LASTDAY_WEAPONS;
-			if(m_aWeapons[WantedWeapon].m_Got)
-				Next--;
+			m_pPlayer->m_MenuLine++;
+			m_pPlayer->m_MenuNeedUpdate = 1;
+		}
+
+		if(Prev && Prev < 128) // make sure we only try sane stuff
+		{
+			m_pPlayer->m_MenuLine--;
+			m_pPlayer->m_MenuNeedUpdate = 1;
 		}
 	}
-
-	if(Prev < 128) // make sure we only try sane stuff
+	else
 	{
-		while(Prev) // Prev Weapon selection
+		if(Next < 128) // make sure we only try sane stuff
 		{
-			WantedWeapon = (WantedWeapon-1)<0?NUM_LASTDAY_WEAPONS-1:WantedWeapon-1;
-			if(m_aWeapons[WantedWeapon].m_Got)
-				Prev--;
+			while(Next) // Next Weapon selection
+			{
+				WantedWeapon = (WantedWeapon+1)%NUM_LASTDAY_WEAPONS;
+				if(m_aWeapons[WantedWeapon].m_Got)
+					Next--;
+			}
 		}
+
+		if(Prev < 128) // make sure we only try sane stuff
+		{
+			while(Prev) // Prev Weapon selection
+			{
+				WantedWeapon = (WantedWeapon-1)<0?NUM_LASTDAY_WEAPONS-1:WantedWeapon-1;
+				if(m_aWeapons[WantedWeapon].m_Got)
+					Prev--;
+			}
+		}
+
+		// Direct Weapon selection
+		if(m_LatestInput.m_WantedWeapon)
+			WantedWeapon = m_Input.m_WantedWeapon-1;
+
+		// check for insane values
+		if(WantedWeapon >= 0 && WantedWeapon < NUM_LASTDAY_WEAPONS && WantedWeapon != m_ActiveWeapon && m_aWeapons[WantedWeapon].m_Got)
+			m_QueuedWeapon = WantedWeapon;
+
+		DoWeaponSwitch();
 	}
-
-	// Direct Weapon selection
-	if(m_LatestInput.m_WantedWeapon)
-		WantedWeapon = m_Input.m_WantedWeapon-1;
-
-	// check for insane values
-	if(WantedWeapon >= 0 && WantedWeapon < NUM_LASTDAY_WEAPONS && WantedWeapon != m_ActiveWeapon && m_aWeapons[WantedWeapon].m_Got)
-		m_QueuedWeapon = WantedWeapon;
-
-	DoWeaponSwitch();
 }
 
 void CCharacter::FireWeapon()
@@ -262,6 +287,12 @@ void CCharacter::FireWeapon()
 
 	if(!WillFire)
 		return;
+	
+	if(m_pPlayer->GetMenuStatus())
+	{
+		GameServer()->CreateSoundGlobal(SOUND_WEAPON_NOAMMO, GetCID());
+		return;
+	}
 
 	// check for ammo
 	if(!m_aWeapons[m_ActiveWeapon].m_Ammo && !m_pPlayer->m_IsBot)
@@ -422,12 +453,6 @@ void CCharacter::HandleInput()
 	// handle Weapons
 	HandleWeapons();
 
-	// air jump
-	if(IsGrounded()) m_JumpCounter = 2;
-	if(m_Core.m_TriggeredEvents&COREEVENT_AIR_JUMP || m_Core.m_TriggeredEvents&COREEVENT_GROUND_JUMP)
-	{
-		m_JumpCounter--;
-	}
 	if(m_pPlayer->m_Sit)
 	{
 		m_SitTick++;
@@ -603,8 +628,13 @@ void CCharacter::Die(int Killer, int Weapon)
 
 		for(int i = TWS_WEAPON_GUN;i < TWS_WEAPON_NINJA;i ++ )
 		{
+			if(!m_aWeapons->m_Got)
+				continue;
+			// Create gun
+			new CPickup(GameWorld(), m_Pos, vec2(random_int(0, 1), random_int(0, 1)), PICKUP_GUN, i);
 			if(m_aWeapons->m_Ammo < 1)
 				continue;
+			// Create gun ammo
 			new CPickup(GameWorld(), m_Pos, vec2(random_int(0, 1), random_int(0, 1)), PICKUP_AMMO, i, m_aWeapons->m_Ammo);
 			m_aWeapons->m_Ammo = 0;
 		}
@@ -616,6 +646,8 @@ void CCharacter::Die(int Killer, int Weapon)
 			new CPickup(GameWorld(), m_Pos, vec2(random_int(0, 1), random_int(0, 1)), PICKUP_RESOURCE, i, m_pPlayer->m_Resource.GetResource(i));
 			m_pPlayer->m_Resource.SetResource(i, 0);
 		}
+		// close menu
+		m_pPlayer->CloseMenu();
 	}
 
 	// a nice sound
@@ -800,9 +832,6 @@ void CCharacter::Snap(int SnappingClient)
 
 	pDDNetCharacter->m_Flags = 0;
 
-	if(m_pPlayer->m_Sit)
-		pDDNetCharacter->m_Flags |= CHARACTERFLAG_HOOK_HIT_DISABLED;
-
 	switch (g_Weapons.m_aWeapons[m_ActiveWeapon]->GetShowType())
 	{
 		case WEAPON_HAMMER: pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_HAMMER; break;
@@ -815,15 +844,22 @@ void CCharacter::Snap(int SnappingClient)
 
 	pDDNetCharacter->m_FreezeStart = 0;
 	pDDNetCharacter->m_FreezeEnd =	0;
+
+	pDDNetCharacter->m_Jumps = m_Core.m_MaxJumps;
+	pDDNetCharacter->m_JumpedTotal = m_Core.m_JumpCounter;
+	pDDNetCharacter->m_TeleCheckpoint = 0;
+	pDDNetCharacter->m_StrongWeakID = 0; // ???
+
 	if(m_FreezeEndTick >= Server()->Tick())
 	{
 		pDDNetCharacter->m_Flags |= CHARACTERFLAG_IN_FREEZE;
 		pDDNetCharacter->m_FreezeStart = m_FreezeStartTick;
 		pDDNetCharacter->m_FreezeEnd =	m_FreezeEndTick;
+		pDDNetCharacter->m_Jumps = 0;
 	}
-	pDDNetCharacter->m_Jumps = m_JumpCounter;
-	pDDNetCharacter->m_TeleCheckpoint = 0;
-	pDDNetCharacter->m_StrongWeakID = 0; // ???
+
+	if(m_pPlayer->m_Sit)
+		pDDNetCharacter->m_Jumps = 0;
 
 	pDDNetCharacter->m_TargetX = m_Core.m_Input.m_TargetX;
 	pDDNetCharacter->m_TargetY = m_Core.m_Input.m_TargetY;
@@ -925,18 +961,21 @@ void CCharacter::DoBotActions()
 			}else if(pTarget->m_Pos.x - m_Pos.x < -448.0f)
 			{
 				m_Botinfo.m_Direction = -1;
-			}else if(pTarget->m_Pos.x - m_Pos.x < 480.0f && pTarget->m_Pos.x - m_Pos.x > 0.0f)
+			}else if(!GameServer()->Collision()->IntersectLine(pTarget->m_Pos, m_Pos, NULL, NULL))
 			{
-				m_Botinfo.m_Direction = -1;
-			}else if(pTarget->m_Pos.x - m_Pos.x > -480.0f && pTarget->m_Pos.x - m_Pos.x < 0.0f)
-			{
-				m_Botinfo.m_Direction = 1;
+				if(pTarget->m_Pos.x - m_Pos.x < 480.0f && pTarget->m_Pos.x - m_Pos.x > 0.0f)
+				{
+					m_Botinfo.m_Direction = -1;
+				}else if(pTarget->m_Pos.x - m_Pos.x > -480.0f && pTarget->m_Pos.x - m_Pos.x < 0.0f)
+				{
+					m_Botinfo.m_Direction = 1;
+				}
 			}else m_Botinfo.m_Direction = 0;
 		}
 		//Attack
 		if(m_pPlayer->m_BotPower&BOTPOWER_HAMMER)
 		{
-			if(distance(pTarget->m_Pos, m_Pos) < m_ProximityRadius + 40.0f && !(random_int(0, 50) % 50))
+			if(distance(pTarget->m_Pos, m_Pos) < m_ProximityRadius + 40.0f && random_int(0, 25) == 25)
 			{
 				m_ActiveWeapon = WEAPON_HAMMER;
 				m_Input.m_Fire = 1;

@@ -11,5 +11,13 @@ autoexec.cfg
 .vscode
 lastday-accounts.db
 
-teeworlds*
-teeworlds_srv*
+teeworlds_srv
+
+cmake_install.cmake
+CMakeCache.txt
+CMakeFiles
+Makefile
+CMakeSettings*
+CPackConfig.cmake
+CPackSourceConfig.cmake
+CTestTestfile.cmake
