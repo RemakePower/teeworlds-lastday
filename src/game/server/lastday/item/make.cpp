@@ -19,6 +19,7 @@ CItemMake::CItemMake(CGameContext *pGameServer)
 {
 	m_pGameServer = pGameServer;
 	m_apDatas.clear();
+	InitItem();
 }
 
 // Public Make

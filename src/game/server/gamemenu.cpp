@@ -66,6 +66,8 @@ void CMenu::RegisterMake(const char *pName)
 {
 	COptions *pOption = new(mem_alloc(sizeof(COptions), sizeof(void*))) COptions;
 
+	pOption->m_pfnCallback = 0;
+    pOption->m_pUserData = GameServer();
 	pOption->m_pName = pName;
 	pOption->m_Page = MENUPAGE_ITEM;
     pOption->m_CloseMenu = true;
@@ -142,6 +144,7 @@ void CMenu::ShowMenu(int ClientID, int Line)
             const char* Buffer = m_DataTemp[j].c_str();
             if(j == Line)
                 MenuBuffer.append("[");
+            else MenuBuffer.append(" ");
             MenuBuffer.append(Localize(Buffer));
             if(j == Line)
                 MenuBuffer.append("]");
@@ -157,6 +160,7 @@ void CMenu::ShowMenu(int ClientID, int Line)
     }
         
     MenuBuffer.append(Localize("Use <mouse1>(Fire) to use option"));
+    MenuBuffer.append(Localize("Use <mouse2>(Hook) to back main menu(or close menu)"));
 
     if(Page == MENUPAGE_ITEM)
     {
@@ -178,7 +182,7 @@ void CMenu::ShowMenu(int ClientID, int Line)
             }
         }
 
-        MenuBuffer.append("\n");
+        MenuBuffer.append("\n\n");
         MenuBuffer.append(Localize("Requires"));
         MenuBuffer.append(":");
         MenuBuffer.append(Buffer);

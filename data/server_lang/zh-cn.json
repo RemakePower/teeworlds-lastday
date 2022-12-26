@@ -53,12 +53,12 @@
             "value": "可用语言: %s"
         },
         {
-            "key": "'%s' entered and joined the game",
-            "value": "'%s' 进入服务器并加入游戏"
+            "key": "Survivor '%s' is coming",
+            "value": "幸存者'%s'来了"
         },
         {
-            "key": "'%s' has left the game (%s)",
-            "value": "'%s' 离开了游戏 (%s)"
+            "key": "Survivor '%s' left",
+            "value": "幸存者'%s'离开了"
         },
         {
             "key": "'%s' has left the game",
@@ -189,10 +189,6 @@
             "value": "'%s' 改名为 '%s'"
         },
         {
-            "key": "Survivor '%s' is coming",
-            "value": "幸存者'%s'来了"
-        },
-        {
             "key": "===Welcome to last day===",
             "value": "===欢迎来到最后一日==="
         },
@@ -215,6 +211,10 @@
         {
             "key": "Use <mouse1>(Fire) to use option",
             "value": "使用<鼠标左键>(攻击)使用选项"
+        },
+        {
+            "key": "Use <mouse2>(Hook) to back main menu(or close menu)",
+            "value": "使用<鼠标右键>(钩子)来返回主菜单(或者关闭菜单)"
         },
         {
             "key": "Make Item",

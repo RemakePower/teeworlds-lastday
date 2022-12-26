@@ -146,6 +146,12 @@ void CPlayer::Tick()
 		{
 			GameServer()->Menu()->UseOptions(m_ClientID);
 		}
+
+		if(m_pCharacter->GetInput()->m_Hook&1 && !(m_pCharacter->GetPrevInput()->m_Hook&1))
+		{
+			m_MenuPage = MENUPAGE_MAIN;
+			m_MenuNeedUpdate = 1;
+		}
 	}
 
 	HandleTuningParams();
@@ -258,6 +264,7 @@ void CPlayer::OnDisconnect(const char *pReason)
 
 	if(Server()->ClientIngame(m_ClientID))
 	{
+		GameServer()->SendChatTarget_Locazition(-1, "Survivor '%s' left", Server()->ClientName(m_ClientID));
 		char aBuf[512];
 		str_format(aBuf, sizeof(aBuf), "leave player='%d:%s'", m_ClientID, Server()->ClientName(m_ClientID));
 		GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "game", aBuf);

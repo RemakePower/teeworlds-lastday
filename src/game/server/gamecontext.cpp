@@ -39,8 +39,8 @@ void CGameContext::Construct(int Resetting)
 	if(Resetting==NO_RESET)
 		m_pVoteOptionHeap = new CHeap();
 		
-	m_pMakeSystem = new CItemMake(this);
 	m_pMenu = new CMenu(this);
+	m_pMakeSystem = new CItemMake(this);
 }
 
 CGameContext::CGameContext(int Resetting)
@@ -636,7 +636,6 @@ void CGameContext::OnClientConnected(int ClientID)
 
 void CGameContext::OnClientDrop(int ClientID, const char *pReason)
 {
-
 	AbortVoteKickOnDisconnect(ClientID);
 	m_apPlayers[ClientID]->OnDisconnect(pReason);
 	delete m_apPlayers[ClientID];
@@ -1506,13 +1505,6 @@ void CGameContext::MenuStatus(int ClientID, void *pUserData)
 	pSelf->m_pController->ShowStatus(ClientID);
 }
 
-void CGameContext::MenuBack(int ClientID, void *pUserData)
-{
-	CGameContext *pSelf = (CGameContext *)pUserData;
-
-	pSelf->m_apPlayers[ClientID]->SetMenuPage(MENUPAGE_MAIN);
-}
-
 void CGameContext::MenuItem(int ClientID, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
@@ -1564,7 +1556,6 @@ void CGameContext::OnMenuOptionsInit()
 {
 	Menu()->Register("Player Status", MENUPAGE_MAIN, MenuStatus, this, true);
 	Menu()->Register("Make Item", MENUPAGE_MAIN, MenuItem, this, false);
-	Menu()->Register("Back", MENUPAGE_NOTMAIN, MenuBack, this, false);
 }
 
 void CGameContext::OnConsoleInit()
