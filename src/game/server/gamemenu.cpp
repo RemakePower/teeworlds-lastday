@@ -159,7 +159,9 @@ void CMenu::ShowMenu(int ClientID, int Line)
         }
     }
         
+    MenuBuffer.append(Localize("\n"));
     MenuBuffer.append(Localize("Use <mouse1>(Fire) to use option"));
+    MenuBuffer.append(Localize("\n"));
     MenuBuffer.append(Localize("Use <mouse2>(Hook) to back main menu(or close menu)"));
 
     if(Page == MENUPAGE_ITEM)
