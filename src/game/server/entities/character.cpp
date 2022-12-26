@@ -628,10 +628,10 @@ void CCharacter::Die(int Killer, int Weapon)
 
 		for(int i = TWS_WEAPON_GUN;i < TWS_WEAPON_NINJA;i ++ )
 		{
-			if(m_aWeapons->m_Ammo < 1)
+			if(m_aWeapons[i].m_Ammo == 0)
 				continue;
 			// Create gun ammo
-			new CPickup(GameWorld(), m_Pos, vec2(random_int(0, 1), random_int(0, 1)), PICKUP_AMMO, i, m_aWeapons->m_Ammo);
+			new CPickup(GameWorld(), m_Pos, vec2(random_int(0, 1), random_int(0, 1)), PICKUP_AMMO, i, max(1, m_aWeapons->m_Ammo));
 			m_aWeapons->m_Ammo = 0;
 		}
 
@@ -650,7 +650,7 @@ void CCharacter::Die(int Killer, int Weapon)
 	{
 		for(int i = TWS_WEAPON_GUN;i < TWS_WEAPON_NINJA;i ++ )
 		{
-			if(!m_aWeapons->m_Got)
+			if(!m_aWeapons[i].m_Got)
 				continue;
 			// Create gun
 			new CPickup(GameWorld(), m_Pos, vec2(random_int(0, 1), random_int(0, 1)), PICKUP_GUN, i);
