@@ -21,19 +21,25 @@ public:
 	typedef void (*MenuCallback)(int ClientID, void *pUserData);
 	
     void Register(const char *pName, int Pages, MenuCallback pfnFunc, void *pUser, bool CloseMenu);
+	void RegisterMake(const char *pName);
 
     void ShowMenu(int ClientID, int Line);
     void UseOptions(int ClientID);
 
 private:
+
     class COptions
 	{
 	public:
+		int m_OptionType;
 		const char *m_pName;
 		int m_Page;
+		bool m_CloseMenu;
+
 		MenuCallback m_pfnCallback;
 		void *m_pUserData;
-		bool m_CloseMenu;
+
+		int GetOptionType() const {return m_OptionType;}
 	};
 
 	array<COptions*> m_apOptions;

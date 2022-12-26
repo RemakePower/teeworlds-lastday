@@ -42,10 +42,19 @@ enum ResourceList
     NUM_RESOURCES,
 };
 
+enum OptionType
+{
+    MENUOPTION_OPTIONS=0,
+    MENUOPTION_ITEMS,
+
+    NUM_MENUOPTIONS,
+};
+
 enum PickupType
 {
     PICKUP_AMMO=0,
     PICKUP_RESOURCE,
+    PICKUP_GUN,
     
     NUM_PICKUPS,
 };

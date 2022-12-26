@@ -222,6 +222,7 @@ public:
 
 	// MakeItem
 	class CItemMake *m_pMakeSystem;
+	void MakeItem(int ClientID, const char *pItemName);
 
 	//Bot Start
 	int GetBotNum() const;

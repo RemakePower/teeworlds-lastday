@@ -23,7 +23,7 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, bool Bot, int BotPower
 	m_Menu = 0;
 	m_MenuPage = 0;
 	m_MenuLine = 0;
-	m_MenuCloseTick = 100;
+	m_MenuNeedUpdate = 0;
 	m_SpectatorID = SPEC_FREEVIEW;
 	m_LastActionTick = Server()->Tick();
 	m_TeamChangeTick = Server()->Tick();
@@ -136,12 +136,11 @@ void CPlayer::Tick()
 
 	if(m_Menu && m_pCharacter)
 	{
-		if(m_MenuCloseTick == 100)
-			GameServer()->Menu()->ShowMenu(m_ClientID, m_MenuLine);
-		if(m_MenuCloseTick)
+		if(m_MenuNeedUpdate)
 		{
-			m_MenuCloseTick--;
-		}else CloseMenu();
+			GameServer()->Menu()->ShowMenu(m_ClientID, m_MenuLine);
+			m_MenuNeedUpdate = 0;
+		}
 
 		if(m_pCharacter->GetInput()->m_Fire&1 && !(m_pCharacter->GetPrevInput()->m_Fire&1))
 		{
@@ -405,18 +404,18 @@ void CPlayer::OpenMenu()
 {
 	m_Menu = 1;
 	m_MenuPage = MENUPAGE_MAIN;
-	m_MenuCloseTick = 100;
+	m_MenuNeedUpdate = 1;
 }
 
 void CPlayer::CloseMenu()
 {
 	m_Menu = 0;
 	m_MenuLine = 0;
-	GameServer()->SendBroadcast(" ", m_ClientID);
+	GameServer()->SendMotd(m_ClientID, "");
 }
 
 void CPlayer::SetMenuPage(int Page)
 {
 	m_MenuPage = Page;
-	m_MenuCloseTick = 100;
+	m_MenuNeedUpdate = 1;
 }

@@ -331,13 +331,17 @@ endif()
 # DEPENDENCY COMPILATION
 ########################################################################
 
+set_glob(DEP_NLOHMANN_JSON_SRC GLOB src/engine/external/nlohmann json.hpp)
+add_library(nlohmann_json EXCLUDE_FROM_ALL OBJECT ${DEP_NLOHMANN_JSON_SRC})
+
 set_glob(DEP_JSON_SRC GLOB src/engine/external/json-parser json.c json.h)
 add_library(json EXCLUDE_FROM_ALL OBJECT ${DEP_JSON_SRC})
 
 set_glob(DEP_MD5_SRC GLOB src/engine/external/md5 md5.c md5.h)
 add_library(md5 EXCLUDE_FROM_ALL OBJECT ${DEP_MD5_SRC})
 
-list(APPEND TARGETS_DEP json md5)
+list(APPEND TARGETS_DEP nlohmann_json json md5)
+set(DEP_NLOHMANN_JSON $<TARGET_OBJECTS:nlohmann_json>)
 set(DEP_JSON $<TARGET_OBJECTS:json>)
 set(DEP_MD5 $<TARGET_OBJECTS:md5>)
 

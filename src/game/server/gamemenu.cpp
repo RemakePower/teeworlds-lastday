@@ -1,3 +1,4 @@
+#include "lastday/item/make.h"
 #include "gamecontext.h"
 #include "gamemenu.h"
 
@@ -52,10 +53,22 @@ void CMenu::Register(const char *pName, int Pages, MenuCallback pfnFunc, void *p
 	
 	pOption->m_pfnCallback = pfnFunc;
 
+    pOption->m_OptionType = MENUOPTION_OPTIONS;
 	pOption->m_pName = pName;
 	pOption->m_Page = Pages;
     pOption->m_pUserData = pUser;
     pOption->m_CloseMenu = CloseMenu;
+
+    m_apOptions.add(pOption);
+}
+
+void CMenu::RegisterMake(const char *pName)
+{
+	COptions *pOption = new(mem_alloc(sizeof(COptions), sizeof(void*))) COptions;
+
+	pOption->m_pName = pName;
+	pOption->m_Page = MENUPAGE_ITEM;
+    pOption->m_CloseMenu = true;
 
     m_apOptions.add(pOption);
 }
@@ -145,7 +158,33 @@ void CMenu::ShowMenu(int ClientID, int Line)
         
     MenuBuffer.append(Localize("Use <mouse1>(Fire) to use option"));
 
-    GameServer()->SendBroadcast(MenuBuffer.c_str(), ClientID);
+    if(Page == MENUPAGE_ITEM)
+    {
+        CItemData ItemInfo;
+
+        GameServer()->m_pMakeSystem->FindItem(pPlayer->m_SelectOption, &ItemInfo);
+
+        std::string Buffer;
+        Buffer.clear();
+        
+        for(int i = 0; i < NUM_RESOURCES;i ++)
+        {
+            if(ItemInfo.m_NeedResource.GetResource(i))
+            {
+                Buffer.append("\n");
+                Buffer.append(Localize(GetResourceName(i)));
+                Buffer.append(":");
+                Buffer.append(std::to_string(ItemInfo.m_NeedResource.GetResource(i)));
+            }
+        }
+
+        MenuBuffer.append("\n");
+        MenuBuffer.append(Localize("Requires"));
+        MenuBuffer.append(":");
+        MenuBuffer.append(Buffer);
+    }
+
+    GameServer()->SendMotd(ClientID, MenuBuffer.c_str());
 
 }
 
@@ -161,5 +200,8 @@ void CMenu::UseOptions(int ClientID)
     dbg_assert(OptionID > -1 && OptionID < m_apOptions.size(), "no this option, but a player use it");
     if(m_apOptions[OptionID]->m_CloseMenu)
         pPlayer->CloseMenu();
-    m_apOptions[OptionID]->m_pfnCallback(ClientID, m_apOptions[OptionID]->m_pUserData);
+    if(m_apOptions[OptionID]->GetOptionType() == MENUOPTION_OPTIONS)
+        m_apOptions[OptionID]->m_pfnCallback(ClientID, m_apOptions[OptionID]->m_pUserData);
+    else if(m_apOptions[OptionID]->GetOptionType() == MENUOPTION_ITEMS)
+        GameServer()->MakeItem(ClientID, m_apOptions[OptionID]->m_pName);
 }

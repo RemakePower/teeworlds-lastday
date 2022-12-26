@@ -269,6 +269,10 @@
             "value": "你得到了%d%s"
         },
         {
+            "key": "Requires",
+            "value": "需要"
+        },
+        {
             "key": "You don't have any things!",
             "value": "你没有任何东西!" 
         }

@@ -1589,4 +1589,9 @@ void secure_random_fill(void *bytes, size_t length);
 }
 #endif
 
+template<int N>
+void str_copy(char (&dst)[N], const char *src)
+{
+	str_copy(dst, src, N);
+}
 #endif

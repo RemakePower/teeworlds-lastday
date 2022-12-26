@@ -120,6 +120,18 @@ void CPickup::Tick()
 				Destroy = true;
 				break;
 			}
+			case PICKUP_GUN:
+			{
+				if(pChr->GetWeaponStat()[m_Subtype].m_Got)
+				{
+					pChr->GetWeaponStat()[m_Subtype].m_Ammo += 5;
+					GameServer()->SendChatTarget_Locazition(pChr->GetCID(), _("You got %d %s"),
+						5, GetAmmoType(m_Subtype));
+					GameServer()->CreateSound(m_Pos, SOUND_PICKUP_SHOTGUN);
+				}else pChr->GetWeaponStat()[m_Subtype].m_Got = true;
+				Destroy = true;
+				break;
+			}
 		}
 
 		if(Destroy)
@@ -151,7 +163,7 @@ void CPickup::Snap(int SnappingClient)
 		pP->m_Type = POWERUP_WEAPON;
 		pP->m_Subtype = WEAPON_HAMMER;
 	}
-	else
+	else if(m_Type == PICKUP_RESOURCE)
 	{
 		int Degres = 0;
 
@@ -182,5 +194,15 @@ void CPickup::Snap(int SnappingClient)
 		pP->m_VelX = 0;
 		pP->m_VelY = 0;
 		pP->m_StartTick = Server()->Tick()-1;
+	}else 
+	{
+		CNetObj_Pickup *pP = static_cast<CNetObj_Pickup *>(Server()->SnapNewItem(NETOBJTYPE_PICKUP, m_ID, sizeof(CNetObj_Pickup)));
+		if(!pP)
+			return;
+
+		pP->m_X = (int)m_Pos.x;
+		pP->m_Y = (int)m_Pos.y;
+		pP->m_Type = POWERUP_WEAPON;
+		pP->m_Subtype = m_Subtype;
 	}
 }

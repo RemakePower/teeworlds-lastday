@@ -215,13 +215,13 @@ void CCharacter::HandleWeaponSwitch()
 		if(Next && Next < 128) // make sure we only try sane stuff
 		{
 			m_pPlayer->m_MenuLine++;
-			m_pPlayer->m_MenuCloseTick = 100;
+			m_pPlayer->m_MenuNeedUpdate = 1;
 		}
 
 		if(Prev && Prev < 128) // make sure we only try sane stuff
 		{
 			m_pPlayer->m_MenuLine--;
-			m_pPlayer->m_MenuCloseTick = 100;
+			m_pPlayer->m_MenuNeedUpdate = 1;
 		}
 	}
 	else
@@ -287,6 +287,12 @@ void CCharacter::FireWeapon()
 
 	if(!WillFire)
 		return;
+	
+	if(m_pPlayer->GetMenuStatus())
+	{
+		GameServer()->CreateSoundGlobal(SOUND_WEAPON_NOAMMO, GetCID());
+		return;
+	}
 
 	// check for ammo
 	if(!m_aWeapons[m_ActiveWeapon].m_Ammo && !m_pPlayer->m_IsBot)
@@ -622,8 +628,13 @@ void CCharacter::Die(int Killer, int Weapon)
 
 		for(int i = TWS_WEAPON_GUN;i < TWS_WEAPON_NINJA;i ++ )
 		{
+			if(!m_aWeapons->m_Got)
+				continue;
+			// Create gun
+			new CPickup(GameWorld(), m_Pos, vec2(random_int(0, 1), random_int(0, 1)), PICKUP_GUN, i);
 			if(m_aWeapons->m_Ammo < 1)
 				continue;
+			// Create gun ammo
 			new CPickup(GameWorld(), m_Pos, vec2(random_int(0, 1), random_int(0, 1)), PICKUP_AMMO, i, m_aWeapons->m_Ammo);
 			m_aWeapons->m_Ammo = 0;
 		}
@@ -635,6 +646,8 @@ void CCharacter::Die(int Killer, int Weapon)
 			new CPickup(GameWorld(), m_Pos, vec2(random_int(0, 1), random_int(0, 1)), PICKUP_RESOURCE, i, m_pPlayer->m_Resource.GetResource(i));
 			m_pPlayer->m_Resource.SetResource(i, 0);
 		}
+		// close menu
+		m_pPlayer->CloseMenu();
 	}
 
 	// a nice sound
