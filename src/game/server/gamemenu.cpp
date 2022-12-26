@@ -66,6 +66,7 @@ void CMenu::RegisterMake(const char *pName)
 {
 	COptions *pOption = new(mem_alloc(sizeof(COptions), sizeof(void*))) COptions;
 
+    pOption->m_OptionType = MENUOPTION_ITEMS;
 	pOption->m_pfnCallback = 0;
     pOption->m_pUserData = GameServer();
 	pOption->m_pName = pName;
