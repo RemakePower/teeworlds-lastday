@@ -269,6 +269,11 @@ if(TARGET_OS AND TARGET_OS STREQUAL "mac")
   find_program(HDIUTIL hdiutil)
 endif()
 
+if(UNIX)
+  # Use -pthread instead of -lpthread to draw dependencies other than libpthread
+  set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+endif()
+
 message(STATUS "******** LastDay ********")
 message(STATUS "Target OS: ${TARGET_OS} ${TARGET_BITS}bit")
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER}")
