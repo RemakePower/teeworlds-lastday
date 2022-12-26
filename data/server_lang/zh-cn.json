@@ -241,8 +241,8 @@
             "value": "没有这个物品!"
         },
         {
-            "key": "%s requires %s.",
-            "value": "%s需要%s."
+            "key": "You don't have enough resources",
+            "value": "你没有足够的资源"
         },
         {
             "key": "You had %s",

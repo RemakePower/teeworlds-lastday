@@ -58,7 +58,7 @@ void CItemMake::MakeItem(const char *pMakeItem, int ClientID)
 
 	if(!CanMake)
 	{
-		ShowNeed(ItemInfo, ClientID);
+		GameServer()->SendChatTarget_Locazition(ClientID, "You don't have enough resources");
 		return;
 	}
 
@@ -193,35 +193,6 @@ bool CItemMake::FindItem(const char *pName, CItemData *pData)
 		}
 	}
 	return Found;
-}
-
-void CItemMake::ShowNeed(CItemData ItemInfo, int ClientID)
-{
-	CPlayer *pPlayer = GameServer()->m_apPlayers[ClientID];
-	if(!pPlayer)
-		return;
-
-
-	const char *pLanguageCode = pPlayer->GetLanguage();
-
-	std::string Buffer;
-	Buffer.clear();
-	
-	bool First=true;	
-	for(int i = 0; i < NUM_RESOURCES;i ++)
-	{
-		if(ItemInfo.m_NeedResource.GetResource(i))
-		{
-			if(!First)
-				Buffer.append(", ");
-			else First = false;
-			Buffer.append(std::to_string(ItemInfo.m_NeedResource.GetResource(i)));
-			Buffer.append(" ");
-			Buffer.append(GameServer()->Localize(pLanguageCode, GetResourceName(i)));
-		}
-	}
-
-	GameServer()->SendChatTarget_Locazition(ClientID, _("%s requires %s."), ItemInfo.m_aName, Buffer.c_str());
 }
 
 // Public
