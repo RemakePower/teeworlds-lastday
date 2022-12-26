@@ -1718,7 +1718,7 @@ void CGameContext::AddResource(int ClientID, int ResourceID, int Num)
 	if(ClientID > MAX_PLAYERS || !m_apPlayers[ClientID])
 		return;
 	CPlayer *pPlayer = m_apPlayers[ClientID];
-	pPlayer->m_Resource.SetResource(ResourceID, pPlayer->m_Resource.GetResource(ResourceID) + 1);
+	pPlayer->m_Resource.SetResource(ResourceID, pPlayer->m_Resource.GetResource(ResourceID) + Num);
 
 	const char *pLanguageCode = pPlayer->GetLanguage();
 
