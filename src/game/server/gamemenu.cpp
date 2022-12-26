@@ -32,7 +32,10 @@ int CMenu::FindOption(const char *pName, int Pages)
 	{
         if(str_comp_nocase(m_apOptions[i]->m_pName, pName) == 0)
         {
-            return i;
+            if(m_apOptions[i]->m_Page == Pages)
+                return i;
+            else if(Pages != MENUPAGE_MAIN && m_apOptions[i]->m_Page == MENUPAGE_NOTMAIN)
+                return i;
         }
 	}
 
@@ -202,8 +205,8 @@ void CMenu::UseOptions(int ClientID)
 
     if(OptionID == -1 || OptionID >= m_apOptions.size())
     {
-        dbg_msg("gamemenu", "a player used option %s, but doesn't have this options", pPlayer->m_SelectOption);
-        dbg_assert(0, "no this option, but a player use it");
+        pPlayer->CloseMenu();
+        return;
     }
     
     if(m_apOptions[OptionID]->m_CloseMenu)
