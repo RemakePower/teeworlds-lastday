@@ -167,6 +167,8 @@ public:
 		CHAT_BLUE=1
 	};
 
+	void SendMenuChat(int To, const char *pText);
+	void SendMenuChat_Locazition(int To, const char *pText, ...);
 	// network
 	void SendMotd(int To, const char* pText);
 	void SendChatTarget(int To, const char *pText);

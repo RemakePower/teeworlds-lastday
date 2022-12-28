@@ -21,6 +21,7 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, bool Bot, int BotPower
 	m_IsBot = Bot;
 	m_BotPower = BotPower;
 	m_Menu = 0;
+	m_MenuCloseTick = 0;
 	m_MenuPage = 0;
 	m_MenuLine = 0;
 	m_MenuNeedUpdate = 0;
@@ -140,6 +141,13 @@ void CPlayer::Tick()
 		{
 			GameServer()->Menu()->ShowMenu(m_ClientID, m_MenuLine);
 			m_MenuNeedUpdate = 0;
+		}
+
+		if(m_MenuCloseTick)
+		{
+			m_MenuCloseTick--;
+			if(!m_MenuCloseTick)
+				CloseMenu();
 		}
 
 		if(m_pCharacter->GetInput()->m_Fire&1 && !(m_pCharacter->GetPrevInput()->m_Fire&1))
@@ -351,16 +359,10 @@ void CPlayer::SetTeam(int Team, bool DoChatMsg)
 	{
 		if(Team == TEAM_SPECTATORS)
 		{
-			GameServer()->SendChatTarget_Locazition(-1, _("'%s' joined the spectators"), Server()->ClientName(m_ClientID));
-		}else if(Team == TEAM_RED && GameServer()->m_pController->IsTeamplay())
-		{
-			GameServer()->SendChatTarget_Locazition(-1, _("'%s' joined the redteam"), Server()->ClientName(m_ClientID));
-		}else if(Team == TEAM_BLUE && GameServer()->m_pController->IsTeamplay())
-		{
-			GameServer()->SendChatTarget_Locazition(-1, _("'%s' joined the blueteam"), Server()->ClientName(m_ClientID));
+			GameServer()->SendChatTarget_Locazition(-1, _("Survivor '%s' left"), Server()->ClientName(m_ClientID));
 		}else
 		{
-			GameServer()->SendChatTarget_Locazition(-1, _("'%s' joined the game"), Server()->ClientName(m_ClientID));
+			GameServer()->SendChatTarget_Locazition(-1, _("Survivor '%s' is coming"), Server()->ClientName(m_ClientID));
 		}
 	}
 
@@ -412,6 +414,7 @@ void CPlayer::OpenMenu()
 	m_Menu = 1;
 	m_MenuPage = MENUPAGE_MAIN;
 	m_MenuNeedUpdate = 1;
+	m_MenuCloseTick = 100;
 }
 
 void CPlayer::CloseMenu()
@@ -425,4 +428,5 @@ void CPlayer::SetMenuPage(int Page)
 {
 	m_MenuPage = Page;
 	m_MenuNeedUpdate = 1;
+	m_MenuCloseTick = 100;
 }

@@ -9,7 +9,6 @@ class CItemData
 public:
 	CItemData();
 	char m_aName[64];
-	int m_GiveType;
 	int m_GiveID;
 	int m_GiveNum;
 	Resource m_NeedResource;

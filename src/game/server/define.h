@@ -8,30 +8,18 @@ char* format_int64_with_commas(char commas, int64 n);
 const char* GetResourceName(int ID);
 const char *GetAmmoType(int WeaponID);
 
-enum ItemType
-{
-    ITEMTYPE_AMMO=0,
-    ITEMTYPE_WEAPON,
-};
-
-enum ItemAmmoList
+enum ItemList
 {
     ITEM_GUN_AMMO,
     ITEM_SHOTGUN_AMMO,
     ITEM_GRENADE_AMMO,
     ITEM_RIFLE_AMMO,
 
-    NUM_ITEM_AMMOS,
-};
-
-enum ItemWeaponList
-{
     ITEM_GUN,
     ITEM_SHOTGUN,
     ITEM_GRENADE,
     ITEM_RIFLE,
-
-    NUM_ITEM_WEAPONS,
+    ITEM_NINJA,
 };
 
 enum ResourceList

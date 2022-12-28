@@ -226,6 +226,46 @@ void CGameContext::CreateSoundGlobal(int Sound, int Target)
 	}
 }
 
+void CGameContext::SendMenuChat(int To, const char* pText)
+{
+	if(To < 0)
+	{
+		for(int i = 0;i < MAX_PLAYERS;i ++)
+		{
+			m_pMenu->AddMenuChat(i, pText);
+		}
+	}
+	else m_pMenu->AddMenuChat(To, pText);
+}
+
+void CGameContext::SendMenuChat_Locazition(int To, const char* pText, ...)
+{
+	int Start = (To < 0 ? 0 : To);
+	int End = (To < 0 ? MAX_CLIENTS : To+1);
+	
+	CNetMsg_Sv_Chat Msg;
+	Msg.m_Team = 0;
+	Msg.m_ClientID = -1;
+	
+	dynamic_string Buffer;
+	
+	va_list VarArgs;
+	va_start(VarArgs, pText);
+	
+	for(int i = Start; i < End; i++)
+	{
+		if(m_apPlayers[i])
+		{
+			Buffer.clear();
+			Server()->Localization()->Format_VL(Buffer, m_apPlayers[i]->GetLanguage(), pText, VarArgs);
+			
+			m_pMenu->AddMenuChat(i, Buffer.buffer());
+		}
+	}
+	
+	va_end(VarArgs);
+}
+
 void CGameContext::SendMotd(int To, const char* pText)
 {
 	if(m_apPlayers[To])
@@ -608,6 +648,7 @@ void CGameContext::OnClientEnter(int ClientID)
 
 
 	m_VoteUpdate = true;
+	Server()->ExpireServerInfo();
 }
 
 void CGameContext::OnClientConnected(int ClientID)
@@ -632,6 +673,8 @@ void CGameContext::OnClientConnected(int ClientID)
 	CNetMsg_Sv_Motd Msg;
 	Msg.m_pMessage = g_Config.m_SvMotd;
 	Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, ClientID);
+
+	Server()->ExpireServerInfo();
 }
 
 void CGameContext::OnClientDrop(int ClientID, const char *pReason)
@@ -649,6 +692,8 @@ void CGameContext::OnClientDrop(int ClientID, const char *pReason)
 		if(m_apPlayers[i] && m_apPlayers[i]->m_SpectatorID == ClientID)
 			m_apPlayers[i]->m_SpectatorID = SPEC_FREEVIEW;
 	}
+
+	Server()->ExpireServerInfo();
 }
 
 void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
@@ -903,9 +948,24 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				m_VoteUpdate = true;
 			}
 		}
-		else if (MsgID == NETMSGTYPE_CL_SETTEAM)
+		else if (MsgID == NETMSGTYPE_CL_SETTEAM && !m_World.m_Paused)
 		{
-			pPlayer->m_Sit = !pPlayer->m_Sit;
+			CNetMsg_Cl_SetTeam *pMsg = (CNetMsg_Cl_SetTeam *)pRawMsg;
+
+			if(pPlayer->GetTeam() == pMsg->m_Team || (g_Config.m_SvSpamprotection && pPlayer->m_LastSetTeam && pPlayer->m_LastSetTeam+Server()->TickSpeed()*3 > Server()->Tick()))
+				return;
+
+			if(pPlayer->GetTeam() != TEAM_SPECTATORS)
+			{
+				pPlayer->m_LastSetTeam = Server()->Tick();
+				SendBroadcast_VL(_("Save your hope"), ClientID);
+				return;
+			}
+
+			if(pPlayer->GetTeam() == TEAM_SPECTATORS || pMsg->m_Team == TEAM_SPECTATORS)
+				m_VoteUpdate = true;
+			pPlayer->SetTeam(pMsg->m_Team);
+			pPlayer->m_TeamChangeTick = Server()->Tick();
 		}
 		else if (MsgID == NETMSGTYPE_CL_SETSPECTATORMODE && !m_World.m_Paused)
 		{
@@ -950,6 +1010,8 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			pPlayer->m_TeeInfos.m_ColorBody = pMsg->m_ColorBody;
 			pPlayer->m_TeeInfos.m_ColorFeet = pMsg->m_ColorFeet;
 			m_pController->OnPlayerInfoChange(pPlayer);
+
+			Server()->ExpireServerInfo();
 		}
 		else if (MsgID == NETMSGTYPE_CL_EMOTICON && !m_World.m_Paused)
 		{
@@ -1069,6 +1131,8 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			pPlayer->m_IsReady = true;
 			CNetMsg_Sv_ReadyToEnter m;
 			Server()->SendPackMsg(&m, MSGFLAG_VITAL|MSGFLAG_FLUSH, ClientID);
+
+			Server()->ExpireServerInfo();
 		}
 	}
 }

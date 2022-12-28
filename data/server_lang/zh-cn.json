@@ -41,6 +41,10 @@
             "value": "激光"
         },
         {
+            "key": "ninja",
+            "value": "忍者刀"
+        },
+        {
     		"key": "Language successfully switched to English",
     		"value": "语言成功切换为中文"
     	},
@@ -157,28 +161,8 @@
             "value": "'%s' 提议将 '%s' 移到旁观 (%s)"
         },
         {
-            "key": "Teams are locked",
-            "value": "队伍已经锁定"
-        },
-        {
-            "key": "Teams were swapped",
-            "value": "队伍交换"
-        },
-        {
-            "key": "Teams were locked",
-            "value": "队伍锁定"
-        },
-        {
-            "key": "Teams were unlocked",
-            "value": "队伍解锁"
-        },
-        {
-            "key": "Teams must be balanced, please join other team",
-            "value": "队伍人数必须均衡，请加入另一个队伍"
-        },
-        {
-            "key": "Only %d active players are allowed",
-            "value": "只允许 %d 名玩家游玩"
+            "key": "Save your hope",
+            "value": "保持你的希望"
         },
         {
             "key": "Invalid spectator id used",
@@ -271,6 +255,10 @@
         {
             "key": "Requires",
             "value": "需要"
+        },
+        {
+            "key": "Chat",
+            "value": "提示"
         },
         {
             "key": "Inventory",

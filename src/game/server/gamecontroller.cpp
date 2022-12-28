@@ -203,6 +203,7 @@ int CGameController::OnCharacterDeath(class CCharacter *pVictim, class CPlayer *
 	if(Weapon == WEAPON_SELF)
 		pVictim->GetPlayer()->m_RespawnTick = Server()->Tick()+Server()->TickSpeed()*3.0f;
 
+	Server()->ExpireServerInfo();
 	return 0;
 }
 

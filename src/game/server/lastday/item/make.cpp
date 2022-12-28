@@ -9,7 +9,6 @@ using json = nlohmann::json;
 
 CItemData::CItemData()
 {
-	m_GiveType = 0;
 	m_GiveID = 0;
 	m_GiveNum = 0;
 	m_NeedResource.ResetResource();
@@ -29,7 +28,7 @@ void CItemMake::MakeItem(const char *pMakeItem, int ClientID)
 	if(!FindItem(pMakeItem, &ItemInfo))
 	{
 		dbg_msg(pMakeItem, pMakeItem);
-		GameServer()->SendChatTarget_Locazition(ClientID, _("No this item!"));
+		GameServer()->SendMenuChat_Locazition(ClientID, _("No this item!"));
 		return;
 	}
 	
@@ -58,31 +57,31 @@ void CItemMake::MakeItem(const char *pMakeItem, int ClientID)
 
 	if(!CanMake)
 	{
-		GameServer()->SendChatTarget_Locazition(ClientID, "You don't have enough resources");
+		GameServer()->SendMenuChat_Locazition(ClientID, "You don't have enough resources");
 		return;
 	}
 
 	CanMake=true;
-	if(ItemInfo.m_GiveType == ITEMTYPE_WEAPON)
-	{
-		CCharacter *pChr = pPlayer->GetCharacter();
+	CCharacter *pChr = pPlayer->GetCharacter();
 
-		switch (ItemInfo.m_GiveID)
-		{
-			case ITEM_SHOTGUN: if(pChr->GetWeaponStat()[WEAPON_SHOTGUN].m_Got) CanMake = false;break;
-			case ITEM_GRENADE: if(pChr->GetWeaponStat()[WEAPON_GRENADE].m_Got) CanMake = false;break;
-			case ITEM_RIFLE: if(pChr->GetWeaponStat()[WEAPON_RIFLE].m_Got) CanMake = false;break;
-		}
+	switch (ItemInfo.m_GiveID)
+	{
+		case ITEM_GUN: if(pChr->GetWeaponStat()[TWS_WEAPON_GUN].m_Got) CanMake = false;break;
+		case ITEM_SHOTGUN: if(pChr->GetWeaponStat()[TWS_WEAPON_SHOTGUN].m_Got) CanMake = false;break;
+		case ITEM_GRENADE: if(pChr->GetWeaponStat()[TWS_WEAPON_GRENADE].m_Got) CanMake = false;break;
+		case ITEM_RIFLE: if(pChr->GetWeaponStat()[TWS_WEAPON_RIFLE].m_Got) CanMake = false;break;
+		case ITEM_NINJA: if(pChr->GetWeaponStat()[TWS_WEAPON_NINJA].m_Got) CanMake = false;break;
 	}
+	
 
 	if(!CanMake)
 	{
-		GameServer()->SendChatTarget_Locazition(ClientID, _("You had %s"), 
+		GameServer()->SendMenuChat_Locazition(ClientID, _("You had %s"), 
 			GameServer()->Localize(pLanguageCode, pMakeItem));
 		return;
 	}
 
-	GameServer()->SendChatTarget_Locazition(ClientID, _("Making %s..."), 
+	GameServer()->SendMenuChat_Locazition(ClientID, _("Making %s..."), 
 		GameServer()->Localize(pLanguageCode, pMakeItem));
 
 	ReturnItem(ItemInfo, ClientID);
@@ -97,40 +96,24 @@ void CItemMake::ReturnItem(CItemData Item, int ClientID)
 
 
 	const char *pLanguageCode = pPlayer->GetLanguage();
+	
+	CCharacter *pChr = pPlayer->GetCharacter();
+	if(!pChr)
+		return;
 
-	if(Item.m_GiveType == ITEMTYPE_AMMO)
+	switch (Item.m_GiveID)
 	{
-		CCharacter *pChr = pPlayer->GetCharacter();
-		if(!pChr)
-			return;
-		switch (Item.m_GiveID)
-		{
-			case ITEM_GUN_AMMO: pChr->GetWeaponStat()[TWS_WEAPON_GUN].m_Ammo += Item.m_GiveNum;break;
-			case ITEM_SHOTGUN_AMMO: pChr->GetWeaponStat()[TWS_WEAPON_SHOTGUN].m_Ammo += Item.m_GiveNum;break;
-			case ITEM_GRENADE_AMMO: pChr->GetWeaponStat()[TWS_WEAPON_GRENADE].m_Ammo += Item.m_GiveNum;break;
-			case ITEM_RIFLE_AMMO: pChr->GetWeaponStat()[TWS_WEAPON_RIFLE].m_Ammo += Item.m_GiveNum;break;
-		}
-	}
-	else if(Item.m_GiveType == ITEMTYPE_WEAPON)
-	{
-		CCharacter *pChr = pPlayer->GetCharacter();
-		if(!pChr)
-			return;
+		case ITEM_GUN_AMMO: pChr->GetWeaponStat()[TWS_WEAPON_GUN].m_Ammo += Item.m_GiveNum;break;
+		case ITEM_SHOTGUN_AMMO: pChr->GetWeaponStat()[TWS_WEAPON_SHOTGUN].m_Ammo += Item.m_GiveNum;break;
+		case ITEM_GRENADE_AMMO: pChr->GetWeaponStat()[TWS_WEAPON_GRENADE].m_Ammo += Item.m_GiveNum;break;
+		case ITEM_RIFLE_AMMO: pChr->GetWeaponStat()[TWS_WEAPON_RIFLE].m_Ammo += Item.m_GiveNum;break;
+		case ITEM_GUN: pChr->GetWeaponStat()[TWS_WEAPON_GUN].m_Got = true;break;
+		case ITEM_SHOTGUN: pChr->GetWeaponStat()[TWS_WEAPON_SHOTGUN].m_Got = true;break;
+		case ITEM_GRENADE: pChr->GetWeaponStat()[TWS_WEAPON_GRENADE].m_Got = true;break;
+		case ITEM_RIFLE: pChr->GetWeaponStat()[TWS_WEAPON_RIFLE].m_Got = true;break;
+		case ITEM_NINJA: pChr->GiveNinja();break;
+	}	
 
-		switch (Item.m_GiveID)
-		{
-			case ITEM_GUN: pChr->GetWeaponStat()[TWS_WEAPON_GUN].m_Got = true;break;
-			case ITEM_SHOTGUN: pChr->GetWeaponStat()[TWS_WEAPON_SHOTGUN].m_Got = true;break;
-			case ITEM_GRENADE: pChr->GetWeaponStat()[TWS_WEAPON_GRENADE].m_Got = true;break;
-			case ITEM_RIFLE: pChr->GetWeaponStat()[TWS_WEAPON_RIFLE].m_Got = true;break;
-		}	
-	}
-
-	if(Item.m_GiveNum)
-		GameServer()->SendChatTarget_Locazition(ClientID, _("Make finish, you get %d %s"), 
-			Item.m_GiveNum, Item.m_aName);
-	else GameServer()->SendChatTarget_Locazition(ClientID, _("Make finish, you get %s"), 
-			Item.m_aName);
 	
 	for(int i = 0; i < NUM_RESOURCES;i ++)
 	{
@@ -138,6 +121,12 @@ void CItemMake::ReturnItem(CItemData Item, int ClientID)
 		int Have = pPlayer->m_Resource.GetResource(i);
 		pPlayer->m_Resource.SetResource(i, Have - Need);
 	}
+
+	if(Item.m_GiveNum)
+		GameServer()->SendMenuChat_Locazition(ClientID, _("Make finish, you get %d %s"), 
+			Item.m_GiveNum, Item.m_aName);
+	else GameServer()->SendMenuChat_Locazition(ClientID, _("Make finish, you get %s"), 
+			Item.m_aName);
 }
 
 // Find Item, if it in the json.return the FOUND(and the Item info)
@@ -163,7 +152,6 @@ bool CItemMake::InitItem()
 		{
 			CItemData *pData = new CItemData();
 			str_copy(pData->m_aName, rStart[i].value("name", " ").c_str());
-			pData->m_GiveType = rStart[i].value("give_type", -1);
 			pData->m_GiveID = rStart[i].value("give_id", -1);
 			pData->m_GiveNum = rStart[i].value("give_num", 0);
 			pData->m_NeedResource.m_Metal = rStart[i].value("metal", 0);
@@ -186,7 +174,6 @@ bool CItemMake::FindItem(const char *pName, CItemData *pData)
 			str_copy(pData->m_aName, m_apDatas[i]->m_aName);
 			pData->m_GiveID = m_apDatas[i]->m_GiveID;
 			pData->m_GiveNum = m_apDatas[i]->m_GiveNum;
-			pData->m_GiveType = m_apDatas[i]->m_GiveType;
 			pData->m_NeedResource = m_apDatas[i]->m_NeedResource;
 			Found = true;
 			break;
@@ -201,7 +188,7 @@ Resource *CItemMake::GetNeed(const char *pMakeItem, int ClientID)
 	CItemData ItemInfo;
 	if(FindItem(pMakeItem, &ItemInfo))
 	{
-		GameServer()->SendChatTarget_Locazition(ClientID, _("No this item!"));
+		GameServer()->SendMenuChat_Locazition(ClientID, _("No this item!"));
 		return 0;
 	}
 

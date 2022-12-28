@@ -135,6 +135,7 @@ public:
 	void SetMenuPage(int Page);
 	int GetMenuPage() const {return m_MenuPage;}
 	int m_MenuLine;
+	int m_MenuCloseTick;
 	bool m_MenuNeedUpdate;
 	const char *m_SelectOption;
 

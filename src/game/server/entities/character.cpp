@@ -216,12 +216,14 @@ void CCharacter::HandleWeaponSwitch()
 		{
 			m_pPlayer->m_MenuLine++;
 			m_pPlayer->m_MenuNeedUpdate = 1;
+			m_pPlayer->m_MenuCloseTick = 100;
 		}
 
 		if(Prev && Prev < 128) // make sure we only try sane stuff
 		{
 			m_pPlayer->m_MenuLine--;
 			m_pPlayer->m_MenuNeedUpdate = 1;
+			m_pPlayer->m_MenuCloseTick = 100;
 		}
 	}
 	else
@@ -626,15 +628,6 @@ void CCharacter::Die(int Killer, int Weapon)
 		Msg.m_ModeSpecial = ModeSpecial;
 		Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, -1);
 
-		for(int i = TWS_WEAPON_GUN;i < TWS_WEAPON_NINJA;i ++ )
-		{
-			if(m_aWeapons[i].m_Ammo == 0)
-				continue;
-			// Create gun ammo
-			new CPickup(GameWorld(), m_Pos, vec2(random_int(0, 1), random_int(0, 1)), PICKUP_AMMO, i, max(1, m_aWeapons->m_Ammo));
-			m_aWeapons->m_Ammo = 0;
-		}
-
 		for(int i = 0;i < NUM_RESOURCES;i ++ )
 		{
 			if(!m_pPlayer->m_Resource.GetResource(i))
@@ -648,6 +641,15 @@ void CCharacter::Die(int Killer, int Weapon)
 
 	if(!m_pPlayer->m_IsBot)
 	{
+		for(int i = TWS_WEAPON_GUN;i < TWS_WEAPON_NINJA;i ++ )
+		{
+			if(m_aWeapons[i].m_Ammo == 0)
+				continue;
+			// Create gun ammo
+			new CPickup(GameWorld(), m_Pos, vec2(random_int(0, 1), random_int(0, 1)), PICKUP_AMMO, i, max(1, m_aWeapons[i].m_Ammo));
+			m_aWeapons->m_Ammo = 0;
+		}
+
 		for(int i = TWS_WEAPON_GUN;i < TWS_WEAPON_NINJA;i ++ )
 		{
 			if(!m_aWeapons[i].m_Got)
@@ -849,6 +851,8 @@ void CCharacter::Snap(int SnappingClient)
 		case WEAPON_NINJA: pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_NINJA; break;
 	}
 
+	pDDNetCharacter->m_NinjaActivationTick = Server()->Tick();
+
 	pDDNetCharacter->m_FreezeStart = 0;
 	pDDNetCharacter->m_FreezeEnd =	0;
 
@@ -929,13 +933,6 @@ void CCharacter::DoBotActions()
 			m_Input.m_Jump = 1;
 		}
 	}else m_Input.m_Jump = 0;
-
-	CCharacter *pUnder = GameWorld()->ClosestCharacter(vec2(m_Pos.x, m_Pos.y + 32.0f), 5.0f, this);
-	if(pUnder && pUnder->GetPlayer()->m_IsBot)
-	{
-		m_Botinfo.m_Direction = -m_Botinfo.m_Direction;
-	}
-
 	// If Target
 	CCharacter *pTarget = GameServer()->GetPlayerChar(m_Botinfo.m_Target);
 	if(pTarget)
@@ -962,22 +959,31 @@ void CCharacter::DoBotActions()
 			}else m_Botinfo.m_Direction = 0;
 		}else // can't use hammer bot need run 
 		{
-			if(pTarget->m_Pos.x - m_Pos.x > 448.0f)
+			if(!GameServer()->Collision()->IntersectLine(pTarget->m_Pos, m_Pos, NULL, NULL))
 			{
-				m_Botinfo.m_Direction = 1;
-			}else if(pTarget->m_Pos.x - m_Pos.x < -448.0f)
-			{
-				m_Botinfo.m_Direction = -1;
-			}else if(!GameServer()->Collision()->IntersectLine(pTarget->m_Pos, m_Pos, NULL, NULL))
-			{
-				if(pTarget->m_Pos.x - m_Pos.x < 480.0f && pTarget->m_Pos.x - m_Pos.x > 0.0f)
+				if(pTarget->m_Pos.x - m_Pos.x > 448.0f)
+				{
+					m_Botinfo.m_Direction = 1;
+				}else if(pTarget->m_Pos.x - m_Pos.x < -448.0f)
+				{
+					m_Botinfo.m_Direction = -1;
+				}else if(pTarget->m_Pos.x - m_Pos.x < 480.0f && pTarget->m_Pos.x - m_Pos.x > 0.0f)
 				{
 					m_Botinfo.m_Direction = -1;
 				}else if(pTarget->m_Pos.x - m_Pos.x > -480.0f && pTarget->m_Pos.x - m_Pos.x < 0.0f)
 				{
 					m_Botinfo.m_Direction = 1;
-				}
-			}else m_Botinfo.m_Direction = 0;
+				}else m_Botinfo.m_Direction = 0;
+			}else
+			{
+				if(pTarget->m_Pos.x - m_Pos.x > 40.0f)
+				{
+					m_Botinfo.m_Direction = 1;
+				}else if(pTarget->m_Pos.x - m_Pos.x < -40.0f)
+				{
+					m_Botinfo.m_Direction = -1;
+				}else m_Botinfo.m_Direction = 0;
+			}
 		}
 		//Attack
 		if(m_pPlayer->m_BotPower&BOTPOWER_HAMMER)
@@ -1001,8 +1007,8 @@ void CCharacter::DoBotActions()
 			}
 		}
 		
-		// Hook (you don't want a can't hammer attack bot to hook target, make target come to bot here, right?)
-		if(m_pPlayer->m_BotPower&BOTPOWER_HOOK && m_pPlayer->m_BotPower&BOTPOWER_HAMMER)
+		// Hook
+		if(m_pPlayer->m_BotPower&BOTPOWER_HOOK)
 		{
 			
 			if(!GameServer()->Collision()->IntersectLine(pTarget->m_Pos, m_Pos, NULL, NULL) && (m_Core.m_HookedPlayer == pTarget->GetCID() && distance(pTarget->m_Pos, m_Pos) > 96.0f) || (distance(pTarget->m_Pos, m_Pos) > 320.0f && distance(pTarget->m_Pos, m_Pos) < 380.0f))
@@ -1010,6 +1016,14 @@ void CCharacter::DoBotActions()
 				m_Input.m_Hook = 1;
 				m_Botinfo.m_RandomPos.x = random_int(-8, 8);
 				m_Botinfo.m_RandomPos.y = random_int(-8, 8);
+				if(m_pPlayer->m_BotPower&BOTPOWER_GUN)
+				{
+					m_ActiveWeapon = WEAPON_GUN;
+					m_Input.m_Fire = 1;
+					m_LatestInput.m_Fire = 1;
+					m_Botinfo.m_RandomPos.x = random_int(-16, 16);
+					m_Botinfo.m_RandomPos.y = random_int(-16, 16);
+				}
 			}else
 			{
 				m_Input.m_Hook = 0;
@@ -1046,6 +1060,19 @@ void CCharacter::DoBotActions()
 		m_LatestInput.m_TargetX = m_Input.m_TargetX;
 		m_LatestInput.m_TargetY = m_Input.m_TargetY;
 	}
+
+	CCharacter *pUnder = GameWorld()->ClosestCharacter(vec2(m_Pos.x, m_Pos.y + 32.0f), 5.0f, this);
+	if(pUnder && pUnder->GetPlayer()->m_IsBot)
+	{
+		m_Botinfo.m_Direction = -m_Botinfo.m_Direction;
+	}
+
+	CCharacter *pAbove = GameWorld()->ClosestCharacter(vec2(m_Pos.x, m_Pos.y - 32.0f), 5.0f, this);
+	if(pAbove && pAbove->GetPlayer()->m_IsBot)
+	{
+		m_Botinfo.m_Direction = -m_Botinfo.m_Direction;
+	}
+
 
 	if(IsGrounded())
 		m_Botinfo.m_LastGroundPos = m_Pos;
