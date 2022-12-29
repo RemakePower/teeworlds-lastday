@@ -85,6 +85,7 @@ class CGameContext : public IGameServer
 
 	static void MenuInventory(int ClientID, void *pUserData);
 	static void MenuItem(int ClientID, void *pUserData);
+	static void MenuSit(int ClientID, void *pUserData);
 
 
 	CGameContext(int Resetting);

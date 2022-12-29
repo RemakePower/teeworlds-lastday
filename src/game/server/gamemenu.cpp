@@ -103,7 +103,7 @@ void CMenu::ShowMenu(int ClientID, int Line)
     MenuBuffer.append("\n");
     if (Line < 0)
     {
-        Line = m_DataTemp.size()-1 + Line%m_DataTemp.size();
+        Line = m_DataTemp.size() + Line%m_DataTemp.size();
     }
 
     if (Line >= m_DataTemp.size())
@@ -194,6 +194,7 @@ void CMenu::ShowMenu(int ClientID, int Line)
         }
 
         MenuBuffer.append("\n\n");
+        MenuBuffer.append(Localize(pPlayer->m_SelectOption));
         MenuBuffer.append(Localize("Requires"));
         MenuBuffer.append(":");
         MenuBuffer.append(Buffer);
@@ -229,6 +230,12 @@ void CMenu::UseOptions(int ClientID)
     
     if(m_apOptions[OptionID]->m_CloseMenu)
         pPlayer->CloseMenu();
+    else
+    {
+        ShowMenu(ClientID, pPlayer->m_MenuLine);
+        pPlayer->m_MenuCloseTick = MENU_CLOSETICK;
+    }
+
     if(m_apOptions[OptionID]->GetOptionType() == MENUOPTION_OPTIONS)
         m_apOptions[OptionID]->m_pfnCallback(ClientID, m_apOptions[OptionID]->m_pUserData);
     else if(m_apOptions[OptionID]->GetOptionType() == MENUOPTION_ITEMS)
@@ -244,6 +251,6 @@ void CMenu::AddMenuChat(int ClientID, const char *pChat)
     if(pPlayer)
     {
         ShowMenu(ClientID, pPlayer->m_MenuLine);
-        pPlayer->m_MenuCloseTick = 100;
+        pPlayer->m_MenuCloseTick = MENU_CLOSETICK;
     }
 }

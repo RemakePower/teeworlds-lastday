@@ -66,11 +66,11 @@ void CItemMake::MakeItem(const char *pMakeItem, int ClientID)
 
 	switch (ItemInfo.m_GiveID)
 	{
-		case ITEM_GUN: if(pChr->GetWeaponStat()[TWS_WEAPON_GUN].m_Got) CanMake = false;break;
-		case ITEM_SHOTGUN: if(pChr->GetWeaponStat()[TWS_WEAPON_SHOTGUN].m_Got) CanMake = false;break;
-		case ITEM_GRENADE: if(pChr->GetWeaponStat()[TWS_WEAPON_GRENADE].m_Got) CanMake = false;break;
-		case ITEM_RIFLE: if(pChr->GetWeaponStat()[TWS_WEAPON_RIFLE].m_Got) CanMake = false;break;
-		case ITEM_NINJA: if(pChr->GetWeaponStat()[TWS_WEAPON_NINJA].m_Got) CanMake = false;break;
+		case ITEM_GUN: if(pChr->GetWeaponStat()[LD_WEAPON_GUN].m_Got) CanMake = false;break;
+		case ITEM_SHOTGUN: if(pChr->GetWeaponStat()[LD_WEAPON_SHOTGUN].m_Got) CanMake = false;break;
+		case ITEM_GRENADE: if(pChr->GetWeaponStat()[LD_WEAPON_GRENADE].m_Got) CanMake = false;break;
+		case ITEM_RIFLE: if(pChr->GetWeaponStat()[LD_WEAPON_RIFLE].m_Got) CanMake = false;break;
+		case ITEM_NINJA: if(pChr->GetWeaponStat()[LD_WEAPON_NINJA].m_Got) CanMake = false;break;
 	}
 	
 
@@ -103,14 +103,14 @@ void CItemMake::ReturnItem(CItemData Item, int ClientID)
 
 	switch (Item.m_GiveID)
 	{
-		case ITEM_GUN_AMMO: pChr->GetWeaponStat()[TWS_WEAPON_GUN].m_Ammo += Item.m_GiveNum;break;
-		case ITEM_SHOTGUN_AMMO: pChr->GetWeaponStat()[TWS_WEAPON_SHOTGUN].m_Ammo += Item.m_GiveNum;break;
-		case ITEM_GRENADE_AMMO: pChr->GetWeaponStat()[TWS_WEAPON_GRENADE].m_Ammo += Item.m_GiveNum;break;
-		case ITEM_RIFLE_AMMO: pChr->GetWeaponStat()[TWS_WEAPON_RIFLE].m_Ammo += Item.m_GiveNum;break;
-		case ITEM_GUN: pChr->GetWeaponStat()[TWS_WEAPON_GUN].m_Got = true;break;
-		case ITEM_SHOTGUN: pChr->GetWeaponStat()[TWS_WEAPON_SHOTGUN].m_Got = true;break;
-		case ITEM_GRENADE: pChr->GetWeaponStat()[TWS_WEAPON_GRENADE].m_Got = true;break;
-		case ITEM_RIFLE: pChr->GetWeaponStat()[TWS_WEAPON_RIFLE].m_Got = true;break;
+		case ITEM_GUN_AMMO: pChr->GetWeaponStat()[LD_WEAPON_GUN].m_Ammo += Item.m_GiveNum;break;
+		case ITEM_SHOTGUN_AMMO: pChr->GetWeaponStat()[LD_WEAPON_SHOTGUN].m_Ammo += Item.m_GiveNum;break;
+		case ITEM_GRENADE_AMMO: pChr->GetWeaponStat()[LD_WEAPON_GRENADE].m_Ammo += Item.m_GiveNum;break;
+		case ITEM_RIFLE_AMMO: pChr->GetWeaponStat()[LD_WEAPON_RIFLE].m_Ammo += Item.m_GiveNum;break;
+		case ITEM_GUN: pChr->GetWeaponStat()[LD_WEAPON_GUN].m_Got = true;break;
+		case ITEM_SHOTGUN: pChr->GetWeaponStat()[LD_WEAPON_SHOTGUN].m_Got = true;break;
+		case ITEM_GRENADE: pChr->GetWeaponStat()[LD_WEAPON_GRENADE].m_Got = true;break;
+		case ITEM_RIFLE: pChr->GetWeaponStat()[LD_WEAPON_RIFLE].m_Got = true;break;
 		case ITEM_NINJA: pChr->GiveNinja();break;
 	}	
 

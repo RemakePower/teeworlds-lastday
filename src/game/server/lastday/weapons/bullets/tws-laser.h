@@ -6,7 +6,7 @@
 class CTWSLaser : public CEntity
 {
 public:
-	CTWSLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEnergy, int Owner);
+	CTWSLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEnergy, int Owner, int Damage);
 
 	void Reset() override;
 	void Tick() override;
@@ -22,6 +22,7 @@ private:
 	vec2 m_Dir;
 	float m_Energy;
 	int m_Bounces;
+	int m_Damage;
 	int m_EvalTick;
 	int m_Owner;
 };

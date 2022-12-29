@@ -59,13 +59,13 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_LastNoAmmoSound = -1;
 	if(!pPlayer->m_IsBot || pPlayer->m_BotPower&WEAPON_HAMMER)
 	{
-		m_ActiveWeapon = TWS_WEAPON_HAMMER;
-		m_LastWeapon = TWS_WEAPON_HAMMER;
+		m_ActiveWeapon = LD_WEAPON_HAMMER;
+		m_LastWeapon = LD_WEAPON_HAMMER;
 	}
 	else
 	{
-		m_ActiveWeapon = TWS_WEAPON_GUN;
-		m_LastWeapon = TWS_WEAPON_GUN;
+		m_ActiveWeapon = LD_WEAPON_GUN;
+		m_LastWeapon = LD_WEAPON_GUN;
 	}
 	m_QueuedWeapon = -1;
 
@@ -125,7 +125,7 @@ bool CCharacter::IsGrounded()
 
 void CCharacter::HandleNinja()
 {
-	if(m_ActiveWeapon != TWS_WEAPON_NINJA)
+	if(m_ActiveWeapon != LD_WEAPON_NINJA)
 		return;
 
 	m_Ninja.m_CurrentMoveTime--;
@@ -179,7 +179,7 @@ void CCharacter::HandleNinja()
 				if(m_NumObjectsHit < 10)
 					m_apHitObjects[m_NumObjectsHit++] = aEnts[i];
 
-				aEnts[i]->TakeDamage(vec2(0, -10.0f), g_pData->m_Weapons.m_Ninja.m_pBase->m_Damage, m_pPlayer->GetCID(), TWS_WEAPON_NINJA);
+				aEnts[i]->TakeDamage(vec2(0, -10.0f), g_Weapons.m_aWeapons[LD_WEAPON_NINJA]->GetDamage(), m_pPlayer->GetCID(), LD_WEAPON_NINJA);
 			}
 		}
 
@@ -216,14 +216,14 @@ void CCharacter::HandleWeaponSwitch()
 		{
 			m_pPlayer->m_MenuLine++;
 			m_pPlayer->m_MenuNeedUpdate = 1;
-			m_pPlayer->m_MenuCloseTick = 100;
+			m_pPlayer->m_MenuCloseTick = MENU_CLOSETICK;
 		}
 
 		if(Prev && Prev < 128) // make sure we only try sane stuff
 		{
 			m_pPlayer->m_MenuLine--;
 			m_pPlayer->m_MenuNeedUpdate = 1;
-			m_pPlayer->m_MenuCloseTick = 100;
+			m_pPlayer->m_MenuCloseTick = MENU_CLOSETICK;
 		}
 	}
 	else
@@ -272,8 +272,8 @@ void CCharacter::FireWeapon()
 	vec2 Direction = normalize(vec2(m_LatestInput.m_TargetX, m_LatestInput.m_TargetY));
 
 	bool FullAuto = false;
-	if(m_ActiveWeapon == TWS_WEAPON_GRENADE || m_ActiveWeapon == TWS_WEAPON_SHOTGUN 
-		|| m_ActiveWeapon == TWS_WEAPON_RIFLE)
+	if(m_ActiveWeapon == LD_WEAPON_GRENADE || m_ActiveWeapon == LD_WEAPON_SHOTGUN 
+		|| m_ActiveWeapon == LD_WEAPON_RIFLE)
 		FullAuto = true;
 
 	if(m_pPlayer->m_IsBot)
@@ -315,7 +315,7 @@ void CCharacter::FireWeapon()
 	vec2 ProjStartPos = m_Pos+Direction*m_ProximityRadius*0.75f;
 	int ClientID = GetCID();
 
-	if(m_ActiveWeapon == TWS_WEAPON_HAMMER || m_ActiveWeapon == TWS_WEAPON_NINJA)
+	if(m_ActiveWeapon == LD_WEAPON_HAMMER || m_ActiveWeapon == LD_WEAPON_NINJA)
 	{
 		// reset objects Hit
 		m_NumObjectsHit = 0;
@@ -641,7 +641,7 @@ void CCharacter::Die(int Killer, int Weapon)
 
 	if(!m_pPlayer->m_IsBot)
 	{
-		for(int i = TWS_WEAPON_GUN;i < TWS_WEAPON_NINJA;i ++ )
+		for(int i = LD_WEAPON_GUN;i < LD_WEAPON_NINJA;i ++ )
 		{
 			if(m_aWeapons[i].m_Ammo == 0)
 				continue;
@@ -650,7 +650,7 @@ void CCharacter::Die(int Killer, int Weapon)
 			m_aWeapons->m_Ammo = 0;
 		}
 
-		for(int i = TWS_WEAPON_GUN;i < TWS_WEAPON_NINJA;i ++ )
+		for(int i = LD_WEAPON_GUN;i < LD_WEAPON_NINJA;i ++ )
 		{
 			if(!m_aWeapons[i].m_Got)
 				continue;

@@ -174,19 +174,19 @@
         },
         {
             "key": "===Welcome to last day===",
-            "value": "===欢迎来到最后一日==="
+            "value": "===欢迎来到最后的日子==="
         },
         {
             "key": "Bind </menu> to your key",
             "value": "请绑定/menu到你的按键"
         },
         {
-            "key": "No change team, change team button is change sit",
-            "value": "无切换队伍,切换队伍按钮是切换坐下"
-        },
-        {
             "key": "Show clan plate can show health bar",
             "value": "显示战队可以显示血量条"
+        },
+        {
+            "key": "Mod wiki: %s",
+            "value": "模组百科: %s"
         },
         {
             "key": "Menu",
@@ -207,6 +207,10 @@
         {
             "key": "Player Inventory",
             "value": "玩家物品栏"
+        },
+        {
+            "key": "Sit",
+            "value": "坐下"
         },
         {
             "key": "Back",

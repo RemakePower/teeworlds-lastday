@@ -15,14 +15,16 @@ private:
     int m_WeaponID;
     CGameContext *m_pGameServer;
     int m_ShowType;
+    int m_Damage;
     int m_FireDelay;
 public:
-    IWeapon(CGameContext *pGameServer, int WeaponID, int ShowType, int FireDelay);
+    IWeapon(CGameContext *pGameServer, int WeaponID, int ShowType, int FireDelay, int Damage);
     CGameContext *GameServer() const;
     CGameWorld *GameWorld() const;
     int GetWeaponID() const;
     int GetShowType() const;
     int GetFireDelay() const;
+    int GetDamage() const;
     virtual void OnFire(int Owner, vec2 Dir, vec2 Pos) = 0;
 };
 
@@ -30,7 +32,7 @@ class CWeapon : public IWeapon
 {
     virtual void Fire(int Owner, vec2 Dir, vec2 Pos) = 0;
 public:
-    CWeapon(CGameContext *pGameServer, int WeaponID, int m_ShowType, int FireDelay);
+    CWeapon(CGameContext *pGameServer, int WeaponID, int m_ShowType, int FireDelay, int Damage);
     void OnFire(int Owner, vec2 Dir, vec2 Pos) override;
 };
 

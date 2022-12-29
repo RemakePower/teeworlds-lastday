@@ -643,8 +643,8 @@ void CGameContext::OnClientEnter(int ClientID)
 
 	SendChatTarget_Locazition(ClientID, "===Welcome to last day===");
 	SendChatTarget_Locazition(ClientID, "Bind </menu> to your key");
-	SendChatTarget_Locazition(ClientID, "No change team, change team button is change sit");
 	SendChatTarget_Locazition(ClientID, "Show clan plate can show health bar");
+	SendChatTarget_Locazition(ClientID, "Mod wiki: %s", "wiki.teeworlds.cn/mods:lastday");
 
 
 	m_VoteUpdate = true;
@@ -1576,6 +1576,18 @@ void CGameContext::MenuItem(int ClientID, void *pUserData)
 	pSelf->m_apPlayers[ClientID]->SetMenuPage(MENUPAGE_ITEM);
 }
 
+void CGameContext::MenuSit(int ClientID, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+
+	CPlayer *pPlayer = pSelf->m_apPlayers[ClientID];
+
+	if(pPlayer)
+	{
+		pPlayer->m_Sit = !pPlayer->m_Sit;
+	}
+}
+
 void CGameContext::SetClientLanguage(int ClientID, const char *pLanguage)
 {
 	Server()->SetClientLanguage(ClientID, pLanguage);
@@ -1620,6 +1632,7 @@ void CGameContext::OnMenuOptionsInit()
 {
 	Menu()->Register("Player Inventory", MENUPAGE_MAIN, MenuInventory, this, true);
 	Menu()->Register("Make Item", MENUPAGE_MAIN, MenuItem, this, false);
+	Menu()->Register("Sit", MENUPAGE_MAIN, MenuSit, this, true);
 }
 
 void CGameContext::OnConsoleInit()

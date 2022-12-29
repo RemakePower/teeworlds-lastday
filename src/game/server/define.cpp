@@ -52,10 +52,10 @@ const char *GetAmmoType(int WeaponID)
 {
 	switch (WeaponID)
 	{
-		case TWS_WEAPON_GUN: return "gun ammo";
-		case TWS_WEAPON_SHOTGUN: return "shotgun ammo";
-		case TWS_WEAPON_GRENADE: return "grenade ammo";
-		case TWS_WEAPON_RIFLE: return "rifle ammo";
+		case LD_WEAPON_GUN: return "gun ammo";
+		case LD_WEAPON_SHOTGUN: return "shotgun ammo";
+		case LD_WEAPON_GRENADE: return "grenade ammo";
+		case LD_WEAPON_RIFLE: return "rifle ammo";
 		default: return "";
 	}
 }

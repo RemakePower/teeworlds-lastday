@@ -3,6 +3,8 @@
 
 #include <base/system.h>
 
+#define MENU_CLOSETICK 200
+
 char* format_int64_with_commas(char commas, int64 n);
 
 const char* GetResourceName(int ID);
@@ -49,12 +51,12 @@ enum PickupType
 
 enum LastDayWeapons
 {
-    TWS_WEAPON_HAMMER=0,
-    TWS_WEAPON_GUN,
-    TWS_WEAPON_SHOTGUN,
-    TWS_WEAPON_GRENADE,
-    TWS_WEAPON_RIFLE,
-    TWS_WEAPON_NINJA,
+    LD_WEAPON_HAMMER=0,
+    LD_WEAPON_GUN,
+    LD_WEAPON_SHOTGUN,
+    LD_WEAPON_GRENADE,
+    LD_WEAPON_RIFLE,
+    LD_WEAPON_NINJA,
 
     NUM_LASTDAY_WEAPONS,
 };

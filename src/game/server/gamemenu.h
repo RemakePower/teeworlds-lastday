@@ -47,6 +47,7 @@ private:
 	array<COptions*> m_apOptions;
 
 	std::string m_aMenuChat[MAX_CLIENTS];
+	
 
 	int FindOption(const char *pName, int Pages);
 };

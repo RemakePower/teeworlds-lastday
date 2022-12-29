@@ -207,7 +207,7 @@ void CPlayer::Snap(int SnappingClient)
 	pClientInfo->m_Country = Server()->ClientCountry(m_ClientID);
 	// TODO:rewrite the bot skin select
 	StrToInts(&pClientInfo->m_Skin0, 6, m_IsBot ? "coala" : m_TeeInfos.m_SkinName);
-	pClientInfo->m_UseCustomColor = 0;
+	pClientInfo->m_UseCustomColor = m_TeeInfos.m_UseCustomColor;
 	pClientInfo->m_ColorBody = m_TeeInfos.m_ColorBody;
 	pClientInfo->m_ColorFeet = m_TeeInfos.m_ColorFeet;
 
@@ -414,7 +414,7 @@ void CPlayer::OpenMenu()
 	m_Menu = 1;
 	m_MenuPage = MENUPAGE_MAIN;
 	m_MenuNeedUpdate = 1;
-	m_MenuCloseTick = 100;
+	m_MenuCloseTick = MENU_CLOSETICK;
 }
 
 void CPlayer::CloseMenu()
@@ -428,5 +428,5 @@ void CPlayer::SetMenuPage(int Page)
 {
 	m_MenuPage = Page;
 	m_MenuNeedUpdate = 1;
-	m_MenuCloseTick = 100;
+	m_MenuCloseTick = MENU_CLOSETICK;
 }
