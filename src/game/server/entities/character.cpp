@@ -57,15 +57,15 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_EmoteStop = -1;
 	m_LastAction = -1;
 	m_LastNoAmmoSound = -1;
-	if(!pPlayer->m_IsBot || pPlayer->m_BotPower.m_Hammer)
-	{
-		m_ActiveWeapon = LD_WEAPON_HAMMER;
-		m_LastWeapon = LD_WEAPON_HAMMER;
-	}
-	else
+	if(!pPlayer->m_IsBot || pPlayer->m_BotPower.m_Gun)
 	{
 		m_ActiveWeapon = LD_WEAPON_GUN;
 		m_LastWeapon = LD_WEAPON_GUN;
+	}
+	else
+	{
+		m_ActiveWeapon = LD_WEAPON_HAMMER;
+		m_LastWeapon = LD_WEAPON_HAMMER;
 	}
 	m_QueuedWeapon = -1;
 

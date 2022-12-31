@@ -19,7 +19,8 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, bool Bot, CBotPower *B
 	m_ClientID = ClientID;
 	m_Team = 0;
 	m_IsBot = Bot;
-	m_BotPower = *BotPower;
+	if(BotPower)
+		m_BotPower = *BotPower;
 	m_Menu = 0;
 	m_MenuCloseTick = 0;
 	m_MenuPage = 0;
