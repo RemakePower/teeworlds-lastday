@@ -551,6 +551,9 @@ void CGameController::InitPower()
 		{
 			CBotPower *pPower = new CBotPower();
 			str_copy(pPower->m_SkinName, BotArray[i].value("skin", "default").c_str());
+			pPower->m_BodyColor = BotArray[i].value("body_color", -1);
+			pPower->m_FeetColor = BotArray[i].value("feet_color", -1);
+			pPower->m_AttackProba = BotArray[i].value("attack_proba", 20);
 			pPower->m_TeamDamage = BotArray[i].value("teamdamage", 0);
 			pPower->m_Gun = BotArray[i].value("gun", 0);
 			pPower->m_Hammer = BotArray[i].value("hammer", 0);

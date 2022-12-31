@@ -205,10 +205,19 @@ void CPlayer::Snap(int SnappingClient)
 	pClientInfo->m_Country = Server()->ClientCountry(m_ClientID);
 	// TODO:rewrite the bot skin select
 	StrToInts(&pClientInfo->m_Skin0, 6, m_IsBot ? m_BotPower.m_SkinName : m_TeeInfos.m_SkinName);
-	pClientInfo->m_UseCustomColor = m_TeeInfos.m_UseCustomColor;
-	pClientInfo->m_ColorBody = m_TeeInfos.m_ColorBody;
-	pClientInfo->m_ColorFeet = m_TeeInfos.m_ColorFeet;
 
+	if(m_IsBot && m_BotPower.m_BodyColor > -1 && m_BotPower.m_FeetColor > -1)
+	{
+		pClientInfo->m_UseCustomColor = 1;
+		pClientInfo->m_ColorBody = m_BotPower.m_BodyColor;
+		pClientInfo->m_ColorFeet = m_BotPower.m_FeetColor;
+	}
+	else 
+	{
+		pClientInfo->m_UseCustomColor = m_TeeInfos.m_UseCustomColor;
+		pClientInfo->m_ColorBody = m_TeeInfos.m_ColorBody;
+		pClientInfo->m_ColorFeet = m_TeeInfos.m_ColorFeet;
+	}
 	CNetObj_PlayerInfo *pPlayerInfo = static_cast<CNetObj_PlayerInfo *>(Server()->SnapNewItem(NETOBJTYPE_PLAYERINFO, id, sizeof(CNetObj_PlayerInfo)));
 	if(!pPlayerInfo)
 		return;

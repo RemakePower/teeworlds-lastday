@@ -962,7 +962,7 @@ void CCharacter::DoBotActions()
 		//Attack
 		if(m_pPlayer->m_BotPower.m_Hammer)
 		{
-			if(distance(pTarget->m_Pos, m_Pos) < m_ProximityRadius + 40.0f && random_int(0, 25) == 25)
+			if(distance(pTarget->m_Pos, m_Pos) < m_ProximityRadius + 40.0f && random_int(1, 100) < m_pPlayer->m_BotPower.m_AttackProba)
 			{
 				m_ActiveWeapon = WEAPON_HAMMER;
 				m_Input.m_Fire = 1;
@@ -971,7 +971,7 @@ void CCharacter::DoBotActions()
 		}
 		else if(m_pPlayer->m_BotPower.m_Gun)
 		{
-			if(distance(pTarget->m_Pos, m_Pos) > 240.0f && !GameServer()->Collision()->IntersectLine(pTarget->m_Pos, m_Pos, NULL, NULL))
+			if(distance(pTarget->m_Pos, m_Pos) > 240.0f && !GameServer()->Collision()->IntersectLine(pTarget->m_Pos, m_Pos, NULL, NULL) && random_int(1, 100) < m_pPlayer->m_BotPower.m_AttackProba)
 			{
 				m_ActiveWeapon = WEAPON_GUN;
 				m_Input.m_Fire = 1;

@@ -56,6 +56,9 @@ class CBotPower
 public:
     CBotPower() {};
     char m_SkinName[64];
+    int m_BodyColor;
+    int m_FeetColor;
+    int m_AttackProba;
     bool m_TeamDamage;
     bool m_Hammer;
     bool m_Gun;
