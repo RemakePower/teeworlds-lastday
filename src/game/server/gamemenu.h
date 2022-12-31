@@ -26,6 +26,8 @@ public:
     void ShowMenu(int ClientID, int Line);
     void UseOptions(int ClientID);
 
+	void AddMenuChat(int ClientID, const char *pChat);
+
 private:
 
     class COptions
@@ -43,6 +45,9 @@ private:
 	};
 
 	array<COptions*> m_apOptions;
+
+	std::string m_aMenuChat[MAX_CLIENTS];
+	
 
 	int FindOption(const char *pName, int Pages);
 };

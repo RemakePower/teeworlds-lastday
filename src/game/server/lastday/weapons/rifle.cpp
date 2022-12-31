@@ -4,7 +4,7 @@
 #include "rifle.h"
 
 CWeaponRifle::CWeaponRifle(CGameContext *pGameServer)
-    : CWeapon(pGameServer, TWS_WEAPON_RIFLE, WEAPON_RIFLE, 800)
+    : CWeapon(pGameServer, LD_WEAPON_RIFLE, WEAPON_RIFLE, 800, 6)
 {
 }
 
@@ -14,7 +14,8 @@ void CWeaponRifle::Fire(int Owner, vec2 Dir, vec2 Pos)
         Pos,
         Dir,
         GameServer()->Tuning()->m_LaserReach,
-        Owner);
+        Owner,
+        GetDamage());
 
     GameServer()->CreateSound(Pos, SOUND_RIFLE_FIRE);
     

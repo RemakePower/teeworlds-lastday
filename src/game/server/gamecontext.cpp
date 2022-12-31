@@ -13,6 +13,7 @@
 
 #include <teeuniverses/components/localization.h>
 
+#include "lastday/item/item.h"
 #include "lastday/item/make.h"
 enum
 {
@@ -40,7 +41,7 @@ void CGameContext::Construct(int Resetting)
 		m_pVoteOptionHeap = new CHeap();
 		
 	m_pMenu = new CMenu(this);
-	m_pMakeSystem = new CItemMake(this);
+	m_pItem = new CItemCore(this);
 }
 
 CGameContext::CGameContext(int Resetting)
@@ -224,6 +225,46 @@ void CGameContext::CreateSoundGlobal(int Sound, int Target)
 			Flag |= MSGFLAG_NORECORD;
 		Server()->SendPackMsg(&Msg, Flag, Target);
 	}
+}
+
+void CGameContext::SendMenuChat(int To, const char* pText)
+{
+	if(To < 0)
+	{
+		for(int i = 0;i < MAX_PLAYERS;i ++)
+		{
+			m_pMenu->AddMenuChat(i, pText);
+		}
+	}
+	else m_pMenu->AddMenuChat(To, pText);
+}
+
+void CGameContext::SendMenuChat_Locazition(int To, const char* pText, ...)
+{
+	int Start = (To < 0 ? 0 : To);
+	int End = (To < 0 ? MAX_CLIENTS : To+1);
+	
+	CNetMsg_Sv_Chat Msg;
+	Msg.m_Team = 0;
+	Msg.m_ClientID = -1;
+	
+	dynamic_string Buffer;
+	
+	va_list VarArgs;
+	va_start(VarArgs, pText);
+	
+	for(int i = Start; i < End; i++)
+	{
+		if(m_apPlayers[i])
+		{
+			Buffer.clear();
+			Server()->Localization()->Format_VL(Buffer, m_apPlayers[i]->GetLanguage(), pText, VarArgs);
+			
+			m_pMenu->AddMenuChat(i, Buffer.buffer());
+		}
+	}
+	
+	va_end(VarArgs);
 }
 
 void CGameContext::SendMotd(int To, const char* pText)
@@ -603,11 +644,12 @@ void CGameContext::OnClientEnter(int ClientID)
 
 	SendChatTarget_Locazition(ClientID, "===Welcome to last day===");
 	SendChatTarget_Locazition(ClientID, "Bind </menu> to your key");
-	SendChatTarget_Locazition(ClientID, "No change team, change team button is change sit");
 	SendChatTarget_Locazition(ClientID, "Show clan plate can show health bar");
+	SendChatTarget_Locazition(ClientID, "Mod wiki: %s", "wiki.teeworlds.cn/mods:lastday");
 
 
 	m_VoteUpdate = true;
+	Server()->ExpireServerInfo();
 }
 
 void CGameContext::OnClientConnected(int ClientID)
@@ -632,6 +674,8 @@ void CGameContext::OnClientConnected(int ClientID)
 	CNetMsg_Sv_Motd Msg;
 	Msg.m_pMessage = g_Config.m_SvMotd;
 	Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, ClientID);
+
+	Server()->ExpireServerInfo();
 }
 
 void CGameContext::OnClientDrop(int ClientID, const char *pReason)
@@ -649,6 +693,8 @@ void CGameContext::OnClientDrop(int ClientID, const char *pReason)
 		if(m_apPlayers[i] && m_apPlayers[i]->m_SpectatorID == ClientID)
 			m_apPlayers[i]->m_SpectatorID = SPEC_FREEVIEW;
 	}
+
+	Server()->ExpireServerInfo();
 }
 
 void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
@@ -903,9 +949,24 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				m_VoteUpdate = true;
 			}
 		}
-		else if (MsgID == NETMSGTYPE_CL_SETTEAM)
+		else if (MsgID == NETMSGTYPE_CL_SETTEAM && !m_World.m_Paused)
 		{
-			pPlayer->m_Sit = !pPlayer->m_Sit;
+			CNetMsg_Cl_SetTeam *pMsg = (CNetMsg_Cl_SetTeam *)pRawMsg;
+
+			if(pPlayer->GetTeam() == pMsg->m_Team || (g_Config.m_SvSpamprotection && pPlayer->m_LastSetTeam && pPlayer->m_LastSetTeam+Server()->TickSpeed()*3 > Server()->Tick()))
+				return;
+
+			if(pPlayer->GetTeam() != TEAM_SPECTATORS)
+			{
+				pPlayer->m_LastSetTeam = Server()->Tick();
+				SendBroadcast_VL(_("Save your hope"), ClientID);
+				return;
+			}
+
+			if(pPlayer->GetTeam() == TEAM_SPECTATORS || pMsg->m_Team == TEAM_SPECTATORS)
+				m_VoteUpdate = true;
+			pPlayer->SetTeam(pMsg->m_Team);
+			pPlayer->m_TeamChangeTick = Server()->Tick();
 		}
 		else if (MsgID == NETMSGTYPE_CL_SETSPECTATORMODE && !m_World.m_Paused)
 		{
@@ -950,6 +1011,8 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			pPlayer->m_TeeInfos.m_ColorBody = pMsg->m_ColorBody;
 			pPlayer->m_TeeInfos.m_ColorFeet = pMsg->m_ColorFeet;
 			m_pController->OnPlayerInfoChange(pPlayer);
+
+			Server()->ExpireServerInfo();
 		}
 		else if (MsgID == NETMSGTYPE_CL_EMOTICON && !m_World.m_Paused)
 		{
@@ -1069,6 +1132,8 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			pPlayer->m_IsReady = true;
 			CNetMsg_Sv_ReadyToEnter m;
 			Server()->SendPackMsg(&m, MSGFLAG_VITAL|MSGFLAG_FLUSH, ClientID);
+
+			Server()->ExpireServerInfo();
 		}
 	}
 }
@@ -1512,6 +1577,18 @@ void CGameContext::MenuItem(int ClientID, void *pUserData)
 	pSelf->m_apPlayers[ClientID]->SetMenuPage(MENUPAGE_ITEM);
 }
 
+void CGameContext::MenuSit(int ClientID, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+
+	CPlayer *pPlayer = pSelf->m_apPlayers[ClientID];
+
+	if(pPlayer)
+	{
+		pPlayer->m_Sit = !pPlayer->m_Sit;
+	}
+}
+
 void CGameContext::SetClientLanguage(int ClientID, const char *pLanguage)
 {
 	Server()->SetClientLanguage(ClientID, pLanguage);
@@ -1556,6 +1633,7 @@ void CGameContext::OnMenuOptionsInit()
 {
 	Menu()->Register("Player Inventory", MENUPAGE_MAIN, MenuInventory, this, true);
 	Menu()->Register("Make Item", MENUPAGE_MAIN, MenuItem, this, false);
+	Menu()->Register("Sit", MENUPAGE_MAIN, MenuSit, this, true);
 }
 
 void CGameContext::OnConsoleInit()
@@ -1713,23 +1791,9 @@ const char *CGameContext::NetVersion() { return GAME_NETVERSION; }
 
 IGameServer *CreateGameServer() { return new CGameContext; }
 
-void CGameContext::AddResource(int ClientID, int ResourceID, int Num)
-{
-	if(ClientID > MAX_PLAYERS || !m_apPlayers[ClientID])
-		return;
-	CPlayer *pPlayer = m_apPlayers[ClientID];
-	pPlayer->m_Resource.SetResource(ResourceID, pPlayer->m_Resource.GetResource(ResourceID) + Num);
-
-	const char *pLanguageCode = pPlayer->GetLanguage();
-
-	SendChatTarget_Locazition(ClientID, _("You got %d %s"), Num, GetResourceName(ResourceID));
-
-	SendEmoticon(ClientID, EMOTICON_SUSHI);	
-}
-
 void CGameContext::MakeItem(int ClientID, const char *pItemName)
 {
-	m_pMakeSystem->MakeItem(pItemName, ClientID);
+	Item()->Make()->MakeItem(pItemName, ClientID);
 }
 
 int CGameContext::GetBotNum() const
@@ -1759,7 +1823,7 @@ void CGameContext::OnBotDead(int ClientID)
 	}
 }
 
-void CGameContext::CreateBot(int ClientID, int BotPower)
+void CGameContext::CreateBot(int ClientID, CBotPower *BotPower)
 {
 	if(ClientID < MAX_PLAYERS || m_apPlayers[ClientID])
 		return;

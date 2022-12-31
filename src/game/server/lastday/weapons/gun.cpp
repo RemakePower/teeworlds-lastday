@@ -4,7 +4,7 @@
 #include "gun.h"
 
 CWeaponGun::CWeaponGun(CGameContext *pGameServer)
-    : CWeapon(pGameServer, TWS_WEAPON_GUN, WEAPON_GUN, 125)
+    : CWeapon(pGameServer, LD_WEAPON_GUN, WEAPON_GUN, 125, 2)
 {
 }
 
@@ -15,7 +15,7 @@ void CWeaponGun::Fire(int Owner, vec2 Dir, vec2 Pos)
     Pos,
     Dir,
     (int)(GameServer()->Server()->TickSpeed()*GameServer()->Tuning()->m_GunLifetime),
-    1, 0, 0, -1, WEAPON_GUN, 0);
+    GetDamage(), 0, 0, -1, WEAPON_GUN, 0);
 
     GameServer()->CreateSound(Pos, SOUND_GUN_FIRE);
     

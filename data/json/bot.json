@@ -1,0 +1,55 @@
+{
+    "json":
+    [
+        {
+            "skin": "coala",
+            "attack_proba": 20,
+            "teamdamage": 1,
+            "hammer": 1,
+            "gun": 0,
+            "hook": 0
+        },
+        {
+            "skin": "cammo",
+            "body_color": 0,
+            "feet_color": 0,
+            "attack_proba": 0,
+            "teamdamage": 0,
+            "hammer": 0,
+            "gun": 0,
+            "hook": 0
+        },
+        {
+            "skin": "warpaint",
+            "attack_proba": 50,
+            "teamdamage": 1,
+            "hammer": 1,
+            "gun": 0,
+            "hook": 1
+        },
+        {
+            "skin": "cammostripes",
+            "attack_proba": 100,
+            "teamdamage": 1,
+            "hammer": 0,
+            "gun": 1,
+            "hook": 1
+        },
+        {
+            "skin": "twintri",
+            "attack_proba": 100,
+            "teamdamage": 1,
+            "hammer": 1,
+            "gun": 0,
+            "hook": 1
+        },
+        {
+            "skin": "random",
+            "attack_proba": 100,
+            "teamdamage": 1,
+            "hammer": 1,
+            "gun": 1,
+            "hook": 1
+        }
+    ]
+}

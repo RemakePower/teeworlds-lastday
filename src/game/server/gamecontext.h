@@ -29,6 +29,7 @@ typedef unsigned __int64 uint64_t;
 #endif
 
 #include "gamemenu.h"
+#include "lastday/item/item.h"
 /*
 	Tick
 		Game Context (CGameContext::tick)
@@ -60,6 +61,7 @@ class CGameContext : public IGameServer
 	CNetObjHandler m_NetObjHandler;
 	CTuningParams m_Tuning;
 	CMenu *m_pMenu;
+	CItemCore *m_pItem;
 
 	static void ConsoleOutputCallback_Chat(const char *pLine, void *pUser);
 
@@ -85,6 +87,7 @@ class CGameContext : public IGameServer
 
 	static void MenuInventory(int ClientID, void *pUserData);
 	static void MenuItem(int ClientID, void *pUserData);
+	static void MenuSit(int ClientID, void *pUserData);
 
 
 	CGameContext(int Resetting);
@@ -103,6 +106,7 @@ public:
 	CCollision *Collision() { return &m_Collision; }
 	CTuningParams *Tuning() { return &m_Tuning; }
 	CMenu *Menu() { return m_pMenu; }
+	class CItemCore *Item() { return m_pItem; }
 	class CLayers *Layers() override { return &m_Layers; }
 
 	CGameContext();
@@ -167,6 +171,8 @@ public:
 		CHAT_BLUE=1
 	};
 
+	void SendMenuChat(int To, const char *pText);
+	void SendMenuChat_Locazition(int To, const char *pText, ...);
 	// network
 	void SendMotd(int To, const char* pText);
 	void SendChatTarget(int To, const char *pText);
@@ -215,16 +221,13 @@ public:
 	const char *Version() override;
 	const char *NetVersion() override;
 
-	void AddResource(int ClientID, int ResourceID, int Num=1);
-
 	// MakeItem
-	class CItemMake *m_pMakeSystem;
 	void MakeItem(int ClientID, const char *pItemName);
 
 	//Bot Start
 	int GetBotNum() const;
 	void OnBotDead(int ClientID);
-	void CreateBot(int ClientID, int BotPower);
+	void CreateBot(int ClientID, CBotPower *BotPower);
 
 	//Bot END
 };

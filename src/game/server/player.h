@@ -13,7 +13,7 @@ class CPlayer
 	MACRO_ALLOC_POOL_ID()
 
 public:
-	CPlayer(CGameContext *pGameServer, int ClientID, bool Bot=false, int BotPower = 0);
+	CPlayer(CGameContext *pGameServer, int ClientID, bool Bot=false, CBotPower *BotPower = 0);
 	~CPlayer();
 
 	void TryRespawn();
@@ -135,14 +135,13 @@ public:
 	void SetMenuPage(int Page);
 	int GetMenuPage() const {return m_MenuPage;}
 	int m_MenuLine;
+	int m_MenuCloseTick;
 	bool m_MenuNeedUpdate;
 	const char *m_SelectOption;
 
-	Resource m_Resource;
-
 	bool m_Sit;
 	// Bot
-	int m_BotPower;
+	CBotPower m_BotPower;
 	bool m_IsBot;
 };
 

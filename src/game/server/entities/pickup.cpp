@@ -4,32 +4,18 @@
 #include <game/server/gamecontext.h>
 #include "pickup.h"
 
-CPickup::CPickup(CGameWorld *pGameWorld, vec2 Pos, vec2 Dir, int Type, int SubType, int Num)
+CPickup::CPickup(CGameWorld *pGameWorld, vec2 Pos, vec2 Dir, const char *Name, int Num)
 : CEntity(pGameWorld, CGameWorld::ENTTYPE_PICKUP)
 {
 	m_Pos = Pos;
 	m_StartPos = Pos;
 	m_Direction = Dir;
-	m_Type = Type;
-	m_Subtype = SubType;
+	m_Name = Name;
 	m_Num = Num;
 	m_ProximityRadius = PickupPhysSize;
 	m_StartTick = Server()->Tick();
 
 	GameWorld()->InsertEntity(this);
-	
-	for(int i=0; i<PickupAmmoNum; i++)
-	{
-		m_AmmoIDs[i] = Server()->SnapNewID();
-	}
-}
-
-CPickup::~CPickup()
-{
-	for(int i=0; i<PickupAmmoNum; i++)
-	{
-		Server()->SnapFreeID(m_AmmoIDs[i]);
-	}
 }
 
 vec2 CPickup::GetPos(float Time)
@@ -99,47 +85,12 @@ void CPickup::Tick()
 	CCharacter *pChr = GameServer()->m_World.ClosestCharacter(m_Pos, 32.0f, 0);
 	if(pChr && pChr->IsAlive() && !pChr->GetPlayer()->m_IsBot)
 	{
-		bool Destroy = false;
-		switch (m_Type)
-		{
-			case PICKUP_AMMO:
-			{
-				if(pChr->GetWeaponStat()[m_Subtype].m_Got)
-				{
-					pChr->GetWeaponStat()[m_Subtype].m_Ammo += m_Num;
-					GameServer()->SendChatTarget_Locazition(pChr->GetCID(), _("You got %d %s"),
-						m_Num, GetAmmoType(m_Subtype));
-					GameServer()->CreateSound(m_Pos, SOUND_PICKUP_SHOTGUN);
-					Destroy = true;
-				}
-				break;
-			}
-			case PICKUP_RESOURCE:
-			{
-				GameServer()->AddResource(pChr->GetCID(), m_Subtype, m_Num);
-				Destroy = true;
-				break;
-			}
-			case PICKUP_GUN:
-			{
-				if(pChr->GetWeaponStat()[m_Subtype].m_Got)
-				{
-					pChr->GetWeaponStat()[m_Subtype].m_Ammo += 5;
-					GameServer()->SendChatTarget_Locazition(pChr->GetCID(), _("You got %d %s"),
-						5, GetAmmoType(m_Subtype));
-					GameServer()->CreateSound(m_Pos, SOUND_PICKUP_SHOTGUN);
-				}else 
-				{
-					pChr->GetWeaponStat()[m_Subtype].m_Got = true;
-					GameServer()->CreateSound(m_Pos, SOUND_PICKUP_GRENADE);
-				}
-				Destroy = true;
-				break;
-			}
-		}
+		GameServer()->Item()->AddInvItemNum(m_Name, m_Num, pChr->GetCID());
+		GameServer()->SendChatTarget_Locazition(pChr->GetCID(), _("You got %d %s"),
+			m_Num, m_Name);
+		GameServer()->CreateSound(m_Pos, SOUND_PICKUP_HEALTH);
 
-		if(Destroy)
-			GameServer()->m_World.DestroyEntity(this);
+		GameServer()->m_World.DestroyEntity(this);
 	}
 
 	if((Server()->Tick() - m_StartTick)/Server()->TickSpeed() >= 60)
@@ -156,57 +107,12 @@ void CPickup::Snap(int SnappingClient)
 	if(NetworkClipped(SnappingClient))
 		return;
 
-	if(m_Type == PICKUP_RESOURCE)
-	{
-		CNetObj_Pickup *pP = static_cast<CNetObj_Pickup *>(Server()->SnapNewItem(NETOBJTYPE_PICKUP, m_ID, sizeof(CNetObj_Pickup)));
-		if(!pP)
-			return;
+	CNetObj_Pickup *pP = static_cast<CNetObj_Pickup *>(Server()->SnapNewItem(NETOBJTYPE_PICKUP, m_ID, sizeof(CNetObj_Pickup)));
+	if(!pP)
+		return;
 
-		pP->m_X = (int)m_Pos.x;
-		pP->m_Y = (int)m_Pos.y;
-		pP->m_Type = POWERUP_WEAPON;
-		pP->m_Subtype = WEAPON_HAMMER;
-	}
-	else if(m_Type == PICKUP_AMMO)
-	{
-		int Degres = 0;
-
-		for(int i = 0;i < PickupAmmoNum;i++)
-		{
-			vec2 Pos = m_Pos + (GetDir(Degres*pi/180) * m_ProximityRadius);
-
-			CNetObj_Projectile *pP = static_cast<CNetObj_Projectile *>(Server()->SnapNewItem(NETOBJTYPE_PROJECTILE, m_AmmoIDs[i], sizeof(CNetObj_Projectile)));
-			if(!pP)
-				return;
-
-			pP->m_X = (int)Pos.x;
-			pP->m_Y = (int)Pos.y;
-			pP->m_Type = WEAPON_SHOTGUN;
-			pP->m_VelX = 0;
-			pP->m_VelY = 0;
-			pP->m_StartTick = Server()->Tick()-2;
-			Degres -= 360 / PickupAmmoNum;
-		}
-
-		CNetObj_Projectile *pP = static_cast<CNetObj_Projectile *>(Server()->SnapNewItem(NETOBJTYPE_PROJECTILE, m_ID, sizeof(CNetObj_Projectile)));
-		if(!pP)
-			return;
-
-		pP->m_X = (int)m_Pos.x;
-		pP->m_Y = (int)m_Pos.y;
-		pP->m_Type = m_Subtype;
-		pP->m_VelX = 0;
-		pP->m_VelY = 0;
-		pP->m_StartTick = Server()->Tick()-1;
-	}else 
-	{
-		CNetObj_Pickup *pP = static_cast<CNetObj_Pickup *>(Server()->SnapNewItem(NETOBJTYPE_PICKUP, m_ID, sizeof(CNetObj_Pickup)));
-		if(!pP)
-			return;
-
-		pP->m_X = (int)m_Pos.x;
-		pP->m_Y = (int)m_Pos.y;
-		pP->m_Type = POWERUP_WEAPON;
-		pP->m_Subtype = m_Subtype;
-	}
+	pP->m_X = (int)m_Pos.x;
+	pP->m_Y = (int)m_Pos.y;
+	pP->m_Type = POWERUP_WEAPON;
+	pP->m_Subtype = WEAPON_HAMMER;
 }

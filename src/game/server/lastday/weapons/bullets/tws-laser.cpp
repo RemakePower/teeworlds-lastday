@@ -2,7 +2,7 @@
 #include <game/server/gamecontext.h>
 #include "tws-laser.h"
 
-CTWSLaser::CTWSLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEnergy, int Owner)
+CTWSLaser::CTWSLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEnergy, int Owner, int Damage)
 : CEntity(pGameWorld, CGameWorld::ENTTYPE_LASER)
 {
 	m_Pos = Pos;
@@ -11,6 +11,7 @@ CTWSLaser::CTWSLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float Sta
 	m_Dir = Direction;
 	m_Bounces = 0;
 	m_EvalTick = 0;
+	m_Damage = Damage;
 	GameWorld()->InsertEntity(this);
 	DoBounce();
 }
@@ -27,7 +28,7 @@ bool CTWSLaser::HitCharacter(vec2 From, vec2 To)
 	m_From = From;
 	m_Pos = At;
 	m_Energy = -1;
-	pHit->TakeDamage(vec2(0.f, 0.f), GameServer()->Tuning()->m_LaserDamage, m_Owner, WEAPON_RIFLE);
+	pHit->TakeDamage(vec2(0.f, 0.f), m_Damage, m_Owner, WEAPON_RIFLE);
 	return true;
 }
 

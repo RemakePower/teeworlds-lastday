@@ -9,7 +9,7 @@ MACRO_ALLOC_POOL_ID_IMPL(CPlayer, MAX_CLIENTS)
 
 IServer *CPlayer::Server() const { return m_pGameServer->Server(); }
 
-CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, bool Bot, int BotPower)
+CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, bool Bot, CBotPower *BotPower)
 {
 	m_pGameServer = pGameServer;
 	m_RespawnTick = Server()->Tick();
@@ -19,8 +19,10 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, bool Bot, int BotPower
 	m_ClientID = ClientID;
 	m_Team = 0;
 	m_IsBot = Bot;
-	m_BotPower = BotPower;
+	if(BotPower)
+		m_BotPower = *BotPower;
 	m_Menu = 0;
+	m_MenuCloseTick = 0;
 	m_MenuPage = 0;
 	m_MenuLine = 0;
 	m_MenuNeedUpdate = 0;
@@ -40,13 +42,10 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, bool Bot, int BotPower
 	    idMap[i] = -1;
 	}
 	idMap[0] = ClientID;
-
-	m_Resource.ResetResource();
 }
 
 CPlayer::~CPlayer()
 {
-	m_Resource.ResetResource();
 	delete m_pCharacter;
 	m_pCharacter = 0;
 }
@@ -142,6 +141,13 @@ void CPlayer::Tick()
 			m_MenuNeedUpdate = 0;
 		}
 
+		if(m_MenuCloseTick)
+		{
+			m_MenuCloseTick--;
+			if(!m_MenuCloseTick)
+				CloseMenu();
+		}
+
 		if(m_pCharacter->GetInput()->m_Fire&1 && !(m_pCharacter->GetPrevInput()->m_Fire&1))
 		{
 			GameServer()->Menu()->UseOptions(m_ClientID);
@@ -198,11 +204,20 @@ void CPlayer::Snap(int SnappingClient)
 
 	pClientInfo->m_Country = Server()->ClientCountry(m_ClientID);
 	// TODO:rewrite the bot skin select
-	StrToInts(&pClientInfo->m_Skin0, 6, m_IsBot ? "coala" : m_TeeInfos.m_SkinName);
-	pClientInfo->m_UseCustomColor = 0;
-	pClientInfo->m_ColorBody = m_TeeInfos.m_ColorBody;
-	pClientInfo->m_ColorFeet = m_TeeInfos.m_ColorFeet;
+	StrToInts(&pClientInfo->m_Skin0, 6, m_IsBot ? m_BotPower.m_SkinName : m_TeeInfos.m_SkinName);
 
+	if(m_IsBot && m_BotPower.m_BodyColor > -1 && m_BotPower.m_FeetColor > -1)
+	{
+		pClientInfo->m_UseCustomColor = 1;
+		pClientInfo->m_ColorBody = m_BotPower.m_BodyColor;
+		pClientInfo->m_ColorFeet = m_BotPower.m_FeetColor;
+	}
+	else 
+	{
+		pClientInfo->m_UseCustomColor = m_TeeInfos.m_UseCustomColor;
+		pClientInfo->m_ColorBody = m_TeeInfos.m_ColorBody;
+		pClientInfo->m_ColorFeet = m_TeeInfos.m_ColorFeet;
+	}
 	CNetObj_PlayerInfo *pPlayerInfo = static_cast<CNetObj_PlayerInfo *>(Server()->SnapNewItem(NETOBJTYPE_PLAYERINFO, id, sizeof(CNetObj_PlayerInfo)));
 	if(!pPlayerInfo)
 		return;
@@ -351,16 +366,10 @@ void CPlayer::SetTeam(int Team, bool DoChatMsg)
 	{
 		if(Team == TEAM_SPECTATORS)
 		{
-			GameServer()->SendChatTarget_Locazition(-1, _("'%s' joined the spectators"), Server()->ClientName(m_ClientID));
-		}else if(Team == TEAM_RED && GameServer()->m_pController->IsTeamplay())
-		{
-			GameServer()->SendChatTarget_Locazition(-1, _("'%s' joined the redteam"), Server()->ClientName(m_ClientID));
-		}else if(Team == TEAM_BLUE && GameServer()->m_pController->IsTeamplay())
-		{
-			GameServer()->SendChatTarget_Locazition(-1, _("'%s' joined the blueteam"), Server()->ClientName(m_ClientID));
+			GameServer()->SendChatTarget_Locazition(-1, _("Survivor '%s' left"), Server()->ClientName(m_ClientID));
 		}else
 		{
-			GameServer()->SendChatTarget_Locazition(-1, _("'%s' joined the game"), Server()->ClientName(m_ClientID));
+			GameServer()->SendChatTarget_Locazition(-1, _("Survivor '%s' is coming"), Server()->ClientName(m_ClientID));
 		}
 	}
 
@@ -412,6 +421,7 @@ void CPlayer::OpenMenu()
 	m_Menu = 1;
 	m_MenuPage = MENUPAGE_MAIN;
 	m_MenuNeedUpdate = 1;
+	m_MenuCloseTick = MENU_CLOSETICK;
 }
 
 void CPlayer::CloseMenu()
@@ -425,4 +435,5 @@ void CPlayer::SetMenuPage(int Page)
 {
 	m_MenuPage = Page;
 	m_MenuNeedUpdate = 1;
+	m_MenuCloseTick = MENU_CLOSETICK;
 }

@@ -3,7 +3,7 @@
 #include "hammer.h"
 
 CWeaponHammer::CWeaponHammer(CGameContext *pGameServer)
-    : CWeapon(pGameServer, TWS_WEAPON_HAMMER, WEAPON_HAMMER, 125)
+    : CWeapon(pGameServer, LD_WEAPON_HAMMER, WEAPON_HAMMER, 125, 2)
 {
 }
 
@@ -39,7 +39,7 @@ void CWeaponHammer::Fire(int Owner, vec2 Dir, vec2 Pos)
         else
             Dir = vec2(0.f, -1.f);
 
-        pTarget->TakeDamage(vec2(0.f, -1.f) + normalize(Dir + vec2(0.f, -1.1f)) * 10.0f, g_pData->m_Weapons.m_Hammer.m_pBase->m_Damage,
+        pTarget->TakeDamage(vec2(0.f, -1.f) + normalize(Dir + vec2(0.f, -1.1f)) * 10.0f, GetDamage(),
             pOwnerChr->GetPlayer()->GetCID(), GetShowType());
         Hits++;
     }

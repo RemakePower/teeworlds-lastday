@@ -1,12 +1,16 @@
 {"translation": 
     [
         {
-            "key": "Metal",
+            "key": "metal",
             "value": "金属碎片"
         },
         {
-            "key": "Wood",
+            "key": "wood",
             "value": "木头"
+        },
+        {
+            "key": "hammer",
+            "value": "锤子"
         },
         {
             "key": "gun",
@@ -39,6 +43,10 @@
         {
             "key": "rifle ammo",
             "value": "激光"
+        },
+        {
+            "key": "ninja",
+            "value": "忍者刀"
         },
         {
     		"key": "Language successfully switched to English",
@@ -157,28 +165,8 @@
             "value": "'%s' 提议将 '%s' 移到旁观 (%s)"
         },
         {
-            "key": "Teams are locked",
-            "value": "队伍已经锁定"
-        },
-        {
-            "key": "Teams were swapped",
-            "value": "队伍交换"
-        },
-        {
-            "key": "Teams were locked",
-            "value": "队伍锁定"
-        },
-        {
-            "key": "Teams were unlocked",
-            "value": "队伍解锁"
-        },
-        {
-            "key": "Teams must be balanced, please join other team",
-            "value": "队伍人数必须均衡，请加入另一个队伍"
-        },
-        {
-            "key": "Only %d active players are allowed",
-            "value": "只允许 %d 名玩家游玩"
+            "key": "Save your hope",
+            "value": "保持你的希望"
         },
         {
             "key": "Invalid spectator id used",
@@ -190,19 +178,19 @@
         },
         {
             "key": "===Welcome to last day===",
-            "value": "===欢迎来到最后一日==="
+            "value": "===欢迎来到最后的日子==="
         },
         {
             "key": "Bind </menu> to your key",
             "value": "请绑定/menu到你的按键"
         },
         {
-            "key": "No change team, change team button is change sit",
-            "value": "无切换队伍,切换队伍按钮是切换坐下"
-        },
-        {
             "key": "Show clan plate can show health bar",
             "value": "显示战队可以显示血量条"
+        },
+        {
+            "key": "Mod wiki: %s",
+            "value": "模组百科: %s"
         },
         {
             "key": "Menu",
@@ -223,6 +211,10 @@
         {
             "key": "Player Inventory",
             "value": "玩家物品栏"
+        },
+        {
+            "key": "Sit",
+            "value": "坐下"
         },
         {
             "key": "Back",
@@ -271,6 +263,10 @@
         {
             "key": "Requires",
             "value": "需要"
+        },
+        {
+            "key": "Chat",
+            "value": "提示"
         },
         {
             "key": "Inventory",

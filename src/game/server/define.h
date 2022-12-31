@@ -3,43 +3,25 @@
 
 #include <base/system.h>
 
+#define MENU_CLOSETICK 200
+
 char* format_int64_with_commas(char commas, int64 n);
 
-const char* GetResourceName(int ID);
-const char *GetAmmoType(int WeaponID);
+const char *GetAmmoName(int WeaponID);
+const char *GetWeaponName(int WeaponID);
 
-enum ItemType
-{
-    ITEMTYPE_AMMO=0,
-    ITEMTYPE_WEAPON,
-};
-
-enum ItemAmmoList
+enum ItemList
 {
     ITEM_GUN_AMMO,
     ITEM_SHOTGUN_AMMO,
     ITEM_GRENADE_AMMO,
     ITEM_RIFLE_AMMO,
 
-    NUM_ITEM_AMMOS,
-};
-
-enum ItemWeaponList
-{
     ITEM_GUN,
     ITEM_SHOTGUN,
     ITEM_GRENADE,
     ITEM_RIFLE,
-
-    NUM_ITEM_WEAPONS,
-};
-
-enum ResourceList
-{
-    RESOURCE_METAL=0,
-    RESOURCE_WOOD,
-
-    NUM_RESOURCES,
+    ITEM_NINJA,
 };
 
 enum OptionType
@@ -50,38 +32,16 @@ enum OptionType
     NUM_MENUOPTIONS,
 };
 
-enum PickupType
-{
-    PICKUP_AMMO=0,
-    PICKUP_RESOURCE,
-    PICKUP_GUN,
-    
-    NUM_PICKUPS,
-};
-
 enum LastDayWeapons
 {
-    TWS_WEAPON_HAMMER=0,
-    TWS_WEAPON_GUN,
-    TWS_WEAPON_SHOTGUN,
-    TWS_WEAPON_GRENADE,
-    TWS_WEAPON_RIFLE,
-    TWS_WEAPON_NINJA,
+    LD_WEAPON_HAMMER=0,
+    LD_WEAPON_GUN,
+    LD_WEAPON_SHOTGUN,
+    LD_WEAPON_GRENADE,
+    LD_WEAPON_RIFLE,
+    LD_WEAPON_NINJA,
 
     NUM_LASTDAY_WEAPONS,
-};
-
-enum BotPower
-{
-    BOTPOWER_HAMMER=1<<0,
-    BOTPOWER_HOOK=1<<1,
-    BOTPOWER_GUN=1<<2,
-    BOTPOWER_TEAMDAMAGE=1<<3,
-    //BOTPOWER_SHOTGUN=1<<4,
-    //BOTPOWER_GRENADE=1<<5,
-    //BOTPOWER_RIFLE=1<<6,
-
-    NUM_BOTPOWERS=4,
 };
 
 enum MenuPages
@@ -89,6 +49,20 @@ enum MenuPages
     MENUPAGE_MAIN=0,
     MENUPAGE_NOTMAIN,
     MENUPAGE_ITEM,
+};
+
+class CBotPower
+{
+public:
+    CBotPower() {};
+    char m_SkinName[64];
+    int m_BodyColor;
+    int m_FeetColor;
+    int m_AttackProba;
+    bool m_TeamDamage;
+    bool m_Hammer;
+    bool m_Gun;
+    bool m_Hook;
 };
 
 #endif

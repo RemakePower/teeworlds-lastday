@@ -4,7 +4,7 @@
 #include "shotgun.h"
 
 CWeaponShotgun::CWeaponShotgun(CGameContext *pGameServer)
-    : CWeapon(pGameServer, TWS_WEAPON_SHOTGUN, WEAPON_SHOTGUN, 500)
+    : CWeapon(pGameServer, LD_WEAPON_SHOTGUN, WEAPON_SHOTGUN, 500, 1)
 {
 }
 
@@ -24,7 +24,7 @@ void CWeaponShotgun::Fire(int Owner, vec2 Dir, vec2 Pos)
             Pos,
             vec2(cosf(a), sinf(a))*Speed,
             (int)(GameServer()->Server()->TickSpeed()*GameServer()->Tuning()->m_ShotgunLifetime),
-            1, 0, 0, -1, GetShowType(), 0);
+            GetDamage(), 0, 0, -1, GetShowType(), 0);
     }
 
     GameServer()->CreateSound(Pos, SOUND_SHOTGUN_FIRE);

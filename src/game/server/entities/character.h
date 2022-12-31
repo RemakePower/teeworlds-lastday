@@ -44,6 +44,8 @@ public:
 	void HandleEvents();
 	void HandleInput();
 
+	void SyncWeapon();
+
 	void OnPredictedInput(CNetObj_PlayerInput *pNewInput);
 	void OnDirectInput(CNetObj_PlayerInput *pNewInput);
 	void ResetInput();
@@ -58,7 +60,6 @@ public:
 	bool IncreaseHealth(int Amount);
 	bool IncreaseArmor(int Amount);
 
-	bool GiveWeapon(int Weapon, int Ammo);
 	void GiveNinja();
 
 	void SetEmote(int Emote, int Tick);
@@ -78,9 +79,7 @@ private:
 
 	struct WeaponStat
 	{
-		int m_AmmoRegenStart;
 		int m_Ammo;
-		int m_Ammocost;
 		bool m_Got;
 
 	} m_aWeapons[NUM_WEAPONS];

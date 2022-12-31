@@ -70,7 +70,7 @@ void CCharacterCore::Reset()
 	m_HookTick = 0;
 	m_HookState = HOOK_IDLE;
 	m_HookedPlayer = -1;
-	m_MaxJumps = 3;
+	m_MaxJumps = 2;
 	m_InfniteJumps = 0;
 	m_JumpCounter = 0;
 	m_TriggeredEvents = 0;
