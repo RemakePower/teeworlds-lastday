@@ -729,7 +729,7 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon)
 
 		// create pickup
 		if(m_pPlayer->m_IsBot && random_int(0, 100) < g_Config.m_LdPickupProba)
-			GameServer()->m_pController->CreateZombiePickup(m_Pos, Force/Force);
+			GameServer()->m_pController->CreateZombiePickup(m_Pos, Force/Force, m_pPlayer->m_BotPower.m_SpawnProba);
 
 		Die(From, Weapon);
 

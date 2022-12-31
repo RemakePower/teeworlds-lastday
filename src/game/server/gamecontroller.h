@@ -146,7 +146,7 @@ public:
 	array<CBotPower> m_BotPowers;
 /** Bot End **/
 
-	void CreateZombiePickup(vec2 Pos, vec2 Dir);
+	void CreateZombiePickup(vec2 Pos, vec2 Dir, int BotSpawnProba);
 
 	WeaponInit WeaponIniter;
 };

@@ -59,6 +59,7 @@ public:
     int m_BodyColor;
     int m_FeetColor;
     int m_AttackProba;
+    int m_SpawnProba;
     bool m_TeamDamage;
     bool m_Hammer;
     bool m_Gun;

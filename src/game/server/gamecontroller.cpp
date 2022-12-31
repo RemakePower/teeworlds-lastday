@@ -554,6 +554,7 @@ void CGameController::InitPower()
 			pPower->m_BodyColor = BotArray[i].value("body_color", -1);
 			pPower->m_FeetColor = BotArray[i].value("feet_color", -1);
 			pPower->m_AttackProba = BotArray[i].value("attack_proba", 20);
+			pPower->m_SpawnProba = BotArray[i].value("spawn_proba", 100);
 			pPower->m_TeamDamage = BotArray[i].value("teamdamage", 0);
 			pPower->m_Gun = BotArray[i].value("gun", 0);
 			pPower->m_Hammer = BotArray[i].value("hammer", 0);
@@ -565,19 +566,26 @@ void CGameController::InitPower()
 
 CBotPower *CGameController::RandomPower()
 {
-	return &m_BotPowers[random_int(0, m_BotPowers.size()-1)];
+	CBotPower *pPower;
+	int RandomID;
+	do
+	{
+		RandomID = random_int(0, m_BotPowers.size()-1);
+	}
+	while(random_int(0, 100) >= m_BotPowers[RandomID].m_SpawnProba);
+	pPower = &m_BotPowers[RandomID];
+	return pPower;
 }	
 
-void CGameController::CreateZombiePickup(vec2 Pos, vec2 Dir)
+void CGameController::CreateZombiePickup(vec2 Pos, vec2 Dir, int BotSpawnProba)
 {
 	const char *PickupName;
 	int PickupRandom = random_int(0, GameServer()->Item()->m_aDrops.size()-1);
 	PickupName = GameServer()->Item()->m_aDrops[PickupRandom]->m_aName;
 	
 	int PickupNum = 0;
-	if(random_int(0, 100) < 10) // pro pickup
-		PickupNum = random_int(3, 5);
-	else PickupNum = random_int(1, 2);
+	BotSpawnProba = 100 - BotSpawnProba;
+	PickupNum = random_int(-2, 1) + BotSpawnProba/10;
 
 	new CPickup(&GameServer()->m_World, Pos, Dir, PickupName, PickupNum);
 }

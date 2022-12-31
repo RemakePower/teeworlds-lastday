@@ -4,6 +4,7 @@
         {
             "skin": "coala",
             "attack_proba": 20,
+            "spawn_proba": 60,
             "teamdamage": 1,
             "hammer": 1,
             "gun": 0,
@@ -14,6 +15,7 @@
             "body_color": 0,
             "feet_color": 0,
             "attack_proba": 0,
+            "spawn_proba": 30,
             "teamdamage": 0,
             "hammer": 0,
             "gun": 0,
@@ -22,6 +24,7 @@
         {
             "skin": "warpaint",
             "attack_proba": 50,
+            "spawn_proba": 15,
             "teamdamage": 1,
             "hammer": 1,
             "gun": 0,
@@ -30,6 +33,7 @@
         {
             "skin": "cammostripes",
             "attack_proba": 100,
+            "spawn_proba": 10,
             "teamdamage": 1,
             "hammer": 0,
             "gun": 1,
@@ -38,6 +42,7 @@
         {
             "skin": "twintri",
             "attack_proba": 100,
+            "spawn_proba": 10,
             "teamdamage": 1,
             "hammer": 1,
             "gun": 0,
@@ -46,6 +51,7 @@
         {
             "skin": "random",
             "attack_proba": 100,
+            "spawn_proba": 5,
             "teamdamage": 1,
             "hammer": 1,
             "gun": 1,
