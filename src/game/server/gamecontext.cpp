@@ -685,6 +685,8 @@ void CGameContext::OnClientDrop(int ClientID, const char *pReason)
 	delete m_apPlayers[ClientID];
 	m_apPlayers[ClientID] = 0;
 
+	Item()->ClearInv(ClientID);
+
 	m_VoteUpdate = true;
 
 	// update spectator modes

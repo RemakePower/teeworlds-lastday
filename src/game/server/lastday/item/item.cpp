@@ -138,3 +138,9 @@ void CItemCore::SetInvItemNum(const char *ItemName, int Num, int ClientID)
 		m_aInventories[ClientID].m_Num.add(Num);
 	}
 }
+
+void CItemCore::ClearInv(int ClientID)
+{
+	m_aInventories[ClientID].m_Name.clear();
+	m_aInventories[ClientID].m_Num.clear();
+}
