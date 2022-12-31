@@ -6,13 +6,11 @@
 #include <game/server/entity.h>
 
 const int PickupPhysSize = 16;
-const int PickupAmmoNum = 8;
 
 class CPickup : public CEntity
 {
 public:
-	CPickup(CGameWorld *pGameWorld, vec2 Pos, vec2 Dir, int Type, int SubType = 0, int Num = 1);
-	~CPickup();
+	CPickup(CGameWorld *pGameWorld, vec2 Pos, vec2 Dir, const char *Name, int Num = 1);
 
 	vec2 GetPos(float Time);
 
@@ -23,10 +21,8 @@ public:
 private:
 	vec2 m_Direction;
 	vec2 m_StartPos;
-	int m_AmmoIDs[PickupAmmoNum];
-	int m_Type;
+	const char *m_Name;
 	int m_Num;
-	int m_Subtype;
 	int m_StartTick;
 };
 

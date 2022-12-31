@@ -1,0 +1,33 @@
+{
+    "json":
+    [
+        {
+            "skin": "coala",
+            "teamdamage": 1,
+            "hammer": 1,
+            "gun": 0,
+            "hook": 0
+        },
+        {
+            "skin": "default",
+            "teamdamage": 0,
+            "hammer": 0,
+            "gun": 0,
+            "hook": 0
+        },
+        {
+            "skin": "warpaint",
+            "teamdamage": 1,
+            "hammer": 1,
+            "gun": 0,
+            "hook": 1
+        },
+        {
+            "skin": "warpaint",
+            "teamdamage": 1,
+            "hammer": 0,
+            "gun": 1,
+            "hook": 1
+        }
+    ]
+}

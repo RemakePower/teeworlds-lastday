@@ -13,6 +13,7 @@
 
 #include <teeuniverses/components/localization.h>
 
+#include "lastday/item/item.h"
 #include "lastday/item/make.h"
 enum
 {
@@ -40,7 +41,7 @@ void CGameContext::Construct(int Resetting)
 		m_pVoteOptionHeap = new CHeap();
 		
 	m_pMenu = new CMenu(this);
-	m_pMakeSystem = new CItemMake(this);
+	m_pItem = new CItemCore(this);
 }
 
 CGameContext::CGameContext(int Resetting)
@@ -1790,23 +1791,9 @@ const char *CGameContext::NetVersion() { return GAME_NETVERSION; }
 
 IGameServer *CreateGameServer() { return new CGameContext; }
 
-void CGameContext::AddResource(int ClientID, int ResourceID, int Num)
-{
-	if(ClientID > MAX_PLAYERS || !m_apPlayers[ClientID])
-		return;
-	CPlayer *pPlayer = m_apPlayers[ClientID];
-	pPlayer->m_Resource.SetResource(ResourceID, pPlayer->m_Resource.GetResource(ResourceID) + Num);
-
-	const char *pLanguageCode = pPlayer->GetLanguage();
-
-	SendChatTarget_Locazition(ClientID, _("You got %d %s"), Num, GetResourceName(ResourceID));
-
-	SendEmoticon(ClientID, EMOTICON_SUSHI);	
-}
-
 void CGameContext::MakeItem(int ClientID, const char *pItemName)
 {
-	m_pMakeSystem->MakeItem(pItemName, ClientID);
+	Item()->Make()->MakeItem(pItemName, ClientID);
 }
 
 int CGameContext::GetBotNum() const
@@ -1836,7 +1823,7 @@ void CGameContext::OnBotDead(int ClientID)
 	}
 }
 
-void CGameContext::CreateBot(int ClientID, int BotPower)
+void CGameContext::CreateBot(int ClientID, CBotPower *BotPower)
 {
 	if(ClientID < MAX_PLAYERS || m_apPlayers[ClientID])
 		return;

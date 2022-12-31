@@ -173,24 +173,19 @@ void CMenu::ShowMenu(int ClientID, int Line)
     {
         MenuBuffer.append(Localize("\n"));
         MenuBuffer.append(Localize("Use <mouse2>(Hook) to back main menu"));
-        CItemData ItemInfo;
-
-        GameServer()->m_pMakeSystem->FindItem(pPlayer->m_SelectOption, &ItemInfo);
+        CItemData *ItemInfo = GameServer()->Item()->GetItemData(pPlayer->m_SelectOption);
 
         std::string Buffer;
         Buffer.clear();
         
-        for(int i = 0; i < NUM_RESOURCES;i ++)
+        for(int i = 0; i < ItemInfo->m_Needs.m_Name.size();i ++)
         {
-            if(ItemInfo.m_NeedResource.GetResource(i))
-            {
-                Buffer.append("\n");
-                Buffer.append(Localize(GetResourceName(i)));
-                Buffer.append(":");
-                Buffer.append(std::to_string(pPlayer->m_Resource.GetResource(i)));
-                Buffer.append("/");
-                Buffer.append(std::to_string(ItemInfo.m_NeedResource.GetResource(i)));
-            }
+            Buffer.append("\n");
+            Buffer.append(Localize(ItemInfo->m_Needs.m_Name[i].c_str()));
+            Buffer.append(":");
+            Buffer.append(std::to_string(GameServer()->Item()->GetInvItemNum(ItemInfo->m_Needs.m_Name[i].c_str(), ClientID)));
+            Buffer.append("/");
+            Buffer.append(std::to_string(ItemInfo->m_Needs.m_Num[i]));   
         }
 
         MenuBuffer.append("\n\n");

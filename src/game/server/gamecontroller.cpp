@@ -11,8 +11,12 @@
 #include "gamecontroller.h"
 #include "gamecontext.h"
 
+#include <engine/external/nlohmann/json.hpp>
+
+#include <fstream>
 #include <string.h>
 
+using json = nlohmann::json;
 
 CGameController::CGameController(class CGameContext *pGameServer)
 {
@@ -35,6 +39,8 @@ CGameController::CGameController(class CGameContext *pGameServer)
 	m_SpawnPoints.clear();
 	
 	WeaponIniter.InitWeapons(pGameServer);
+
+	InitPower();
 }
 
 CGameController::~CGameController()
@@ -213,7 +219,7 @@ void CGameController::OnCharacterSpawn(class CCharacter *pChr)
 	pChr->IncreaseHealth(10);
 
 	// give default weapons
-	pChr->GiveWeapon(WEAPON_HAMMER, -1);
+	GameServer()->Item()->SetInvItemNum(GetWeaponName(LD_WEAPON_HAMMER), 1, pChr->GetCID());
 }
 
 void CGameController::TogglePause()
@@ -490,7 +496,7 @@ void CGameController::ShowInventory(int ClientID)
 
 	const char *pLanguageCode = pPlayer->GetLanguage();
 
-	Resource *pPResource = &pPlayer->m_Resource;
+	CInventoryData *pData = GameServer()->Item()->GetInventory(ClientID);
 	std::string Buffer;
 	Buffer.clear();
 
@@ -499,21 +505,16 @@ void CGameController::ShowInventory(int ClientID)
 	Buffer.append("===");
 	Buffer.append("\n");
 	
-	bool Nothing = true;
-	for(int i = 0; i < NUM_RESOURCES;i ++)
+	for(int i = 0; i < pData->m_Name.size();i ++)
 	{
-		if(pPResource->GetResource(i))
-		{
-			Buffer.append(GameServer()->Localize(pLanguageCode, GetResourceName(i)));
-			Buffer.append(": ");
-			Buffer.append(format_int64_with_commas(',', pPResource->GetResource(i)));
-			Buffer.append("\n");
-			Nothing = false;
-		}
+		Buffer.append(GameServer()->Localize(pLanguageCode, pData->m_Name[i].c_str()));
+		Buffer.append(": ");
+		Buffer.append(format_int64_with_commas(',', pData->m_Num[i]));
+		Buffer.append("\n");
 	}
 	Buffer.append("\n");
 
-	if(Nothing)
+	if(!pData->m_Name.size())
 		Buffer.append(GameServer()->Localize(pLanguageCode, "You don't have any things!"));
 	GameServer()->SendMotd(ClientID, Buffer.c_str());
 }
@@ -523,35 +524,57 @@ void CGameController::OnCreateBot()
 	for(int i = BOT_CLIENTS_START; i < BOT_CLIENTS_END; i ++)
 	{
 		if(GameServer()->m_apPlayers[i]) continue;
-		int Power = RandomPower();
+		CBotPower *Power = RandomPower();
 		GameServer()->CreateBot(i, Power);
 	}
 }
 
-int CGameController::RandomPower()
+void CGameController::InitPower()
 {
-	int PowerNum = random_int(1, NUM_BOTPOWERS);
-	int Power = 0;
-	for(int i = 0;i < PowerNum;i ++)
+	// read file data into buffer
+	const char *pFilename = "./data/json/bot.json";
+	std::ifstream File(pFilename);
+
+	if(!File.is_open())
 	{
-		Power |= 1<<random_int(0, NUM_BOTPOWERS-1);
+		dbg_msg("Bot", "can't open 'data/json/bot.json'");
+		return;
 	}
-	return Power;
+
+	// parse json data
+	json Data = json::parse(File);
+
+	json BotArray = Data["json"];
+	if(BotArray.is_array())
+	{
+		for(unsigned i = 0; i < BotArray.size(); ++i)
+		{
+			CBotPower *pPower = new CBotPower();
+			str_copy(pPower->m_SkinName, BotArray[i].value("skin", "default").c_str());
+			pPower->m_TeamDamage = BotArray[i].value("teamdamage", 0);
+			pPower->m_Gun = BotArray[i].value("gun", 0);
+			pPower->m_Hammer = BotArray[i].value("hammer", 0);
+			pPower->m_Hook = BotArray[i].value("hook", 0);
+			m_BotPowers.add(*pPower);
+		}
+	}
 }
+
+CBotPower *CGameController::RandomPower()
+{
+	return &m_BotPowers[random_int(0, m_BotPowers.size()-1)];
+}	
 
 void CGameController::CreateZombiePickup(vec2 Pos, vec2 Dir)
 {
-	int PickupType, PickupSubtype;
-	PickupType = random_int(0, PICKUP_RESOURCE);
+	const char *PickupName;
+	int PickupRandom = random_int(0, GameServer()->Item()->m_aDrops.size()-1);
+	PickupName = GameServer()->Item()->m_aDrops[PickupRandom]->m_aName;
 	
-	if(PickupType == PICKUP_AMMO)
-	{
-		PickupSubtype = random_int(WEAPON_GUN, WEAPON_RIFLE);
-	}
-	else if(PickupType == PICKUP_RESOURCE)
-	{
-		PickupSubtype = random_int(RESOURCE_METAL, NUM_RESOURCES-1);
-	}
+	int PickupNum = 0;
+	if(random_int(0, 100) < 10) // pro pickup
+		PickupNum = random_int(3, 5);
+	else PickupNum = random_int(1, 2);
 
-	new CPickup(&GameServer()->m_World, Pos, Dir, PickupType, PickupSubtype, random_int(1,3));
+	new CPickup(&GameServer()->m_World, Pos, Dir, PickupName, PickupNum);
 }

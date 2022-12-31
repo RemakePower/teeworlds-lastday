@@ -15,7 +15,6 @@ typedef unsigned __int64 uint64_t;
 #endif
 
 #include <base/tl/array.h>
-#include "lastday/item/resource.h"
 
 #include "lastday/weapons-core/weapon.h"
 
@@ -142,7 +141,9 @@ public:
 	void ShowInventory(int ClientID);
 /** Bot **/
 	void OnCreateBot();
-	int RandomPower();
+	void InitPower();
+	CBotPower *RandomPower();
+	array<CBotPower> m_BotPowers;
 /** Bot End **/
 
 	void CreateZombiePickup(vec2 Pos, vec2 Dir);

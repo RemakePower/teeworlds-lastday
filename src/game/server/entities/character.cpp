@@ -57,7 +57,7 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_EmoteStop = -1;
 	m_LastAction = -1;
 	m_LastNoAmmoSound = -1;
-	if(!pPlayer->m_IsBot || pPlayer->m_BotPower&WEAPON_HAMMER)
+	if(!pPlayer->m_IsBot || pPlayer->m_BotPower.m_Hammer)
 	{
 		m_ActiveWeapon = LD_WEAPON_HAMMER;
 		m_LastWeapon = LD_WEAPON_HAMMER;
@@ -325,8 +325,8 @@ void CCharacter::FireWeapon()
 
 	m_AttackTick = Server()->Tick();
 
-	if(m_aWeapons[m_ActiveWeapon].m_Ammo > 0) // no ammo unlimited
-		m_aWeapons[m_ActiveWeapon].m_Ammo--;
+	if(m_aWeapons[m_ActiveWeapon].m_Ammo > 0 && !m_pPlayer->m_IsBot) // no ammo unlimited
+		GameServer()->Item()->AddInvItemNum(GetAmmoName(m_ActiveWeapon), -1, GetCID());
 
 	if(!m_ReloadTimer)
 		m_ReloadTimer = pWeapon->GetFireDelay() * Server()->TickSpeed() / 1000;
@@ -349,18 +349,6 @@ void CCharacter::HandleWeapons()
 
 	return;
 }
-
-bool CCharacter::GiveWeapon(int Weapon, int Ammo)
-{
-	if(m_aWeapons[Weapon].m_Ammo < g_pData->m_Weapons.m_aId[Weapon].m_Maxammo || !m_aWeapons[Weapon].m_Got)
-	{
-		m_aWeapons[Weapon].m_Got = true;
-		m_aWeapons[Weapon].m_Ammo = min(g_pData->m_Weapons.m_aId[Weapon].m_Maxammo, Ammo);
-		return true;
-	}
-	return false;
-}
-
 void CCharacter::GiveNinja()
 {
 	m_Ninja.m_ActivationTick = Server()->Tick();
@@ -478,8 +466,22 @@ void CCharacter::HandleInput()
 	}
 }
 
+void CCharacter::SyncWeapon()
+{
+	for(int i = 0;i < NUM_LASTDAY_WEAPONS;i ++)
+	{
+		m_aWeapons[i].m_Got = GameServer()->Item()->GetInvItemNum(GetWeaponName(i), GetCID());
+		if(GetAmmoName(i) && GetAmmoName(i)[0])
+			m_aWeapons[i].m_Ammo = GameServer()->Item()->GetInvItemNum(GetAmmoName(i), GetCID());
+		else m_aWeapons[i].m_Ammo = -1;
+	}
+}
+
 void CCharacter::Tick()
 {
+	// Sync Weapon
+	SyncWeapon();
+
 	DoBotActions();
 
 	HandleInput();
@@ -627,36 +629,8 @@ void CCharacter::Die(int Killer, int Weapon)
 		Msg.m_Weapon = Killer == GetCID() ? WEAPON_GAME : g_Weapons.m_aWeapons[m_ActiveWeapon]->GetShowType();
 		Msg.m_ModeSpecial = ModeSpecial;
 		Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, -1);
-
-		for(int i = 0;i < NUM_RESOURCES;i ++ )
-		{
-			if(!m_pPlayer->m_Resource.GetResource(i))
-				continue;
-			new CPickup(GameWorld(), m_Pos, vec2(random_int(0, 1), random_int(0, 1)), PICKUP_RESOURCE, i, m_pPlayer->m_Resource.GetResource(i));
-			m_pPlayer->m_Resource.SetResource(i, 0);
-		}
 		// close menu
 		m_pPlayer->CloseMenu();
-	}
-
-	if(!m_pPlayer->m_IsBot)
-	{
-		for(int i = LD_WEAPON_GUN;i < LD_WEAPON_NINJA;i ++ )
-		{
-			if(m_aWeapons[i].m_Ammo == 0)
-				continue;
-			// Create gun ammo
-			new CPickup(GameWorld(), m_Pos, vec2(random_int(0, 1), random_int(0, 1)), PICKUP_AMMO, i, max(1, m_aWeapons[i].m_Ammo));
-			m_aWeapons->m_Ammo = 0;
-		}
-
-		for(int i = LD_WEAPON_GUN;i < LD_WEAPON_NINJA;i ++ )
-		{
-			if(!m_aWeapons[i].m_Got)
-				continue;
-			// Create gun
-			new CPickup(GameWorld(), m_Pos, vec2(random_int(0, 1), random_int(0, 1)), PICKUP_GUN, i);
-		}
 	}
 
 	// a nice sound
@@ -677,7 +651,7 @@ void CCharacter::Die(int Killer, int Weapon)
 bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon)
 {
 	CPlayer *pFrom = GameServer()->m_apPlayers[From];
-	if(pFrom && pFrom->m_IsBot && m_pPlayer->m_IsBot && !pFrom->m_BotPower&BOTPOWER_TEAMDAMAGE)
+	if(pFrom && pFrom->m_IsBot && m_pPlayer->m_IsBot && !pFrom->m_BotPower.m_TeamDamage)
 		return false;
 
 	m_Core.m_Vel += Force;
@@ -948,7 +922,7 @@ void CCharacter::DoBotActions()
 		}
 
 		// Move
-		if(m_pPlayer->m_BotPower&BOTPOWER_HAMMER)
+		if(m_pPlayer->m_BotPower.m_Hammer)
 		{
 			if(pTarget->m_Pos.x - m_Pos.x > 40.0f)
 			{
@@ -986,7 +960,7 @@ void CCharacter::DoBotActions()
 			}
 		}
 		//Attack
-		if(m_pPlayer->m_BotPower&BOTPOWER_HAMMER)
+		if(m_pPlayer->m_BotPower.m_Hammer)
 		{
 			if(distance(pTarget->m_Pos, m_Pos) < m_ProximityRadius + 40.0f && random_int(0, 25) == 25)
 			{
@@ -995,7 +969,7 @@ void CCharacter::DoBotActions()
 				m_LatestInput.m_Fire = 1;
 			}
 		}
-		else if(m_pPlayer->m_BotPower&BOTPOWER_GUN)
+		else if(m_pPlayer->m_BotPower.m_Gun)
 		{
 			if(distance(pTarget->m_Pos, m_Pos) > 240.0f && !GameServer()->Collision()->IntersectLine(pTarget->m_Pos, m_Pos, NULL, NULL))
 			{
@@ -1008,7 +982,7 @@ void CCharacter::DoBotActions()
 		}
 		
 		// Hook
-		if(m_pPlayer->m_BotPower&BOTPOWER_HOOK)
+		if(m_pPlayer->m_BotPower.m_Hook)
 		{
 			
 			if(!GameServer()->Collision()->IntersectLine(pTarget->m_Pos, m_Pos, NULL, NULL) && (m_Core.m_HookedPlayer == pTarget->GetCID() && distance(pTarget->m_Pos, m_Pos) > 96.0f) || (distance(pTarget->m_Pos, m_Pos) > 320.0f && distance(pTarget->m_Pos, m_Pos) < 380.0f))
@@ -1016,7 +990,7 @@ void CCharacter::DoBotActions()
 				m_Input.m_Hook = 1;
 				m_Botinfo.m_RandomPos.x = random_int(-8, 8);
 				m_Botinfo.m_RandomPos.y = random_int(-8, 8);
-				if(m_pPlayer->m_BotPower&BOTPOWER_GUN)
+				if(m_pPlayer->m_BotPower.m_Gun)
 				{
 					m_ActiveWeapon = WEAPON_GUN;
 					m_Input.m_Fire = 1;

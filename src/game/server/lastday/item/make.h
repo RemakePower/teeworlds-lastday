@@ -2,32 +2,17 @@
 #define GAME_SERVER_LASTDAY_ITEM_MAKE_H
 
 #include <base/tl/array.h>
-#include "resource.h"
 
-class CItemData
+class CMakeCore
 {
-public:
-	CItemData();
-	char m_aName[64];
-	int m_GiveID;
-	int m_GiveNum;
-	Resource m_NeedResource;
-};
+	class CItemCore *m_pParent;
+	class CGameContext *GameServer() const;
 
-class CItemMake
-{
-	class CGameContext *m_pGameServer;
-	CGameContext *GameServer() const { return m_pGameServer; }
-
-	array<CItemData*> m_apDatas;
-	void ReturnItem(CItemData Item, int ClientID);
-	bool InitItem();
+	void ReturnItem(class CItemData *Item, int ClientID);
 
 public:
-    CItemMake(CGameContext *pGameServer);
+    CMakeCore(CItemCore *pItem);
 	void MakeItem(const char *pMakeItem, int ClientID);
-	bool FindItem(const char *pName, CItemData *pData);
-	Resource *GetNeed(const char *pMakeItem, int ClientID);
 };
 
 #endif

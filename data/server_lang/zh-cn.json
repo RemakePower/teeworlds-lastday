@@ -1,12 +1,16 @@
 {"translation": 
     [
         {
-            "key": "Metal",
+            "key": "metal",
             "value": "金属碎片"
         },
         {
-            "key": "Wood",
+            "key": "wood",
             "value": "木头"
+        },
+        {
+            "key": "hammer",
+            "value": "锤子"
         },
         {
             "key": "gun",

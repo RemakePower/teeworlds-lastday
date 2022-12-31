@@ -7,8 +7,8 @@
 
 char* format_int64_with_commas(char commas, int64 n);
 
-const char* GetResourceName(int ID);
-const char *GetAmmoType(int WeaponID);
+const char *GetAmmoName(int WeaponID);
+const char *GetWeaponName(int WeaponID);
 
 enum ItemList
 {
@@ -24,29 +24,12 @@ enum ItemList
     ITEM_NINJA,
 };
 
-enum ResourceList
-{
-    RESOURCE_METAL=0,
-    RESOURCE_WOOD,
-
-    NUM_RESOURCES,
-};
-
 enum OptionType
 {
     MENUOPTION_OPTIONS=0,
     MENUOPTION_ITEMS,
 
     NUM_MENUOPTIONS,
-};
-
-enum PickupType
-{
-    PICKUP_AMMO=0,
-    PICKUP_RESOURCE,
-    PICKUP_GUN,
-    
-    NUM_PICKUPS,
 };
 
 enum LastDayWeapons
@@ -61,24 +44,22 @@ enum LastDayWeapons
     NUM_LASTDAY_WEAPONS,
 };
 
-enum BotPower
-{
-    BOTPOWER_HAMMER=1<<0,
-    BOTPOWER_HOOK=1<<1,
-    BOTPOWER_GUN=1<<2,
-    BOTPOWER_TEAMDAMAGE=1<<3,
-    //BOTPOWER_SHOTGUN=1<<4,
-    //BOTPOWER_GRENADE=1<<5,
-    //BOTPOWER_RIFLE=1<<6,
-
-    NUM_BOTPOWERS=4,
-};
-
 enum MenuPages
 {
     MENUPAGE_MAIN=0,
     MENUPAGE_NOTMAIN,
     MENUPAGE_ITEM,
+};
+
+class CBotPower
+{
+public:
+    CBotPower() {};
+    char m_SkinName[64];
+    bool m_TeamDamage;
+    bool m_Hammer;
+    bool m_Gun;
+    bool m_Hook;
 };
 
 #endif
