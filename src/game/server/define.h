@@ -60,6 +60,7 @@ public:
     int m_FeetColor;
     int m_AttackProba;
     int m_SpawnProba;
+    int m_DropNum;
     bool m_TeamDamage;
     bool m_Hammer;
     bool m_Gun;
