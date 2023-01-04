@@ -2,7 +2,7 @@
 #include <game/server/gamecontext.h>
 #include "tws-laser.h"
 
-CTWSLaser::CTWSLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEnergy, int Owner, int Damage)
+CTWSLaser::CTWSLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEnergy, int Owner, int Damage, int Weapon, bool Freeze)
 : CEntity(pGameWorld, CGameWorld::ENTTYPE_LASER)
 {
 	m_Pos = Pos;
@@ -12,6 +12,8 @@ CTWSLaser::CTWSLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float Sta
 	m_Bounces = 0;
 	m_EvalTick = 0;
 	m_Damage = Damage;
+	m_Weapon = Weapon;
+	m_Freeze = Freeze;
 	GameWorld()->InsertEntity(this);
 	DoBounce();
 }
@@ -28,7 +30,14 @@ bool CTWSLaser::HitCharacter(vec2 From, vec2 To)
 	m_From = From;
 	m_Pos = At;
 	m_Energy = -1;
-	pHit->TakeDamage(vec2(0.f, 0.f), m_Damage, m_Owner, WEAPON_RIFLE);
+	pHit->TakeDamage(vec2(0.f, 0.f), m_Damage, m_Owner, m_Weapon);
+	if(!m_Freeze)
+	{
+		if(pOwnerChar)
+			pHit->Freeze(pOwnerChar->GetPlayer()->GetNextTuningParams()->m_LaserFreezeTime);
+		else 
+			pHit->Freeze(GameServer()->Tuning()->m_LaserFreezeTime);
+	}
 	return true;
 }
 
@@ -100,13 +109,30 @@ void CTWSLaser::Snap(int SnappingClient)
 	if(NetworkClipped(SnappingClient))
 		return;
 
-	CNetObj_Laser *pObj = static_cast<CNetObj_Laser *>(Server()->SnapNewItem(NETOBJTYPE_LASER, m_ID, sizeof(CNetObj_Laser)));
-	if(!pObj)
-		return;
+	if(m_Freeze && GameServer()->GetClientVersion(SnappingClient) >= VERSION_DDNET_MULTI_LASER)
+	{
+		CNetObj_DDNetLaser *pObj = static_cast<CNetObj_DDNetLaser *>(Server()->SnapNewItem(NETOBJTYPE_DDNETLASER, m_ID, sizeof(CNetObj_DDNetLaser)));
+		if(!pObj)
+			return;
 
-	pObj->m_X = (int)m_Pos.x;
-	pObj->m_Y = (int)m_Pos.y;
-	pObj->m_FromX = (int)m_From.x;
-	pObj->m_FromY = (int)m_From.y;
-	pObj->m_StartTick = m_EvalTick;
+		pObj->m_ToX = (int)m_Pos.x;
+		pObj->m_ToY = (int)m_Pos.y;
+		pObj->m_FromX = (int)m_From.x;
+		pObj->m_FromY = (int)m_From.y;
+		pObj->m_StartTick = m_EvalTick;
+		pObj->m_Owner = m_Owner;
+		pObj->m_Type = LASERTYPE_FREEZE;
+	}
+	else
+	{
+		CNetObj_Laser *pObj = static_cast<CNetObj_Laser *>(Server()->SnapNewItem(NETOBJTYPE_LASER, m_ID, sizeof(CNetObj_Laser)));
+		if(!pObj)
+			return;
+
+		pObj->m_X = (int)m_Pos.x;
+		pObj->m_Y = (int)m_Pos.y;
+		pObj->m_FromX = (int)m_From.x;
+		pObj->m_FromY = (int)m_From.y;
+		pObj->m_StartTick = m_EvalTick;
+	}
 }

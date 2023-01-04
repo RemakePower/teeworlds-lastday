@@ -322,36 +322,59 @@ void CGameContext::SendChatTarget_Locazition(int To, const char *pText, ...)
 
 void CGameContext::SendChat(int ChatterClientID, int Team, const char *pText)
 {
-	char aBuf[256];
-	if(ChatterClientID >= 0 && ChatterClientID < MAX_CLIENTS)
-		str_format(aBuf, sizeof(aBuf), "%d:%d:%s: %s", ChatterClientID, Team, Server()->ClientName(ChatterClientID), pText);
-	else
-		str_format(aBuf, sizeof(aBuf), "*** %s", pText);
-	Console()->Print(IConsole::OUTPUT_LEVEL_ADDINFO, Team!=CHAT_ALL?"teamchat":"chat", aBuf);
+	char aBuf[268];
+	char nText[300];
 
-	if(Team == CHAT_ALL)
+	if(ChatterClientID >= 0 && ChatterClientID < MAX_CLIENTS)
 	{
-		CNetMsg_Sv_Chat Msg;
-		Msg.m_Team = 0;
-		Msg.m_ClientID = ChatterClientID;
-		Msg.m_pMessage = pText;
-		Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, -1);
+		str_format(aBuf, sizeof(aBuf), "%d:%d:%s: %s", ChatterClientID, Team, Server()->ClientName(ChatterClientID), pText);
 	}
 	else
+		str_format(aBuf, sizeof(aBuf), "*** %s", pText);
+	Console()->Print(IConsole::OUTPUT_LEVEL_ADDINFO, "chat", aBuf);
+
+	CNetMsg_Sv_Chat Msg;
+	Msg.m_Team = Team != CHAT_ALL;
+
+	// pack one for the recording only
+	Server()->SendPackMsg(&Msg, MSGFLAG_VITAL|MSGFLAG_NOSEND, -1);
+
+	// send to the clients
+	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
-		CNetMsg_Sv_Chat Msg;
-		Msg.m_Team = 1;
-		Msg.m_ClientID = ChatterClientID;
-		Msg.m_pMessage = pText;
-
-		// pack one for the recording only
-		Server()->SendPackMsg(&Msg, MSGFLAG_VITAL|MSGFLAG_NOSEND, -1);
-
-		// send to the clients
-		for(int i = 0; i < MAX_CLIENTS; i++)
+		if(!m_apPlayers[i] || (m_apPlayers[i]->GetTeam() != Team && Team != CHAT_ALL)) continue;
+		int found = 0;
+		if(i == ChatterClientID)
 		{
-			if(m_apPlayers[i] && m_apPlayers[i]->GetTeam() == Team)
-				Server()->SendPackMsg(&Msg, MSGFLAG_VITAL|MSGFLAG_NORECORD, i);
+			// don't delete!!! if delete this codes, the chatter can't see his chat, i don't know why, but just right.
+			str_format(nText, sizeof(aBuf), "%d:%d:%s: %s", 0, Team, Server()->ClientName(ChatterClientID), pText);
+
+			Msg.m_pMessage = pText;
+			Msg.m_ClientID = 0;
+			Server()->SendPackMsg(&Msg, MSGFLAG_VITAL|MSGFLAG_NORECORD, i);
+			continue;	
+		}else if (ChatterClientID >= 0)
+				for (int j = 0;j < DDNET_MAX_CLIENTS;j++)
+					if (m_apPlayers[i]->m_IDMap[j] == ChatterClientID)
+					{
+						// don't delete!!! if delete this codes, the client can't see chat, i don't know why, but just right.
+						str_format(nText, sizeof(aBuf), "%d:%d:%s: %s", j, Team, Server()->ClientName(ChatterClientID), pText);
+
+						Msg.m_pMessage = pText;
+						Msg.m_ClientID = j;
+						Server()->SendPackMsg(&Msg, MSGFLAG_VITAL|MSGFLAG_NORECORD, i);
+						found = 1;
+						break;
+					}
+		if(!found)
+		{
+			// don't delete!!! if delete this codes, the client can't see chat, i don't know why, but just right.
+			str_format(nText, sizeof(aBuf), "%d:%d:%s: %s", DDNET_MAX_CLIENTS-1, Team, Server()->ClientName(ChatterClientID), pText);
+			
+			m_apPlayers[i]->m_IDMap[DDNET_MAX_CLIENTS-1] = ChatterClientID;
+			Msg.m_pMessage = pText;
+			Msg.m_ClientID = DDNET_MAX_CLIENTS-1;
+			Server()->SendPackMsg(&Msg, MSGFLAG_VITAL|MSGFLAG_NORECORD, i);
 		}
 	}
 }
@@ -973,22 +996,23 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 		else if (MsgID == NETMSGTYPE_CL_SETSPECTATORMODE && !m_World.m_Paused)
 		{
 			CNetMsg_Cl_SetSpectatorMode *pMsg = (CNetMsg_Cl_SetSpectatorMode *)pRawMsg;
+			int ID = pMsg->m_SpectatorID != SPEC_FREEVIEW ? pPlayer->m_IDMap[pMsg->m_SpectatorID] : -1;
 
 			if(g_Config.m_SvSpamprotection && pPlayer->m_LastSetSpectatorMode && pPlayer->m_LastSetSpectatorMode+Server()->TickSpeed()*3 > Server()->Tick())
 				return;
 
 			if(pMsg->m_SpectatorID != SPEC_FREEVIEW)
-				if (!Server()->ReverseTranslate(pMsg->m_SpectatorID, ClientID))
+				if (!Server()->ReverseTranslate(ID, ClientID))
 					return;
 
 			if(pPlayer->GetTeam() != TEAM_SPECTATORS || pPlayer->m_SpectatorID == pMsg->m_SpectatorID || ClientID == pMsg->m_SpectatorID)
 				return;
 			
 			pPlayer->m_LastSetSpectatorMode = Server()->Tick();
-			if(pMsg->m_SpectatorID != SPEC_FREEVIEW && (!m_apPlayers[pMsg->m_SpectatorID] || m_apPlayers[pMsg->m_SpectatorID]->GetTeam() == TEAM_SPECTATORS))
+			if(pMsg->m_SpectatorID != SPEC_FREEVIEW && (!m_apPlayers[ID] || m_apPlayers[ID]->GetTeam() == TEAM_SPECTATORS))
 				SendChatTarget_Locazition(ClientID, _("Invalid spectator id used"));
 			else
-				pPlayer->m_SpectatorID = pMsg->m_SpectatorID;
+				pPlayer->m_SpectatorID = ID;
 		}
 		else if (MsgID == NETMSGTYPE_CL_CHANGEINFO)
 		{
@@ -1787,6 +1811,11 @@ bool CGameContext::IsClientPlayer(int ClientID)
 	return m_apPlayers[ClientID] && m_apPlayers[ClientID]->GetTeam() == TEAM_SPECTATORS ? false : true;
 }
 
+int CGameContext::GetClientVersion(int ClientID) const
+{
+	return Server()->GetClientVersion(ClientID);
+}
+
 const char *CGameContext::GameType() { return MOD_NAME; }
 const char *CGameContext::Version() { return GAME_VERSION; }
 const char *CGameContext::NetVersion() { return GAME_NETVERSION; }
@@ -1801,7 +1830,7 @@ void CGameContext::MakeItem(int ClientID, const char *pItemName)
 int CGameContext::GetBotNum() const
 {
 	int Num = 0;
-	for(int i = BOT_CLIENTS_START; i < BOT_CLIENTS_END; i ++)
+	for(int i = BOT_CLIENTS_START; i < MAX_CLIENTS; i ++)
 	{
 		if(m_apPlayers[i])
 			Num++;

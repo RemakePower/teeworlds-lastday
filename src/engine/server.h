@@ -33,6 +33,10 @@ public:
 		int m_Latency;
 		int m_Authed;
 		bool m_CustClt;
+		bool m_GotDDNetVersion;
+		int m_DDNetVersion;
+		const char *m_pDDNetVersionStr;
+		const CUuid *m_pConnectionID;
 	};
 
 	inline class CLocalization* Localization() { return m_pLocalization; }
@@ -45,8 +49,10 @@ public:
 	virtual const char *ClientClan(int ClientID) = 0;
 	virtual int ClientCountry(int ClientID) = 0;
 	virtual bool ClientIngame(int ClientID) = 0;
-	virtual int GetClientInfo(int ClientID, CClientInfo *pInfo) = 0;
+	virtual bool GetClientInfo(int ClientID, CClientInfo *pInfo) const = 0;
+	virtual void SetClientDDNetVersion(int ClientID, int DDNetVersion) = 0;
 	virtual void GetClientAddr(int ClientID, char *pAddrStr, int Size) = 0;
+	virtual int GetClientVersion(int ClientID) const = 0;
 
 	virtual int SendMsg(CMsgPacker *pMsg, int Flags, int ClientID) = 0;
 
@@ -112,6 +118,8 @@ public:
 
 	bool Translate(int& target, int client)
 	{
+		if(client >= MAX_PLAYERS)
+			return false;
 		CClientInfo info;
 		GetClientInfo(client, &info);
 		if (info.m_CustClt)
@@ -132,6 +140,8 @@ public:
 
 	bool ReverseTranslate(int& target, int client)
 	{
+		if(client >= MAX_PLAYERS)
+			return false;
 		CClientInfo info;
 		GetClientInfo(client, &info);
 		if (info.m_CustClt)

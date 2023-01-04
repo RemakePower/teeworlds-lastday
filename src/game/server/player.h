@@ -127,7 +127,6 @@ public:
 private:
 	bool m_Menu;
 	int m_MenuPage;
-
 public:
 	inline bool GetMenuStatus() const { return m_Menu; }
 	void OpenMenu();
@@ -143,6 +142,9 @@ public:
 	// Bot
 	CBotPower m_BotPower;
 	bool m_IsBot;
+
+	int m_IDMap[DDNET_MAX_CLIENTS];
+	int m_IDMapBook[DDNET_MAX_CLIENTS];
 };
 
 #endif

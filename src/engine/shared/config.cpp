@@ -3,6 +3,7 @@
 #include <engine/config.h>
 #include <engine/storage.h>
 #include <engine/shared/config.h>
+#include "protocol.h"
 
 CConfiguration g_Config;
 

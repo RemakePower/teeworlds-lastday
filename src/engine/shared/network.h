@@ -5,6 +5,7 @@
 
 #include "ringbuffer.h"
 #include "stun.h"
+#include "protocol.h"
 
 #include <base/math.h>
 #include <base/system.h>
@@ -59,7 +60,7 @@ enum
 	NET_MAX_PAYLOAD = NET_MAX_PACKETSIZE - 6,
 	NET_MAX_CHUNKHEADERSIZE = 5,
 	NET_PACKETHEADERSIZE = 3,
-	NET_MAX_CLIENTS = 64,
+	NET_MAX_CLIENTS = MAX_PLAYERS,
 	NET_MAX_CONSOLE_CLIENTS = 4,
 	NET_MAX_SEQUENCE = 1 << 10,
 	NET_SEQUENCE_MASK = NET_MAX_SEQUENCE - 1,

@@ -2,6 +2,7 @@
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 #include <new>
 #include <engine/shared/config.h>
+#include <base/tl/array.h>
 #include "player.h"
 
 
@@ -35,13 +36,19 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, bool Bot, CBotPower *B
 
 	m_PrevTuningParams = *pGameServer->Tuning();
 	m_NextTuningParams = m_PrevTuningParams;
-
+	
 	int* idMap = Server()->GetIdMap(ClientID);
 	for (int i = 1;i < VANILLA_MAX_CLIENTS;i++)
 	{
 	    idMap[i] = -1;
 	}
 	idMap[0] = ClientID;
+	
+	for (int i = 1;i < DDNET_MAX_CLIENTS;i++)
+	{
+	    m_IDMap[i] = -1;
+	}
+	m_IDMap[0] = ClientID;
 }
 
 CPlayer::~CPlayer()
@@ -71,9 +78,6 @@ void CPlayer::HandleTuningParams()
 
 void CPlayer::Tick()
 {
-#ifdef CONF_DEBUG
-	if(!g_Config.m_DbgDummies || m_ClientID < MAX_CLIENTS-g_Config.m_DbgDummies)
-#endif
 	if(!Server()->ClientIngame(m_ClientID))
 		return;
 
@@ -188,8 +192,25 @@ void CPlayer::Snap(int SnappingClient)
 	if(!Server()->ClientIngame(m_ClientID))
 		return;
 
-	int id = m_ClientID;
-	if (!Server()->Translate(id, SnappingClient)) return;
+	int id = -1;
+	int* idMap = GameServer()->m_apPlayers[SnappingClient]->m_IDMap;
+	if(SnappingClient == m_ClientID)
+	{
+		id = 0;
+	}else
+	{
+		for (int i = 0;i < DDNET_MAX_CLIENTS;i++)
+		{
+			if (idMap[i] == m_ClientID)
+			{
+				id = i;
+				break;
+			}
+		}
+	}
+
+	if (id == -1)
+		return;
 
 	CNetObj_ClientInfo *pClientInfo = static_cast<CNetObj_ClientInfo *>(Server()->SnapNewItem(NETOBJTYPE_CLIENTINFO, id, sizeof(CNetObj_ClientInfo)));
 	if(!pClientInfo)
@@ -244,7 +265,7 @@ void CPlayer::Snap(int SnappingClient)
 
 	if(m_ClientID == SnappingClient && m_Team == TEAM_SPECTATORS)
 	{
-		CNetObj_SpectatorInfo *pSpectatorInfo = static_cast<CNetObj_SpectatorInfo *>(Server()->SnapNewItem(NETOBJTYPE_SPECTATORINFO, m_ClientID, sizeof(CNetObj_SpectatorInfo)));
+		CNetObj_SpectatorInfo *pSpectatorInfo = static_cast<CNetObj_SpectatorInfo *>(Server()->SnapNewItem(NETOBJTYPE_SPECTATORINFO, id, sizeof(CNetObj_SpectatorInfo)));
 		if(!pSpectatorInfo)
 			return;
 

@@ -214,6 +214,7 @@ public:
 
 	bool IsClientReady(int ClientID) override;
 	bool IsClientPlayer(int ClientID) override;
+	int GetClientVersion(int ClientID) const;
 
 	void OnSetAuthed(int ClientID,int Level) override;
 	

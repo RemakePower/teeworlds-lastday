@@ -33,6 +33,8 @@
 #include "server.h"
 
 #include <teeuniverses/components/localization.h>
+#include <game/version.h>
+
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -468,20 +470,41 @@ bool CServer::IsAuthed(int ClientID)
 	return m_aClients[ClientID].m_Authed;
 }
 
-int CServer::GetClientInfo(int ClientID, CClientInfo *pInfo)
+bool CServer::GetClientInfo(int ClientID, CClientInfo *pInfo) const
 {
-	dbg_assert(ClientID >= 0 && ClientID < MAX_CLIENTS, "client_id is not valid");
-	dbg_assert(pInfo != 0, "info can not be null");
+	dbg_assert(ClientID >= 0 && ClientID < MAX_CLIENTS, "ClientID is not valid");
+	dbg_assert(pInfo != nullptr, "pInfo cannot be null");
 
 	if(m_aClients[ClientID].m_State == CClient::STATE_INGAME)
 	{
 		pInfo->m_pName = m_aClients[ClientID].m_aName;
 		pInfo->m_Latency = m_aClients[ClientID].m_Latency;
-		pInfo->m_CustClt = m_aClients[ClientID].m_CustClt;
-		pInfo->m_Authed = m_aClients[ClientID].m_Authed;
-		return 1;
+		pInfo->m_GotDDNetVersion = m_aClients[ClientID].m_DDNetVersionSettled;
+		pInfo->m_DDNetVersion = m_aClients[ClientID].m_DDNetVersion >= 0 ? m_aClients[ClientID].m_DDNetVersion : VERSION_VANILLA;
+		if(m_aClients[ClientID].m_GotDDNetVersionPacket)
+		{
+			pInfo->m_pConnectionID = &m_aClients[ClientID].m_ConnectionID;
+			pInfo->m_pDDNetVersionStr = m_aClients[ClientID].m_aDDNetVersionStr;
+		}
+		else
+		{
+			pInfo->m_pConnectionID = nullptr;
+			pInfo->m_pDDNetVersionStr = nullptr;
+		}
+		return true;
 	}
-	return 0;
+	return false;
+}
+
+void CServer::SetClientDDNetVersion(int ClientID, int DDNetVersion)
+{
+	dbg_assert(ClientID >= 0 && ClientID < MAX_CLIENTS, "ClientID is not valid");
+
+	if(m_aClients[ClientID].m_State == CClient::STATE_INGAME)
+	{
+		m_aClients[ClientID].m_DDNetVersion = DDNetVersion;
+		m_aClients[ClientID].m_DDNetVersionSettled = true;
+	}
 }
 
 void CServer::GetClientAddr(int ClientID, char *pAddrStr, int Size)
@@ -592,6 +615,9 @@ int CServer::SendMsg(CMsgPacker *pMsg, int Flags, int ClientID)
 	if(Flags & MSGFLAG_FLUSH)
 		Packet.m_Flags |= NETSENDFLAG_FLUSH;
 
+	if(ClientID >= MAX_PLAYERS)
+		return -1;
+
 	if(ClientID < 0)
 	{
 		CPacker Pack6;
@@ -606,7 +632,7 @@ int CServer::SendMsg(CMsgPacker *pMsg, int Flags, int ClientID)
 
 		if(!(Flags & MSGFLAG_NOSEND))
 		{
-			for(int i = 0; i < MAX_CLIENTS; i++)
+			for(int i = 0; i < MAX_PLAYERS; i++)
 			{
 				if(m_aClients[i].m_State == CClient::STATE_INGAME)
 				{
@@ -780,6 +806,9 @@ int CServer::ClientRejoinCallback(int ClientID, void *pUser)
 
 	pThis->m_aClients[ClientID].m_Authed = AUTHED_NO;
 	pThis->m_aClients[ClientID].m_pRconCmdToSend = 0;
+	pThis->m_aClients[ClientID].m_DDNetVersion = VERSION_NONE;
+	pThis->m_aClients[ClientID].m_GotDDNetVersionPacket = false;
+	pThis->m_aClients[ClientID].m_DDNetVersionSettled = false;
 
 	pThis->m_aClients[ClientID].Reset();
 
@@ -799,6 +828,9 @@ int CServer::NewClientNoAuthCallback(int ClientID, void *pUser)
 	pThis->m_aClients[ClientID].m_AuthTries = 0;
 	pThis->m_aClients[ClientID].m_pRconCmdToSend = 0;
 	pThis->m_aClients[ClientID].m_CustClt = 0;
+	pThis->m_aClients[ClientID].m_DDNetVersion = VERSION_NONE;
+	pThis->m_aClients[ClientID].m_GotDDNetVersionPacket = false;
+	pThis->m_aClients[ClientID].m_DDNetVersionSettled = false;
 	pThis->m_aClients[ClientID].Reset();
 
 	pThis->SendMap(ClientID);
@@ -810,7 +842,7 @@ int CServer::NewClientNoAuthCallback(int ClientID, void *pUser)
 int CServer::NewClientCallback(int ClientID, void *pUser, bool Sixup)
 {
 	CServer *pThis = (CServer *)pUser;
-	pThis->m_aClients[ClientID].m_State = CClient::STATE_AUTH;
+	pThis->m_aClients[ClientID].m_State = CClient::STATE_PREAUTH;
 	pThis->m_aClients[ClientID].m_aName[0] = 0;
 	pThis->m_aClients[ClientID].m_aClan[0] = 0;
 	pThis->m_aClients[ClientID].m_CustClt = 0;
@@ -818,6 +850,9 @@ int CServer::NewClientCallback(int ClientID, void *pUser, bool Sixup)
 	pThis->m_aClients[ClientID].m_Authed = AUTHED_NO;
 	pThis->m_aClients[ClientID].m_AuthTries = 0;
 	pThis->m_aClients[ClientID].m_pRconCmdToSend = 0;
+	pThis->m_aClients[ClientID].m_DDNetVersion = VERSION_NONE;
+	pThis->m_aClients[ClientID].m_GotDDNetVersionPacket = false;
+	pThis->m_aClients[ClientID].m_DDNetVersionSettled = false;
 	memset(&pThis->m_aClients[ClientID].m_Addr, 0, sizeof(NETADDR));
 	pThis->m_aClients[ClientID].Reset();
 	return 0;
@@ -964,9 +999,28 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 	if(Sys)
 	{
 		// system message
-		if(Msg == NETMSG_INFO)
+		if(Msg == NETMSG_CLIENTVER)
 		{
-			if((pPacket->m_Flags&NET_CHUNKFLAG_VITAL) != 0 && m_aClients[ClientID].m_State == CClient::STATE_AUTH)
+			if((pPacket->m_Flags & NET_CHUNKFLAG_VITAL) != 0 && m_aClients[ClientID].m_State == CClient::STATE_PREAUTH)
+			{
+				CUuid *pConnectionID = (CUuid *)Unpacker.GetRaw(sizeof(*pConnectionID));
+				int DDNetVersion = Unpacker.GetInt();
+				const char *pDDNetVersionStr = Unpacker.GetString(CUnpacker::SANITIZE_CC);
+				if(Unpacker.Error() || !str_utf8_check(pDDNetVersionStr) || DDNetVersion < 0)
+				{
+					return;
+				}
+				m_aClients[ClientID].m_ConnectionID = *pConnectionID;
+				m_aClients[ClientID].m_DDNetVersion = DDNetVersion;
+				str_copy(m_aClients[ClientID].m_aDDNetVersionStr, pDDNetVersionStr);
+				m_aClients[ClientID].m_DDNetVersionSettled = true;
+				m_aClients[ClientID].m_GotDDNetVersionPacket = true;
+				m_aClients[ClientID].m_State = CClient::STATE_AUTH;
+			}
+		}
+		else if(Msg == NETMSG_INFO)
+		{
+			if((pPacket->m_Flags&NET_CHUNKFLAG_VITAL) != 0 && (m_aClients[ClientID].m_State == CClient::STATE_AUTH || m_aClients[ClientID].m_State == CClient::STATE_PREAUTH))
 			{
 				const char *pVersion = Unpacker.GetString(CUnpacker::SANITIZE_CC);
 				if((str_comp(pVersion, GameServer()->NetVersion()) != 0) && (str_comp(pVersion, "0.6 626fce9a778df4d4") != 0))
@@ -1355,7 +1409,7 @@ void CServer::CacheServerInfo(CCache *pCache, int Type, bool SendClients)
 			p.AddString(aBuf, 64);
 		}
 	}
-	p.AddString(GetMapName(), 32);
+	p.AddString("LastDay", 32);
 
 	if(Type == SERVERINFO_EXTENDED)
 	{
@@ -1372,7 +1426,7 @@ void CServer::CacheServerInfo(CCache *pCache, int Type, bool SendClients)
 	int MaxClients = m_NetServer.MaxClients();
 	// How many clients the used serverinfo protocol supports, has to be tracked
 	// separately to make sure we don't subtract the reserved slots from it
-	int MaxClientsProtocol = MAX_CLIENTS;
+	int MaxClientsProtocol = MAX_PLAYERS;
 	if(Type == SERVERINFO_VANILLA || Type == SERVERINFO_INGAME)
 	{
 		if(ClientCount >= VANILLA_MAX_CLIENTS)
@@ -1607,7 +1661,7 @@ void CServer::UpdateRegisterServerInfo()
 		JsonBool(g_Config.m_Password[0]),
 		EscapeJson(aGameType, sizeof(aGameType), GameServer()->GameType()),
 		EscapeJson(aName, sizeof(aName), g_Config.m_SvName),
-		EscapeJson(aMapName, sizeof(aMapName), m_aCurrentMap),
+		EscapeJson(aMapName, sizeof(aMapName), "LastDay"),
 		aMapSha256,
 		m_CurrentMapSize,
 		EscapeJson(aVersion, sizeof(aVersion), GameServer()->Version()));
@@ -1891,7 +1945,7 @@ int CServer::Run()
 					// new map loaded
 					GameServer()->OnShutdown();
 
-					for(int ClientID = 0; ClientID < MAX_CLIENTS; ClientID++)
+					for(int ClientID = 0; ClientID < MAX_PLAYERS; ClientID++)
 					{
 						if(m_aClients[ClientID].m_State <= CClient::STATE_AUTH)
 							continue;
@@ -2002,7 +2056,7 @@ int CServer::Run()
 		}
 	}
 	// disconnect all clients on shutdown
-	for(int i = 0; i < MAX_CLIENTS; ++i)
+	for(int i = 0; i < MAX_PLAYERS; ++i)
 	{
 		if(m_aClients[i].m_State != CClient::STATE_EMPTY)
 			m_NetServer.Drop(i, "Server shutdown");
@@ -2160,7 +2214,7 @@ void CServer::ConchainModCommandUpdate(IConsole::IResult *pResult, void *pUserDa
 		pfnCallback(pResult, pCallbackUserData);
 		if(pInfo && OldAccessLevel != pInfo->GetAccessLevel())
 		{
-			for(int i = 0; i < MAX_CLIENTS; ++i)
+			for(int i = 0; i < MAX_PLAYERS; ++i)
 			{
 				if(pThis->m_aClients[i].m_State == CServer::CClient::STATE_EMPTY || pThis->m_aClients[i].m_Authed != CServer::AUTHED_MOD ||
 					(pThis->m_aClients[i].m_pRconCmdToSend && str_comp(pResult->GetString(0), pThis->m_aClients[i].m_pRconCmdToSend->m_pName) >= 0))
@@ -2349,6 +2403,18 @@ void CServer::ConchainMapUpdate(IConsole::IResult *pResult, void *pUserData, ICo
 		CServer *pThis = static_cast<CServer *>(pUserData);
 		pThis->m_MapReload = str_comp(g_Config.m_SvMap, pThis->m_aCurrentMap) != 0;
 	}
+}
+
+int CServer::GetClientVersion(int ClientID) const
+{
+	// Assume latest client version for server demos
+	if(ClientID == -1)
+		return DDNET_VERSIONNR;
+
+	CClientInfo Info;
+	if(GetClientInfo(ClientID, &Info))
+		return Info.m_DDNetVersion;
+	return VERSION_NONE;
 }
 
 void CServer::InitClientBot(int ClientID)

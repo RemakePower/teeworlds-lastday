@@ -41,6 +41,7 @@ MACRO_TUNING_PARAM(LaserReach, laser_reach, 800.0f)
 MACRO_TUNING_PARAM(LaserBounceDelay, laser_bounce_delay, 150)
 MACRO_TUNING_PARAM(LaserBounceNum, laser_bounce_num, 1)
 MACRO_TUNING_PARAM(LaserBounceCost, laser_bounce_cost, 0)
+MACRO_TUNING_PARAM(LaserFreezeTime, laser_freeze_time, 3.0f)
 
 MACRO_TUNING_PARAM(PlayerCollision, player_collision, 1)
 MACRO_TUNING_PARAM(PlayerHooking, player_hooking, 1)

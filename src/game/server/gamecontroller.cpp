@@ -386,7 +386,7 @@ void CGameController::Snap(int SnappingClient)
 	if(!pGameInfoEx)
 		return;
 
-	pGameInfoEx->m_Flags = GAMEINFOFLAG_GAMETYPE_PLUS | GAMEINFOFLAG_ALLOW_EYE_WHEEL | GAMEINFOFLAG_ALLOW_HOOK_COLL | GAMEINFOFLAG_ALLOW_ZOOM | GAMEINFOFLAG_PREDICT_VANILLA;
+	pGameInfoEx->m_Flags = GAMEINFOFLAG_GAMETYPE_PLUS | GAMEINFOFLAG_ALLOW_EYE_WHEEL | GAMEINFOFLAG_ALLOW_HOOK_COLL | GAMEINFOFLAG_PREDICT_VANILLA;
 	pGameInfoEx->m_Flags2 = GAMEINFOFLAG2_GAMETYPE_CITY | GAMEINFOFLAG2_ALLOW_X_SKINS | GAMEINFOFLAG2_HUD_DDRACE | GAMEINFOFLAG2_HUD_HEALTH_ARMOR | GAMEINFOFLAG2_HUD_AMMO;
 	pGameInfoEx->m_Version = GAMEINFO_CURVERSION;
 }
@@ -521,7 +521,7 @@ void CGameController::ShowInventory(int ClientID)
 
 void CGameController::OnCreateBot()
 {
-	for(int i = BOT_CLIENTS_START; i < BOT_CLIENTS_END; i ++)
+	for(int i = BOT_CLIENTS_START; i < MAX_CLIENTS; i ++)
 	{
 		if(GameServer()->m_apPlayers[i]) continue;
 		CBotPower *Power = RandomPower();
