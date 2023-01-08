@@ -33,6 +33,7 @@
 #include "server.h"
 
 #include <teeuniverses/components/localization.h>
+#include <engine/server/mapgen.h>
 #include <game/version.h>
 
 #include <fstream>
@@ -1804,25 +1805,41 @@ void CServer::SetCustClt(int ClientID)
 char *CServer::GetMapName()
 {
 	// get the name of the map without his path
-	char *pMapShortName = &g_Config.m_SvMap[0];
-	for(int i = 0; i < str_length(g_Config.m_SvMap)-1; i++)
+	char *pMapShortName = &m_aCurrentMap[0];
+	for(int i = 0; i < str_length(m_aCurrentMap)-1; i++)
 	{
-		if(g_Config.m_SvMap[i] == '/' || g_Config.m_SvMap[i] == '\\')
-			pMapShortName = &g_Config.m_SvMap[i+1];
+		if(m_aCurrentMap[i] == '/' || m_aCurrentMap[i] == '\\')
+			pMapShortName = &m_aCurrentMap[i+1];
 	}
 	return pMapShortName;
 }
 
-int CServer::LoadMap(const char *pMapName)
+int CServer::LoadMap()
 {
 	m_MapReload = false;
 	//DATAFILE *df;
 	char aBuf[512];
-	str_format(aBuf, sizeof(aBuf), "maps/%s.map", pMapName);
+	str_copy(aBuf, "generated_map/ld_generated.map");
 
 	/*df = datafile_load(buf);
 	if(!df)
 		return 0;*/
+	{
+		CMapGen MapGen(Storage(), Console());
+
+		char aMapDir[256];
+		str_format(aMapDir, sizeof(aMapDir), "generated_map");
+
+		char aFullPath[512];
+		Storage()->GetCompletePath(IStorage::TYPE_SAVE, aMapDir, aFullPath, sizeof(aFullPath));
+		if(fs_makedir(aFullPath) != 0)
+		{
+			dbg_msg("infclass", "Can't create the directory '%s'", aMapDir);
+		}
+
+		if(!MapGen.CreateMap(aBuf))
+			return 0;
+	}
 
 	if(!m_pMap->Load(aBuf))
 		return 0;
@@ -1845,7 +1862,7 @@ int CServer::LoadMap(const char *pMapName)
 	str_format(aBufMsg, sizeof(aBufMsg), "%s crc is %08x", aBuf, m_CurrentMapCrc);
 	Console()->Print(IConsole::OUTPUT_LEVEL_ADDINFO, "server", aBufMsg);
 
-	str_copy(m_aCurrentMap, pMapName, sizeof(m_aCurrentMap));
+	str_copy(m_aCurrentMap, "ld_generated", sizeof(m_aCurrentMap));
 	//map_set(df);
 
 	// load complete map into memory for download
@@ -1867,9 +1884,9 @@ int CServer::Run()
 	m_PrintCBIndex = Console()->RegisterPrintCallback(g_Config.m_ConsoleOutputLevel, SendRconLineAuthed, this);
 
 	// load map
-	if(!LoadMap(g_Config.m_SvMap))
+	if(!LoadMap())
 	{
-		dbg_msg("server", "failed to load map. mapname='%s'", g_Config.m_SvMap);
+		dbg_msg("server", "failed to load map.");
 		return -1;
 	}
 
@@ -1940,7 +1957,7 @@ int CServer::Run()
 			if(m_MapReload || m_CurrentGameTick >= 0x6FFFFFFF) // force reload to make sure the ticks stay within a valid range
 			{
 				// load map
-				if(LoadMap(g_Config.m_SvMap))
+				if(LoadMap())
 				{
 					// new map loaded
 					GameServer()->OnShutdown();
@@ -1964,9 +1981,7 @@ int CServer::Run()
 				}
 				else
 				{
-					str_format(aBuf, sizeof(aBuf), "failed to load map. mapname='%s'", g_Config.m_SvMap);
-					Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "server", aBuf);
-					str_copy(g_Config.m_SvMap, m_aCurrentMap, sizeof(g_Config.m_SvMap));
+					return -1;
 				}
 			}
 
@@ -2267,7 +2282,6 @@ void CServer::RegisterCommands()
 	Console()->Chain("sv_max_clients_per_ip", ConchainMaxclientsperipUpdate, this);
 	Console()->Chain("mod_command", ConchainModCommandUpdate, this);
 	Console()->Chain("console_output_level", ConchainConsoleOutputLevelUpdate, this);
-	Console()->Chain("sv_map", ConchainMapUpdate, this);
 	// register console commands in sub parts
 	m_ServerBan.InitServerBan(Console(), Storage(), this);
 	m_pGameServer->OnConsoleInit();
@@ -2393,16 +2407,6 @@ int main(int argc, const char **argv) // ignore_convention
 	delete pConfig;
 	return 0;
 	
-}
-
-void CServer::ConchainMapUpdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData)
-{
-	pfnCallback(pResult, pCallbackUserData);
-	if(pResult->NumArguments() >= 1)
-	{
-		CServer *pThis = static_cast<CServer *>(pUserData);
-		pThis->m_MapReload = str_comp(g_Config.m_SvMap, pThis->m_aCurrentMap) != 0;
-	}
 }
 
 int CServer::GetClientVersion(int ClientID) const

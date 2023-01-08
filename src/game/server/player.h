@@ -13,7 +13,7 @@ class CPlayer
 	MACRO_ALLOC_POOL_ID()
 
 public:
-	CPlayer(CGameContext *pGameServer, int ClientID, bool Bot=false, CBotPower *BotPower = 0);
+	CPlayer(CGameContext *pGameServer, int ClientID, bool Bot=false, CBotData *BotData = 0);
 	~CPlayer();
 
 	void TryRespawn();
@@ -140,7 +140,7 @@ public:
 
 	bool m_Sit;
 	// Bot
-	CBotPower m_BotPower;
+	CBotData m_BotData;
 	bool m_IsBot;
 
 	int m_IDMap[DDNET_MAX_CLIENTS];

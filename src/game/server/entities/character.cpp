@@ -57,7 +57,7 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_EmoteStop = -1;
 	m_LastAction = -1;
 	m_LastNoAmmoSound = -1;
-	if(!pPlayer->m_IsBot || pPlayer->m_BotPower.m_Gun)
+	if(!pPlayer->m_IsBot || pPlayer->m_BotData.m_Gun)
 	{
 		m_ActiveWeapon = LD_WEAPON_GUN;
 		m_LastWeapon = LD_WEAPON_GUN;
@@ -418,12 +418,15 @@ void CCharacter::HandleEvents()
 	if((GameServer()->Collision()->GetCollisionAt(m_Pos.x+m_ProximityRadius/3.f, m_Pos.y-m_ProximityRadius/3.f)&CCollision::COLFLAG_DEATH ||
 		GameServer()->Collision()->GetCollisionAt(m_Pos.x+m_ProximityRadius/3.f, m_Pos.y+m_ProximityRadius/3.f)&CCollision::COLFLAG_DEATH ||
 		GameServer()->Collision()->GetCollisionAt(m_Pos.x-m_ProximityRadius/3.f, m_Pos.y-m_ProximityRadius/3.f)&CCollision::COLFLAG_DEATH ||
-		GameServer()->Collision()->GetCollisionAt(m_Pos.x-m_ProximityRadius/3.f, m_Pos.y+m_ProximityRadius/3.f)&CCollision::COLFLAG_DEATH ||
-		GameLayerClipped(m_Pos)) && Server()->Tick() >= m_NextDmgTick)
+		GameServer()->Collision()->GetCollisionAt(m_Pos.x-m_ProximityRadius/3.f, m_Pos.y+m_ProximityRadius/3.f)&CCollision::COLFLAG_DEATH) &&
+		Server()->Tick() >= m_NextDmgTick)
 	{
 		m_NextDmgTick = Server()->Tick() + Server()->TickSpeed() * 0.1;
 		TakeDamage(vec2(0, 0), 1, GetCID(), WEAPON_WORLD);
 	}
+
+	if(GameLayerClipped(m_Pos))
+		Die(GetCID(), WEAPON_WORLD);
 
 	if(!m_pPlayer)
 		return;
@@ -621,14 +624,6 @@ void CCharacter::Die(int Killer, int Weapon)
 			Killer, Server()->ClientName(Killer),
 			m_pPlayer->GetCID(), Server()->ClientName(m_pPlayer->GetCID()), Weapon, ModeSpecial);
 		GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
-	
-		// send the kill message
-		CNetMsg_Sv_KillMsg Msg;
-		Msg.m_Killer = Killer;
-		Msg.m_Victim = m_pPlayer->GetCID();
-		Msg.m_Weapon = Killer == GetCID() ? WEAPON_GAME : g_Weapons.m_aWeapons[m_ActiveWeapon]->GetShowType();
-		Msg.m_ModeSpecial = ModeSpecial;
-		Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, -1);
 		// close menu
 		m_pPlayer->CloseMenu();
 	}
@@ -651,7 +646,7 @@ void CCharacter::Die(int Killer, int Weapon)
 bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon)
 {
 	CPlayer *pFrom = GameServer()->m_apPlayers[From];
-	if(pFrom && pFrom->m_IsBot && m_pPlayer->m_IsBot && !pFrom->m_BotPower.m_TeamDamage)
+	if(pFrom && pFrom->m_IsBot && m_pPlayer->m_IsBot && !pFrom->m_BotData.m_TeamDamage)
 		return false;
 
 	m_Core.m_Vel += Force;
@@ -728,8 +723,8 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon)
 		}
 
 		// create pickup
-		if(m_pPlayer->m_IsBot && random_int(0, 100) < g_Config.m_LdPickupProba)
-			GameServer()->m_pController->CreateZombiePickup(m_Pos, Force/Force, m_pPlayer->m_BotPower.m_DropNum);
+		if(m_pPlayer->m_IsBot && random_int(0, 100) <= m_pPlayer->m_BotData.m_DropProba)
+			GameServer()->m_pController->CreateZombiePickup(m_Pos, Force/Force, m_pPlayer->m_BotData.m_DropNum);
 
 		Die(From, Weapon);
 
@@ -979,7 +974,7 @@ void CCharacter::DoBotActions()
 		}
 
 		// Move
-		if(m_pPlayer->m_BotPower.m_Hammer)
+		if(m_pPlayer->m_BotData.m_Hammer)
 		{
 			if(pTarget->m_Pos.x - m_Pos.x > 40.0f)
 			{
@@ -1017,18 +1012,18 @@ void CCharacter::DoBotActions()
 			}
 		}
 		//Attack
-		if(m_pPlayer->m_BotPower.m_Hammer)
+		if(m_pPlayer->m_BotData.m_Hammer)
 		{
-			if(distance(pTarget->m_Pos, m_Pos) < m_ProximityRadius + 40.0f && random_int(1, 100) < m_pPlayer->m_BotPower.m_AttackProba)
+			if(distance(pTarget->m_Pos, m_Pos) < m_ProximityRadius + 40.0f && random_int(1, 100) <= m_pPlayer->m_BotData.m_AttackProba)
 			{
 				m_ActiveWeapon = WEAPON_HAMMER;
 				m_Input.m_Fire = 1;
 				m_LatestInput.m_Fire = 1;
 			}
 		}
-		else if(m_pPlayer->m_BotPower.m_Gun)
+		else if(m_pPlayer->m_BotData.m_Gun)
 		{
-			if(distance(pTarget->m_Pos, m_Pos) > 240.0f && !GameServer()->Collision()->IntersectLine(pTarget->m_Pos, m_Pos, NULL, NULL) && random_int(1, 100) < m_pPlayer->m_BotPower.m_AttackProba)
+			if(distance(pTarget->m_Pos, m_Pos) > 240.0f && !GameServer()->Collision()->IntersectLine(pTarget->m_Pos, m_Pos, NULL, NULL) && random_int(1, 100) <= m_pPlayer->m_BotData.m_AttackProba)
 			{
 				m_ActiveWeapon = WEAPON_GUN;
 				m_Input.m_Fire = 1;
@@ -1039,7 +1034,7 @@ void CCharacter::DoBotActions()
 		}
 		
 		// Hook
-		if(m_pPlayer->m_BotPower.m_Hook)
+		if(m_pPlayer->m_BotData.m_Hook)
 		{
 			
 			if(!GameServer()->Collision()->IntersectLine(pTarget->m_Pos, m_Pos, NULL, NULL) && (m_Core.m_HookedPlayer == pTarget->GetCID() && distance(pTarget->m_Pos, m_Pos) > 96.0f) || (distance(pTarget->m_Pos, m_Pos) > 320.0f && distance(pTarget->m_Pos, m_Pos) < 380.0f))
@@ -1047,7 +1042,7 @@ void CCharacter::DoBotActions()
 				m_Input.m_Hook = 1;
 				m_Botinfo.m_RandomPos.x = random_int(-8, 8);
 				m_Botinfo.m_RandomPos.y = random_int(-8, 8);
-				if(m_pPlayer->m_BotPower.m_Gun)
+				if(m_pPlayer->m_BotData.m_Gun)
 				{
 					m_ActiveWeapon = WEAPON_GUN;
 					m_Input.m_Fire = 1;

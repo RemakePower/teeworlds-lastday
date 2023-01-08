@@ -1854,7 +1854,7 @@ void CGameContext::OnBotDead(int ClientID)
 	}
 }
 
-void CGameContext::CreateBot(int ClientID, CBotPower *BotPower)
+void CGameContext::CreateBot(int ClientID, CBotData *BotPower)
 {
 	if(ClientID < MAX_PLAYERS || m_apPlayers[ClientID])
 		return;

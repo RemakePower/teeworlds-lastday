@@ -10,7 +10,7 @@ MACRO_ALLOC_POOL_ID_IMPL(CPlayer, MAX_CLIENTS)
 
 IServer *CPlayer::Server() const { return m_pGameServer->Server(); }
 
-CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, bool Bot, CBotPower *BotPower)
+CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, bool Bot, CBotData *BotData)
 {
 	m_pGameServer = pGameServer;
 	m_RespawnTick = Server()->Tick();
@@ -20,8 +20,8 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, bool Bot, CBotPower *B
 	m_ClientID = ClientID;
 	m_Team = 0;
 	m_IsBot = Bot;
-	if(BotPower)
-		m_BotPower = *BotPower;
+	if(BotData)
+		m_BotData = *BotData;
 	m_Menu = 0;
 	m_MenuCloseTick = 0;
 	m_MenuPage = 0;
@@ -225,13 +225,13 @@ void CPlayer::Snap(int SnappingClient)
 
 	pClientInfo->m_Country = Server()->ClientCountry(m_ClientID);
 	// TODO:rewrite the bot skin select
-	StrToInts(&pClientInfo->m_Skin0, 6, m_IsBot ? m_BotPower.m_SkinName : m_TeeInfos.m_SkinName);
+	StrToInts(&pClientInfo->m_Skin0, 6, m_IsBot ? m_BotData.m_SkinName : m_TeeInfos.m_SkinName);
 
-	if(m_IsBot && m_BotPower.m_BodyColor > -1 && m_BotPower.m_FeetColor > -1)
+	if(m_IsBot && m_BotData.m_BodyColor > -1 && m_BotData.m_FeetColor > -1)
 	{
 		pClientInfo->m_UseCustomColor = 1;
-		pClientInfo->m_ColorBody = m_BotPower.m_BodyColor;
-		pClientInfo->m_ColorFeet = m_BotPower.m_FeetColor;
+		pClientInfo->m_ColorBody = m_BotData.m_BodyColor;
+		pClientInfo->m_ColorFeet = m_BotData.m_FeetColor;
 	}
 	else 
 	{
@@ -247,7 +247,7 @@ void CPlayer::Snap(int SnappingClient)
 	pPlayerInfo->m_Local = SnappingClient == m_ClientID ? 1 : 0;
 	pPlayerInfo->m_ClientID = id;
 	pPlayerInfo->m_Score = m_Score;
-	pPlayerInfo->m_Team = m_Team;
+	pPlayerInfo->m_Team = m_IsBot ? 10 : m_Team;
 
 	if(m_ClientID == SnappingClient)
 		pPlayerInfo->m_Local = 1;

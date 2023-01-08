@@ -274,7 +274,7 @@ class CCache
 	void PumpNetwork(bool PacketWaiting);
 
 	char *GetMapName();
-	int LoadMap(const char *pMapName);
+	int LoadMap();
 
 	int Run();
 
@@ -289,7 +289,6 @@ class CCache
 	static void ConchainMaxclientsperipUpdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 	static void ConchainModCommandUpdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 	static void ConchainConsoleOutputLevelUpdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
-	static void ConchainMapUpdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 	
 	void RegisterCommands();
 

@@ -144,17 +144,6 @@ void CGameController::ChangeMap(const char *pToMap)
 
 void CGameController::CycleMap()
 {
-	if(m_aMapWish[0] == 0)
-	{
-		return;
-	}
-
-	char aBuf[256];
-	str_format(aBuf, sizeof(aBuf), "rotating map to %s", m_aMapWish);
-	GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
-	str_copy(g_Config.m_SvMap, m_aMapWish, sizeof(g_Config.m_SvMap));
-	m_aMapWish[0] = 0;
-	m_RoundCount = 0;
 	return;
 }
 
@@ -524,8 +513,8 @@ void CGameController::OnCreateBot()
 	for(int i = BOT_CLIENTS_START; i < MAX_CLIENTS; i ++)
 	{
 		if(GameServer()->m_apPlayers[i]) continue;
-		CBotPower *Power = RandomPower();
-		GameServer()->CreateBot(i, Power);
+		CBotData *Data = RandomPower();
+		GameServer()->CreateBot(i, Data);
 	}
 }
 
@@ -549,12 +538,13 @@ void CGameController::InitPower()
 	{
 		for(unsigned i = 0; i < BotArray.size(); ++i)
 		{
-			CBotPower *pPower = new CBotPower();
+			CBotData *pPower = new CBotData();
 			str_copy(pPower->m_SkinName, BotArray[i].value("skin", "default").c_str());
 			pPower->m_BodyColor = BotArray[i].value("body_color", -1);
 			pPower->m_FeetColor = BotArray[i].value("feet_color", -1);
 			pPower->m_AttackProba = BotArray[i].value("attack_proba", 20);
 			pPower->m_SpawnProba = BotArray[i].value("spawn_proba", 100);
+			pPower->m_DropProba = BotArray[i].value("drop_proba", 80);
 			pPower->m_DropNum = BotArray[i].value("drop_num", 1);
 			pPower->m_TeamDamage = BotArray[i].value("teamdamage", 0);
 			pPower->m_Gun = BotArray[i].value("gun", 0);
@@ -565,9 +555,9 @@ void CGameController::InitPower()
 	}
 }
 
-CBotPower *CGameController::RandomPower()
+CBotData *CGameController::RandomPower()
 {
-	CBotPower *pPower;
+	CBotData *pPower;
 	int RandomID;
 	do
 	{

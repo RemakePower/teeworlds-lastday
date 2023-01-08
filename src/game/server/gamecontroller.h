@@ -142,8 +142,8 @@ public:
 /** Bot **/
 	void OnCreateBot();
 	void InitPower();
-	CBotPower *RandomPower();
-	array<CBotPower> m_BotPowers;
+	CBotData *RandomPower();
+	array<CBotData> m_BotPowers;
 /** Bot End **/
 
 	void CreateZombiePickup(vec2 Pos, vec2 Dir, int DropNum);

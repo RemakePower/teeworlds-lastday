@@ -228,7 +228,7 @@ public:
 	//Bot Start
 	int GetBotNum() const;
 	void OnBotDead(int ClientID);
-	void CreateBot(int ClientID, CBotPower *BotPower);
+	void CreateBot(int ClientID, CBotData *BotPower);
 
 	//Bot END
 };
