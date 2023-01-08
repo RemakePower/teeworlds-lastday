@@ -142,9 +142,6 @@ public:
 	// Bot
 	CBotData m_BotData;
 	bool m_IsBot;
-
-	int m_IDMap[DDNET_MAX_CLIENTS];
-	int m_IDMapBook[DDNET_MAX_CLIENTS];
 };
 
 #endif

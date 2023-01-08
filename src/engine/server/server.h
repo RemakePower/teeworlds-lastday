@@ -140,7 +140,6 @@ public:
 
 		char m_aLanguage[16];
 		NETADDR m_Addr;
-		bool m_CustClt;
 		bool m_GotDDNetVersionPacket;
 		bool m_DDNetVersionSettled;
 		int m_DDNetVersion;
@@ -304,7 +303,6 @@ public:
 	const char* GetClientLanguage(int ClientID) override;
 	void SetClientLanguage(int ClientID, const char* pLanguage) override;
 	int* GetIdMap(int ClientID) override;
-	void SetCustClt(int ClientID) override;
 };
 
 #endif

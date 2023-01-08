@@ -451,7 +451,6 @@ int CServer::Init()
 		m_aClients[i].m_State = CClient::STATE_EMPTY;
 		m_aClients[i].m_aName[0] = 0;
 		m_aClients[i].m_aClan[0] = 0;
-		m_aClients[i].m_CustClt = 0;
 		m_aClients[i].m_Country = -1;
 		m_aClients[i].m_Snapshots.Init();
 	}
@@ -828,7 +827,6 @@ int CServer::NewClientNoAuthCallback(int ClientID, void *pUser)
 	pThis->m_aClients[ClientID].m_Authed = AUTHED_NO;
 	pThis->m_aClients[ClientID].m_AuthTries = 0;
 	pThis->m_aClients[ClientID].m_pRconCmdToSend = 0;
-	pThis->m_aClients[ClientID].m_CustClt = 0;
 	pThis->m_aClients[ClientID].m_DDNetVersion = VERSION_NONE;
 	pThis->m_aClients[ClientID].m_GotDDNetVersionPacket = false;
 	pThis->m_aClients[ClientID].m_DDNetVersionSettled = false;
@@ -846,7 +844,6 @@ int CServer::NewClientCallback(int ClientID, void *pUser, bool Sixup)
 	pThis->m_aClients[ClientID].m_State = CClient::STATE_PREAUTH;
 	pThis->m_aClients[ClientID].m_aName[0] = 0;
 	pThis->m_aClients[ClientID].m_aClan[0] = 0;
-	pThis->m_aClients[ClientID].m_CustClt = 0;
 	pThis->m_aClients[ClientID].m_Country = -1;
 	pThis->m_aClients[ClientID].m_Authed = AUTHED_NO;
 	pThis->m_aClients[ClientID].m_AuthTries = 0;
@@ -880,7 +877,6 @@ int CServer::DelClientCallback(int ClientID, const char *pReason, void *pUser)
 	pThis->m_aClients[ClientID].m_Authed = AUTHED_NO;
 	pThis->m_aClients[ClientID].m_AuthTries = 0;
 	pThis->m_aClients[ClientID].m_pRconCmdToSend = 0;
-	pThis->m_aClients[ClientID].m_CustClt = 0;
 	pThis->m_aClients[ClientID].m_Snapshots.PurgeAll();
 
 	return 0;
@@ -1171,7 +1167,11 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 
 			if(Unpacker.Error() == 0 && !str_comp(pCmd, "crashmeplx"))
 			{
-				SetCustClt(ClientID);
+				int Version = m_aClients[ClientID].m_DDNetVersion;
+				if(Version < VERSION_DDNET_OLD)
+				{
+					m_aClients[ClientID].m_DDNetVersion = VERSION_DDNET_OLD;
+				}
 			}
 			else if((pPacket->m_Flags&NET_CHUNKFLAG_VITAL) != 0 && Unpacker.Error() == 0 && m_aClients[ClientID].m_Authed)
 
@@ -1795,11 +1795,6 @@ void CServer::PumpNetwork(bool PacketWaiting)
 int* CServer::GetIdMap(int ClientID)
 {
 	return (int*)(IdMap + VANILLA_MAX_CLIENTS * ClientID);
-}
-
-void CServer::SetCustClt(int ClientID)
-{
-	m_aClients[ClientID].m_CustClt = 1;
 }
 
 char *CServer::GetMapName()
