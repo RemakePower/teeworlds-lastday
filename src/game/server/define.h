@@ -10,20 +10,6 @@ char* format_int64_with_commas(char commas, int64 n);
 const char *GetAmmoName(int WeaponID);
 const char *GetWeaponName(int WeaponID);
 
-enum ItemList
-{
-    ITEM_GUN_AMMO,
-    ITEM_SHOTGUN_AMMO,
-    ITEM_GRENADE_AMMO,
-    ITEM_RIFLE_AMMO,
-
-    ITEM_GUN,
-    ITEM_SHOTGUN,
-    ITEM_GRENADE,
-    ITEM_RIFLE,
-    ITEM_NINJA,
-};
-
 enum OptionType
 {
     MENUOPTION_OPTIONS=0,
@@ -51,14 +37,17 @@ enum MenuPages
     MENUPAGE_ITEM,
 };
 
-class CBotPower
+class CBotData
 {
 public:
-    CBotPower() {};
+    CBotData() {};
     char m_SkinName[64];
     int m_BodyColor;
     int m_FeetColor;
     int m_AttackProba;
+    int m_SpawnProba;
+    int m_DropProba;
+    int m_DropNum;
     bool m_TeamDamage;
     bool m_Hammer;
     bool m_Gun;

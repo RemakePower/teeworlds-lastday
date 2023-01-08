@@ -95,6 +95,7 @@ public:
 		enum
 		{
 			STATE_EMPTY = 0,
+			STATE_PREAUTH,
 			STATE_AUTH,
 			STATE_CONNECTING,
 			STATE_READY,
@@ -140,6 +141,11 @@ public:
 		char m_aLanguage[16];
 		NETADDR m_Addr;
 		bool m_CustClt;
+		bool m_GotDDNetVersionPacket;
+		bool m_DDNetVersionSettled;
+		int m_DDNetVersion;
+		char m_aDDNetVersionStr[64];
+		CUuid m_ConnectionID;
 	};
 
 	CClient m_aClients[MAX_CLIENTS];
@@ -201,13 +207,15 @@ public:
 
 	void SetRconCID(int ClientID);
 	bool IsAuthed(int ClientID);
-	int GetClientInfo(int ClientID, CClientInfo *pInfo);
+	bool GetClientInfo(int ClientID, CClientInfo *pInfo) const override;
+	void SetClientDDNetVersion(int ClientID, int DDNetVersion) override;
 	void GetClientAddr(int ClientID, char *pAddrStr, int Size);
 	const char *ClientName(int ClientID);
 	const char *ClientClan(int ClientID);
 	int ClientCountry(int ClientID);
 	bool ClientIngame(int ClientID);
 	int MaxClients() const;
+	int GetClientVersion(int ClientID) const override;
 
 	int SendMsg(CMsgPacker *pMsg, int Flags, int ClientID) override;
 
@@ -266,7 +274,7 @@ class CCache
 	void PumpNetwork(bool PacketWaiting);
 
 	char *GetMapName();
-	int LoadMap(const char *pMapName);
+	int LoadMap();
 
 	int Run();
 
@@ -281,7 +289,7 @@ class CCache
 	static void ConchainMaxclientsperipUpdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 	static void ConchainModCommandUpdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 	static void ConchainConsoleOutputLevelUpdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
-
+	
 	void RegisterCommands();
 
 	// Bots

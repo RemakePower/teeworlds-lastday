@@ -214,6 +214,7 @@ public:
 
 	bool IsClientReady(int ClientID) override;
 	bool IsClientPlayer(int ClientID) override;
+	int GetClientVersion(int ClientID) const;
 
 	void OnSetAuthed(int ClientID,int Level) override;
 	
@@ -227,7 +228,7 @@ public:
 	//Bot Start
 	int GetBotNum() const;
 	void OnBotDead(int ClientID);
-	void CreateBot(int ClientID, CBotPower *BotPower);
+	void CreateBot(int ClientID, CBotData *BotPower);
 
 	//Bot END
 };

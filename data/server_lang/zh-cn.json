@@ -9,6 +9,14 @@
             "value": "木头"
         },
         {
+            "key": "stone",
+            "value": "石块"
+        },
+        {
+            "key": "frame",
+            "value": "框架"
+        },
+        {  
             "key": "hammer",
             "value": "锤子"
         },

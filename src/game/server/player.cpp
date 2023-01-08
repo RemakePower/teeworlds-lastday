@@ -2,6 +2,7 @@
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 #include <new>
 #include <engine/shared/config.h>
+#include <base/tl/array.h>
 #include "player.h"
 
 
@@ -9,7 +10,7 @@ MACRO_ALLOC_POOL_ID_IMPL(CPlayer, MAX_CLIENTS)
 
 IServer *CPlayer::Server() const { return m_pGameServer->Server(); }
 
-CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, bool Bot, CBotPower *BotPower)
+CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, bool Bot, CBotData *BotData)
 {
 	m_pGameServer = pGameServer;
 	m_RespawnTick = Server()->Tick();
@@ -19,8 +20,8 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, bool Bot, CBotPower *B
 	m_ClientID = ClientID;
 	m_Team = 0;
 	m_IsBot = Bot;
-	if(BotPower)
-		m_BotPower = *BotPower;
+	if(BotData)
+		m_BotData = *BotData;
 	m_Menu = 0;
 	m_MenuCloseTick = 0;
 	m_MenuPage = 0;
@@ -35,13 +36,19 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, bool Bot, CBotPower *B
 
 	m_PrevTuningParams = *pGameServer->Tuning();
 	m_NextTuningParams = m_PrevTuningParams;
-
+	
 	int* idMap = Server()->GetIdMap(ClientID);
 	for (int i = 1;i < VANILLA_MAX_CLIENTS;i++)
 	{
 	    idMap[i] = -1;
 	}
 	idMap[0] = ClientID;
+	
+	for (int i = 1;i < DDNET_MAX_CLIENTS;i++)
+	{
+	    m_IDMap[i] = -1;
+	}
+	m_IDMap[0] = ClientID;
 }
 
 CPlayer::~CPlayer()
@@ -71,9 +78,6 @@ void CPlayer::HandleTuningParams()
 
 void CPlayer::Tick()
 {
-#ifdef CONF_DEBUG
-	if(!g_Config.m_DbgDummies || m_ClientID < MAX_CLIENTS-g_Config.m_DbgDummies)
-#endif
 	if(!Server()->ClientIngame(m_ClientID))
 		return;
 
@@ -188,8 +192,25 @@ void CPlayer::Snap(int SnappingClient)
 	if(!Server()->ClientIngame(m_ClientID))
 		return;
 
-	int id = m_ClientID;
-	if (!Server()->Translate(id, SnappingClient)) return;
+	int id = -1;
+	int* idMap = GameServer()->m_apPlayers[SnappingClient]->m_IDMap;
+	if(SnappingClient == m_ClientID)
+	{
+		id = 0;
+	}else
+	{
+		for (int i = 0;i < DDNET_MAX_CLIENTS;i++)
+		{
+			if (idMap[i] == m_ClientID)
+			{
+				id = i;
+				break;
+			}
+		}
+	}
+
+	if (id == -1)
+		return;
 
 	CNetObj_ClientInfo *pClientInfo = static_cast<CNetObj_ClientInfo *>(Server()->SnapNewItem(NETOBJTYPE_CLIENTINFO, id, sizeof(CNetObj_ClientInfo)));
 	if(!pClientInfo)
@@ -204,13 +225,13 @@ void CPlayer::Snap(int SnappingClient)
 
 	pClientInfo->m_Country = Server()->ClientCountry(m_ClientID);
 	// TODO:rewrite the bot skin select
-	StrToInts(&pClientInfo->m_Skin0, 6, m_IsBot ? m_BotPower.m_SkinName : m_TeeInfos.m_SkinName);
+	StrToInts(&pClientInfo->m_Skin0, 6, m_IsBot ? m_BotData.m_SkinName : m_TeeInfos.m_SkinName);
 
-	if(m_IsBot && m_BotPower.m_BodyColor > -1 && m_BotPower.m_FeetColor > -1)
+	if(m_IsBot && m_BotData.m_BodyColor > -1 && m_BotData.m_FeetColor > -1)
 	{
 		pClientInfo->m_UseCustomColor = 1;
-		pClientInfo->m_ColorBody = m_BotPower.m_BodyColor;
-		pClientInfo->m_ColorFeet = m_BotPower.m_FeetColor;
+		pClientInfo->m_ColorBody = m_BotData.m_BodyColor;
+		pClientInfo->m_ColorFeet = m_BotData.m_FeetColor;
 	}
 	else 
 	{
@@ -223,7 +244,7 @@ void CPlayer::Snap(int SnappingClient)
 		return;
 
 	pPlayerInfo->m_Latency = SnappingClient == -1 ? m_Latency.m_Min : GameServer()->m_apPlayers[SnappingClient]->m_aActLatency[m_ClientID];
-	pPlayerInfo->m_Local = 0;
+	pPlayerInfo->m_Local = SnappingClient == m_ClientID ? 1 : 0;
 	pPlayerInfo->m_ClientID = id;
 	pPlayerInfo->m_Score = m_Score;
 	pPlayerInfo->m_Team = m_IsBot ? 10 : m_Team;
@@ -244,7 +265,7 @@ void CPlayer::Snap(int SnappingClient)
 
 	if(m_ClientID == SnappingClient && m_Team == TEAM_SPECTATORS)
 	{
-		CNetObj_SpectatorInfo *pSpectatorInfo = static_cast<CNetObj_SpectatorInfo *>(Server()->SnapNewItem(NETOBJTYPE_SPECTATORINFO, m_ClientID, sizeof(CNetObj_SpectatorInfo)));
+		CNetObj_SpectatorInfo *pSpectatorInfo = static_cast<CNetObj_SpectatorInfo *>(Server()->SnapNewItem(NETOBJTYPE_SPECTATORINFO, id, sizeof(CNetObj_SpectatorInfo)));
 		if(!pSpectatorInfo)
 			return;
 

@@ -22,7 +22,7 @@ class CCharacter : public CEntity
 
 public:
 	//character's size
-	static const int ms_PhysSize = 28;
+	static const int ms_PhysSize = 28.0f;
 
 	CCharacter(CGameWorld *pWorld);
 

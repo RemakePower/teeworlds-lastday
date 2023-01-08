@@ -343,12 +343,16 @@ add_library(nlohmann_json EXCLUDE_FROM_ALL OBJECT ${DEP_NLOHMANN_JSON_SRC})
 set_glob(DEP_JSON_SRC GLOB src/engine/external/json-parser json.c json.h)
 add_library(json EXCLUDE_FROM_ALL OBJECT ${DEP_JSON_SRC})
 
+set_glob(DEP_NOISE_SRC GLOB src/engine/external/open-simplex-noise open-simplex-noise.cpp open-simplex-noise.h)
+add_library(noise EXCLUDE_FROM_ALL OBJECT ${DEP_NOISE_SRC})
+
 set_glob(DEP_MD5_SRC GLOB src/engine/external/md5 md5.c md5.h)
 add_library(md5 EXCLUDE_FROM_ALL OBJECT ${DEP_MD5_SRC})
 
 list(APPEND TARGETS_DEP nlohmann_json json md5)
 set(DEP_NLOHMANN_JSON $<TARGET_OBJECTS:nlohmann_json>)
 set(DEP_JSON $<TARGET_OBJECTS:json>)
+set(DEP_NOISE $<TARGET_OBJECTS:noise>)
 set(DEP_MD5 $<TARGET_OBJECTS:md5>)
 
 ########################################################################
@@ -430,7 +434,7 @@ set(GAME_GENERATED_SHARED
   src/game/generated/protocol.h
 )
 
-set(DEPS ${DEP_JSON} ${DEP_MD5} ${ZLIB_DEP})
+set(DEPS ${DEP_NLOHMANN_JSON} ${DEP_JSON} ${DEP_NOISE} ${DEP_MD5} ${ZLIB_DEP})
 
 # Libraries
 set(LIBS

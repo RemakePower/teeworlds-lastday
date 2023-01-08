@@ -1,0 +1,172 @@
+[Default]
+Index 1
+
+#top
+Index 16
+Pos 0 -1 EMPTY
+
+#right
+Index 21
+Pos 1 0 EMPTY
+
+#bottom
+Index 52
+Pos 0 1 EMPTY
+
+#left
+Index 20
+Pos -1 0 EMPTY
+
+#corner top-right
+Index 5
+Pos 0 -1 EMPTY
+Pos 1 0 EMPTY
+
+#corner top-left
+Index 4
+Pos 0 -1 EMPTY
+Pos -1 0 EMPTY
+
+#corner bottom-left
+Index 36
+Pos 0 1 EMPTY
+Pos -1 0 EMPTY
+
+#corner bottom-right
+Index 37
+Pos 0 1 EMPTY
+Pos 1 0 EMPTY
+
+#inside corner top-right
+Index 54
+Pos -1 1 EMPTY
+Pos -1 0 FULL
+Pos 0 1 FULL
+
+#inside corner top-left
+Index 53
+Pos 1 1 EMPTY
+Pos 1 0 FULL
+Pos 0 1 FULL
+
+#inside corner bottom-left
+Index 49
+Pos 1 -1 EMPTY
+Pos 1 0 FULL
+Pos 0 -1 FULL
+
+#inside corner bottom-right
+Index 48
+Pos -1 -1 EMPTY
+Pos -1 0 FULL
+Pos 0 -1 FULL
+
+#right bottom
+Index 22
+Pos -1 0 EMPTY
+Pos -1 1 FULL
+Pos 0 1 FULL
+
+#left bottom
+Index 38
+Pos 1 0 EMPTY
+Pos 1 1 FULL
+Pos 0 1 FULL
+
+#top corner right 2
+Index 33
+Pos 0 -1 EMPTY
+Pos 1 0 EMPTY
+Pos 1 1 FULL
+
+#top corner left 2
+Index 32
+Pos 0 -1 EMPTY
+Pos -1 0 EMPTY
+Pos -1 1 FULL
+
+NewRun
+
+#random bones
+Index 2
+Pos 0 0 INDEX 1
+Pos 0 1 NOTINDEX -1
+Pos 0 -1 NOTINDEX -1
+Pos 1 0 NOTINDEX -1
+Pos -1 0 NOTINDEX -1
+Random 250
+
+Index 3
+Pos 0 0 INDEX 1
+Pos 0 1 NOTINDEX -1
+Pos 0 -1 NOTINDEX -1
+Pos 1 0 NOTINDEX -1
+Pos -1 0 NOTINDEX -1
+Random 250
+
+Index 66
+Pos 0 0 INDEX 1
+Pos 0 1 NOTINDEX -1
+Pos 0 -1 NOTINDEX -1
+Pos 1 0 NOTINDEX -1
+Pos -1 0 NOTINDEX -1
+Random 250
+
+Index 67
+Pos 0 0 INDEX 1
+Pos 0 1 NOTINDEX -1
+Pos 0 -1 NOTINDEX -1
+Pos 1 0 NOTINDEX -1
+Pos -1 0 NOTINDEX -1
+Random 250
+
+Index 68
+Pos 0 0 INDEX 1
+Pos 0 1 NOTINDEX -1
+Pos 0 -1 NOTINDEX -1
+Pos 1 0 NOTINDEX -1
+Pos -1 0 NOTINDEX -1
+Random 250
+
+NewRun
+
+#random big bones
+Index 64
+Pos 0 0 INDEX 1
+Pos 1 0 INDEX 1
+Pos 0 1 INDEX 1
+Pos 1 1 INDEX 1
+Pos -1 0 NOTINDEX -1
+Pos 0 -1 NOTINDEX -1
+Pos 0 2 NOTINDEX -1
+Pos 2 0 NOTINDEX -1
+Random 300
+
+NewRun
+
+#remove overlaps
+Index 1
+Pos 0 0 INDEX 64
+Pos -1 0 INDEX 64
+
+Index 1
+Pos 0 0 INDEX 64
+Pos -1 -1 INDEX 64
+
+Index 1
+Pos 0 0 INDEX 64
+Pos 0 -1 INDEX 64
+
+Index 1
+Pos 0 0 INDEX 64
+Pos 1 -1 INDEX 64
+
+NewRun
+
+#fill bones
+Index 65
+Pos -1 0 INDEX 64
+Index 80
+Pos 0 -1 INDEX 64
+Index 81
+Pos -1 -1 INDEX 64

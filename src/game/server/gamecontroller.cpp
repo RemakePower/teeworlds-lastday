@@ -144,17 +144,6 @@ void CGameController::ChangeMap(const char *pToMap)
 
 void CGameController::CycleMap()
 {
-	if(m_aMapWish[0] == 0)
-	{
-		return;
-	}
-
-	char aBuf[256];
-	str_format(aBuf, sizeof(aBuf), "rotating map to %s", m_aMapWish);
-	GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
-	str_copy(g_Config.m_SvMap, m_aMapWish, sizeof(g_Config.m_SvMap));
-	m_aMapWish[0] = 0;
-	m_RoundCount = 0;
 	return;
 }
 
@@ -386,7 +375,7 @@ void CGameController::Snap(int SnappingClient)
 	if(!pGameInfoEx)
 		return;
 
-	pGameInfoEx->m_Flags = GAMEINFOFLAG_GAMETYPE_PLUS | GAMEINFOFLAG_ALLOW_EYE_WHEEL | GAMEINFOFLAG_ALLOW_HOOK_COLL | GAMEINFOFLAG_ALLOW_ZOOM | GAMEINFOFLAG_PREDICT_VANILLA;
+	pGameInfoEx->m_Flags = GAMEINFOFLAG_GAMETYPE_PLUS | GAMEINFOFLAG_ALLOW_EYE_WHEEL | GAMEINFOFLAG_ALLOW_HOOK_COLL | GAMEINFOFLAG_PREDICT_VANILLA;
 	pGameInfoEx->m_Flags2 = GAMEINFOFLAG2_GAMETYPE_CITY | GAMEINFOFLAG2_ALLOW_X_SKINS | GAMEINFOFLAG2_HUD_DDRACE | GAMEINFOFLAG2_HUD_HEALTH_ARMOR | GAMEINFOFLAG2_HUD_AMMO;
 	pGameInfoEx->m_Version = GAMEINFO_CURVERSION;
 }
@@ -521,11 +510,11 @@ void CGameController::ShowInventory(int ClientID)
 
 void CGameController::OnCreateBot()
 {
-	for(int i = BOT_CLIENTS_START; i < BOT_CLIENTS_END; i ++)
+	for(int i = BOT_CLIENTS_START; i < MAX_CLIENTS; i ++)
 	{
 		if(GameServer()->m_apPlayers[i]) continue;
-		CBotPower *Power = RandomPower();
-		GameServer()->CreateBot(i, Power);
+		CBotData *Data = RandomPower();
+		GameServer()->CreateBot(i, Data);
 	}
 }
 
@@ -549,11 +538,14 @@ void CGameController::InitPower()
 	{
 		for(unsigned i = 0; i < BotArray.size(); ++i)
 		{
-			CBotPower *pPower = new CBotPower();
+			CBotData *pPower = new CBotData();
 			str_copy(pPower->m_SkinName, BotArray[i].value("skin", "default").c_str());
 			pPower->m_BodyColor = BotArray[i].value("body_color", -1);
 			pPower->m_FeetColor = BotArray[i].value("feet_color", -1);
 			pPower->m_AttackProba = BotArray[i].value("attack_proba", 20);
+			pPower->m_SpawnProba = BotArray[i].value("spawn_proba", 100);
+			pPower->m_DropProba = BotArray[i].value("drop_proba", 80);
+			pPower->m_DropNum = BotArray[i].value("drop_num", 1);
 			pPower->m_TeamDamage = BotArray[i].value("teamdamage", 0);
 			pPower->m_Gun = BotArray[i].value("gun", 0);
 			pPower->m_Hammer = BotArray[i].value("hammer", 0);
@@ -563,21 +555,26 @@ void CGameController::InitPower()
 	}
 }
 
-CBotPower *CGameController::RandomPower()
+CBotData *CGameController::RandomPower()
 {
-	return &m_BotPowers[random_int(0, m_BotPowers.size()-1)];
+	CBotData *pPower;
+	int RandomID;
+	do
+	{
+		RandomID = random_int(0, m_BotPowers.size()-1);
+	}
+	while(random_int(0, 100) >= m_BotPowers[RandomID].m_SpawnProba);
+	pPower = &m_BotPowers[RandomID];
+	return pPower;
 }	
 
-void CGameController::CreateZombiePickup(vec2 Pos, vec2 Dir)
+void CGameController::CreateZombiePickup(vec2 Pos, vec2 Dir, int DropNum)
 {
 	const char *PickupName;
 	int PickupRandom = random_int(0, GameServer()->Item()->m_aDrops.size()-1);
 	PickupName = GameServer()->Item()->m_aDrops[PickupRandom]->m_aName;
 	
-	int PickupNum = 0;
-	if(random_int(0, 100) < 10) // pro pickup
-		PickupNum = random_int(3, 5);
-	else PickupNum = random_int(1, 2);
+	int PickupNum = max(1, random_int(-1, 1) + DropNum);
 
 	new CPickup(&GameServer()->m_World, Pos, Dir, PickupName, PickupNum);
 }

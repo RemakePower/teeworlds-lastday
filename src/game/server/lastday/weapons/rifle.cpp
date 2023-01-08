@@ -15,7 +15,9 @@ void CWeaponRifle::Fire(int Owner, vec2 Dir, vec2 Pos)
         Dir,
         GameServer()->Tuning()->m_LaserReach,
         Owner,
-        GetDamage());
+        GetDamage(),
+        GetWeaponID(),
+        1);
 
     GameServer()->CreateSound(Pos, SOUND_RIFLE_FIRE);
     
