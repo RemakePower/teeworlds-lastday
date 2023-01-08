@@ -32,7 +32,6 @@ public:
 		const char *m_pName;
 		int m_Latency;
 		int m_Authed;
-		bool m_CustClt;
 		bool m_GotDDNetVersion;
 		int m_DDNetVersion;
 		const char *m_pDDNetVersionStr;
@@ -118,12 +117,8 @@ public:
 
 	bool Translate(int& target, int client)
 	{
-		if(client >= MAX_PLAYERS)
-			return false;
 		CClientInfo info;
 		GetClientInfo(client, &info);
-		if (info.m_CustClt)
-			return true;
 		int* map = GetIdMap(client);
 		bool found = false;
 		for (int i = 0; i < VANILLA_MAX_CLIENTS; i++)
@@ -140,12 +135,8 @@ public:
 
 	bool ReverseTranslate(int& target, int client)
 	{
-		if(client >= MAX_PLAYERS)
-			return false;
 		CClientInfo info;
 		GetClientInfo(client, &info);
-		if (info.m_CustClt)
-			return true;
 		int* map = GetIdMap(client);
 		if (map[target] == -1)
 			return false;
@@ -181,7 +172,6 @@ public:
 	virtual const char* GetClientLanguage(int ClientID) = 0;
 	virtual void SetClientLanguage(int ClientID, const char* pLanguage) = 0;
 	virtual int* GetIdMap(int ClientID) = 0;
-	virtual void SetCustClt(int ClientID) = 0;
 	
 	virtual void ExpireServerInfo() = 0;
 };

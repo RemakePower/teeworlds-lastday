@@ -12,6 +12,10 @@ typedef unsigned __int64 uint64_t;
 #include <stdint.h>
 #endif
 
+#include <bitset>
+
+#include <engine/shared/protocol.h>
+
 //
 class CEventHandler
 {
@@ -21,7 +25,7 @@ class CEventHandler
 	int m_aTypes[MAX_EVENTS]; // TODO: remove some of these arrays
 	int m_aOffsets[MAX_EVENTS];
 	int m_aSizes[MAX_EVENTS];
-	int64_t m_aClientMasks[MAX_EVENTS];
+	std::bitset<MAX_CLIENTS>  m_aClientMasks[MAX_EVENTS];
 	char m_aData[MAX_DATASIZE];
 
 	class CGameContext *m_pGameServer;
@@ -33,7 +37,8 @@ public:
 	void SetGameServer(CGameContext *pGameServer);
 
 	CEventHandler();
-	void *Create(int Type, int Size, int64_t Mask = -1LL);
+	void *Create(int Type, int Size);
+	void *Create(int Type, int Size, std::bitset<MAX_CLIENTS> const& Mask);
 	void Clear();
 	void Snap(int SnappingClient);
 };

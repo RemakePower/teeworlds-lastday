@@ -43,12 +43,6 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, bool Bot, CBotData *Bo
 	    idMap[i] = -1;
 	}
 	idMap[0] = ClientID;
-	
-	for (int i = 1;i < DDNET_MAX_CLIENTS;i++)
-	{
-	    m_IDMap[i] = -1;
-	}
-	m_IDMap[0] = ClientID;
 }
 
 CPlayer::~CPlayer()
@@ -191,26 +185,9 @@ void CPlayer::Snap(int SnappingClient)
 #endif
 	if(!Server()->ClientIngame(m_ClientID))
 		return;
-
-	int id = -1;
-	int* idMap = GameServer()->m_apPlayers[SnappingClient]->m_IDMap;
-	if(SnappingClient == m_ClientID)
-	{
-		id = 0;
-	}else
-	{
-		for (int i = 0;i < DDNET_MAX_CLIENTS;i++)
-		{
-			if (idMap[i] == m_ClientID)
-			{
-				id = i;
-				break;
-			}
-		}
-	}
-
-	if (id == -1)
-		return;
+		
+	int id = m_ClientID;
+	if (!Server()->Translate(id, SnappingClient)) return;
 
 	CNetObj_ClientInfo *pClientInfo = static_cast<CNetObj_ClientInfo *>(Server()->SnapNewItem(NETOBJTYPE_CLIENTINFO, id, sizeof(CNetObj_ClientInfo)));
 	if(!pClientInfo)
@@ -277,21 +254,34 @@ void CPlayer::Snap(int SnappingClient)
 
 void CPlayer::FakeSnap(int SnappingClient)
 {
-	IServer::CClientInfo info;
-	Server()->GetClientInfo(SnappingClient, &info);
-	if (info.m_CustClt)
-		return;
+	int FakeID = VANILLA_MAX_CLIENTS - 1;
 
-	int id = VANILLA_MAX_CLIENTS - 1;
-
-	CNetObj_ClientInfo *pClientInfo = static_cast<CNetObj_ClientInfo *>(Server()->SnapNewItem(NETOBJTYPE_CLIENTINFO, id, sizeof(CNetObj_ClientInfo)));
+	CNetObj_ClientInfo *pClientInfo = static_cast<CNetObj_ClientInfo *>(Server()->SnapNewItem(NETOBJTYPE_CLIENTINFO, FakeID, sizeof(CNetObj_ClientInfo)));
 
 	if(!pClientInfo)
 		return;
 
 	StrToInts(&pClientInfo->m_Name0, 4, " ");
-	StrToInts(&pClientInfo->m_Clan0, 3, Server()->ClientClan(m_ClientID));
-	StrToInts(&pClientInfo->m_Skin0, 6, m_TeeInfos.m_SkinName);
+	StrToInts(&pClientInfo->m_Clan0, 3, "");
+	StrToInts(&pClientInfo->m_Skin0, 6, "default");
+
+	CNetObj_PlayerInfo *pPlayerInfo = static_cast<CNetObj_PlayerInfo *>(Server()->SnapNewItem(NETOBJTYPE_PLAYERINFO, FakeID, sizeof(CNetObj_PlayerInfo)));
+	if(!pPlayerInfo)
+		return;
+
+	pPlayerInfo->m_Latency = m_Latency.m_Min;
+	pPlayerInfo->m_Local = 1;
+	pPlayerInfo->m_ClientID = FakeID;
+	pPlayerInfo->m_Score = -9999;
+	pPlayerInfo->m_Team = TEAM_SPECTATORS;
+
+	CNetObj_SpectatorInfo *pSpectatorInfo = static_cast<CNetObj_SpectatorInfo *>(Server()->SnapNewItem(NETOBJTYPE_SPECTATORINFO, FakeID, sizeof(CNetObj_SpectatorInfo)));
+	if(!pSpectatorInfo)
+		return;
+
+	pSpectatorInfo->m_SpectatorID = m_SpectatorID;
+	pSpectatorInfo->m_X = m_ViewPos.x;
+	pSpectatorInfo->m_Y = m_ViewPos.y;
 }
 
 void CPlayer::OnDisconnect(const char *pReason)

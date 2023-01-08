@@ -19,6 +19,8 @@
 #include "player.h"
 #include "define.h"
 
+#include <bitset>
+
 #ifdef _MSC_VER
 typedef __int32 int32_t;
 typedef unsigned __int32 uint32_t;
@@ -51,6 +53,12 @@ typedef unsigned __int64 uint64_t;
 			All players (CPlayer::snap)
 
 */
+std::bitset<MAX_CLIENTS> const& CmaskAll();
+std::bitset<MAX_CLIENTS> CmaskOne(int ClientID);
+std::bitset<MAX_CLIENTS> CmaskAllExceptOne(int ClientID);
+
+inline bool CmaskIsSet(std::bitset<MAX_CLIENTS> const& Mask, int ClientID) { return Mask[ClientID]; }
+
 class CGameContext : public IGameServer
 {
 	IServer *m_pServer;
@@ -154,12 +162,12 @@ public:
 	CVoteOptionServer *m_pVoteOptionLast;
 
 	// helper functions
-	void CreateDamageInd(vec2 Pos, float AngleMod, int Amount, int64_t Mask=-1LL);
-	void CreateExplosion(vec2 Pos, int Owner, int Weapon, bool NoDamage, int64_t Mask=-1LL);
-	void CreateHammerHit(vec2 Pos, int64_t Mask=-1LL);
-	void CreatePlayerSpawn(vec2 Pos, int64_t Mask=-1LL);
-	void CreateDeath(vec2 Pos, int Who, int64_t Mask=-1LL);
-	void CreateSound(vec2 Pos, int Sound, int64_t Mask=-1LL);
+	void CreateDamageInd(vec2 Pos, float AngleMod, int Amount, std::bitset<MAX_CLIENTS> const& Mask=CmaskAll());
+	void CreateExplosion(vec2 Pos, int Owner, int Weapon, bool NoDamage, std::bitset<MAX_CLIENTS> const& Mask=CmaskAll());
+	void CreateHammerHit(vec2 Pos, std::bitset<MAX_CLIENTS> const& Mask=CmaskAll());
+	void CreatePlayerSpawn(vec2 Pos, std::bitset<MAX_CLIENTS> const& Mask= CmaskAll());
+	void CreateDeath(vec2 Pos, int Who, std::bitset<MAX_CLIENTS> const& Mask=CmaskAll());
+	void CreateSound(vec2 Pos, int Sound, std::bitset<MAX_CLIENTS> const& Mask=CmaskAll());
 	void CreateSoundGlobal(int Sound, int Target=-1);
 
 
@@ -232,10 +240,5 @@ public:
 
 	//Bot END
 };
-
-inline int64_t CmaskAll() { return -1LL; }
-inline int64_t CmaskOne(int ClientID) { return 1LL<<ClientID; }
-inline int64_t CmaskAllExceptOne(int ClientID) { return CmaskAll()^CmaskOne(ClientID); }
-inline bool CmaskIsSet(int64_t Mask, int ClientID) { return (Mask&CmaskOne(ClientID)) != 0; }
 
 #endif
