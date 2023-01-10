@@ -94,12 +94,11 @@ public:
 			pos - The center position.
 			radius - How far off the CCharacter is allowed to be
 			notthis - Entity to ignore
-			bot - Do find bot?
 
 		Returns:
 			Returns a pointer to the closest CCharacter or NULL if no CCharacter is close enough.
 	*/
-	class CCharacter *ClosestCharacter(vec2 Pos, float Radius, CEntity *ppNotThis, bool Bot=true);
+	class CCharacter *ClosestCharacter(vec2 Pos, float Radius, CEntity *ppNotThis);
 
 	/*
 		Function: insert_entity

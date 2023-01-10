@@ -172,6 +172,7 @@ public:
 		vec2 m_RandomPos;
 	} m_Botinfo;
 	void DoBotActions();
+	CCharacter *FindTarget(vec2 Pos, float Radius);
 	bool CheckPos(vec2 CheckPos);
 /*** Bot End ***/
 

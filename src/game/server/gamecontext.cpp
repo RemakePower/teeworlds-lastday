@@ -1467,6 +1467,13 @@ void CGameContext::ConVote(IConsole::IResult *pResult, void *pUserData)
 	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "server", aBuf);
 }
 
+void CGameContext::ConMapRegenerate(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext* pSelf = (CGameContext*) pUserData;
+	pSelf->Server()->RegenerateMap();
+	pSelf->SendChatTarget_Locazition(-1, "Map will regenerate!");
+}
+
 void CGameContext::ConchainSpecialMotdupdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData)
 {
 	pfnCallback(pResult, pCallbackUserData);
@@ -1488,7 +1495,7 @@ void CGameContext::ConAbout(IConsole::IResult *pResult, void *pUserData)
 
 	char aThanksList[256];
 
-	str_copy(aThanksList, "necropotame, kurosio, GutZuFusss, and ST-Chara");
+	str_copy(aThanksList, "necropotame, kurosio, DDNet, GutZuFusss, and ST-Chara");
 	// necropotame made this frame, ST-Chara and RemakePower now support it.Localization from Kurosio.
 
 	pSelf->SendChatTarget_Locazition(ClientID, "=====%s=====", MOD_NAME);

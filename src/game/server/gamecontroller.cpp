@@ -40,7 +40,7 @@ CGameController::CGameController(class CGameContext *pGameServer)
 	
 	WeaponIniter.InitWeapons(pGameServer);
 
-	InitPower();
+	InitBotData();
 }
 
 CGameController::~CGameController()
@@ -53,7 +53,7 @@ vec2 CGameController::GetSpawnPos()
 	for(int i = 0;i < m_SpawnPoints.size(); i++)
 	{
 		Pos = m_SpawnPoints[random_int(0, m_SpawnPoints.size()-1)];
-		if(!GameServer()->m_World.ClosestCharacter(Pos, 64.0f, 0x0))
+		if(!GameServer()->m_World.ClosestCharacter(Pos, 128.0f, 0x0))
 			break;
 	}
 	return Pos;
@@ -65,15 +65,15 @@ void CGameController::InitSpawnPos()
 	CMapItemLayerTilemap *pTileMap = GameServer()->Layers()->GameLayer();
 	CTile *pTiles = GameServer()->m_pTiles;
 
-	for(int y = 0; y < pTileMap->m_Height; y+=2)
+	for(int y = 0; y < pTileMap->m_Height; y++)
 	{
-		for(int x = 0; x < pTileMap->m_Width; x+=2)
+		for(int x = 0; x < pTileMap->m_Width; x++)
 		{
 			int Index = pTiles[y*pTileMap->m_Width+x].m_Index;
 
 			if(Index&CCollision::COLFLAG_SOLID || Index&CCollision::COLFLAG_DEATH) continue;
 			int GroudIndex = pTiles[(y+1)*pTileMap->m_Width+x].m_Index;
-			if(GroudIndex&CCollision::COLFLAG_SOLID)
+			if(GroudIndex&CCollision::COLFLAG_SOLID && random_int(1, 100) >= y*100/pTileMap->m_Height)
 			{
 				vec2 Pos(x*32.0f+16.0f, y*32.0f+16.0f);
 				m_SpawnPoints.add(Pos);
@@ -513,12 +513,12 @@ void CGameController::OnCreateBot()
 	for(int i = BOT_CLIENTS_START; i < MAX_CLIENTS; i ++)
 	{
 		if(GameServer()->m_apPlayers[i]) continue;
-		CBotData *Data = RandomPower();
+		CBotData *Data = RandomBotData();
 		GameServer()->CreateBot(i, Data);
 	}
 }
 
-void CGameController::InitPower()
+void CGameController::InitBotData()
 {
 	// read file data into buffer
 	const char *pFilename = "./data/json/bot.json";
@@ -538,34 +538,34 @@ void CGameController::InitPower()
 	{
 		for(unsigned i = 0; i < BotArray.size(); ++i)
 		{
-			CBotData *pPower = new CBotData();
-			str_copy(pPower->m_SkinName, BotArray[i].value("skin", "default").c_str());
-			pPower->m_BodyColor = BotArray[i].value("body_color", -1);
-			pPower->m_FeetColor = BotArray[i].value("feet_color", -1);
-			pPower->m_AttackProba = BotArray[i].value("attack_proba", 20);
-			pPower->m_SpawnProba = BotArray[i].value("spawn_proba", 100);
-			pPower->m_DropProba = BotArray[i].value("drop_proba", 80);
-			pPower->m_DropNum = BotArray[i].value("drop_num", 1);
-			pPower->m_TeamDamage = BotArray[i].value("teamdamage", 0);
-			pPower->m_Gun = BotArray[i].value("gun", 0);
-			pPower->m_Hammer = BotArray[i].value("hammer", 0);
-			pPower->m_Hook = BotArray[i].value("hook", 0);
-			m_BotPowers.add(*pPower);
+			CBotData *pData = new CBotData();
+			str_copy(pData->m_SkinName, BotArray[i].value("skin", "default").c_str());
+			pData->m_BodyColor = BotArray[i].value("body_color", -1);
+			pData->m_FeetColor = BotArray[i].value("feet_color", -1);
+			pData->m_AttackProba = BotArray[i].value("attack_proba", 20);
+			pData->m_SpawnProba = BotArray[i].value("spawn_proba", 100);
+			pData->m_DropProba = BotArray[i].value("drop_proba", 80);
+			pData->m_DropNum = BotArray[i].value("drop_num", 1);
+			pData->m_TeamDamage = BotArray[i].value("teamdamage", 0);
+			pData->m_Gun = BotArray[i].value("gun", 0);
+			pData->m_Hammer = BotArray[i].value("hammer", 0);
+			pData->m_Hook = BotArray[i].value("hook", 0);
+			m_BotDatas.add(*pData);
 		}
 	}
 }
 
-CBotData *CGameController::RandomPower()
+CBotData *CGameController::RandomBotData()
 {
-	CBotData *pPower;
+	CBotData *pData;
 	int RandomID;
 	do
 	{
-		RandomID = random_int(0, m_BotPowers.size()-1);
+		RandomID = random_int(0, m_BotDatas.size()-1);
 	}
-	while(random_int(0, 100) >= m_BotPowers[RandomID].m_SpawnProba);
-	pPower = &m_BotPowers[RandomID];
-	return pPower;
+	while(random_int(1, 100) > m_BotDatas[RandomID].m_SpawnProba);
+	pData = &m_BotDatas[RandomID];
+	return pData;
 }	
 
 void CGameController::CreateZombiePickup(vec2 Pos, vec2 Dir, int DropNum)

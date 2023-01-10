@@ -174,6 +174,7 @@ public:
 	virtual int* GetIdMap(int ClientID) = 0;
 	
 	virtual void ExpireServerInfo() = 0;
+	virtual void RegenerateMap() = 0;
 };
 
 class IGameServer : public IInterface

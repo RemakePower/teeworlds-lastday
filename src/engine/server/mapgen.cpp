@@ -14,6 +14,7 @@ CMapGen::CMapGen(IStorage *pStorage, IConsole* pConsole) :
 	m_pConsole(pConsole),
 	m_pBackGroundTiles(0),
 	m_pGameTiles(0),
+	m_pDoodadsTiles(0),
 	m_pHookableTiles(0),
 	m_pUnhookableTiles(0)
 {
@@ -22,8 +23,16 @@ CMapGen::CMapGen(IStorage *pStorage, IConsole* pConsole) :
 
 CMapGen::~CMapGen()
 {
+	if(m_pBackGroundTiles)
+		delete[] m_pBackGroundTiles;
 	if(m_pGameTiles)
 		delete[] m_pGameTiles;
+	if(m_pDoodadsTiles)
+		delete[] m_pDoodadsTiles;
+	if(m_pHookableTiles)
+		delete[] m_pHookableTiles;
+	if(m_pUnhookableTiles)
+		delete[] m_pUnhookableTiles;
 }
 
 void CMapGen::InitQuad(CQuad* pQuad)
@@ -287,21 +296,18 @@ void CMapGen::GenerateGameLayer()
 		dbg_msg("mapgen", "%d Area left", AreaList.size());
 		int tempdis = Width;
 		CAirTile Start, End;
-		for(int i = 0;i < AreaList[0]->m_Tiles.size();i++)
+		End = AreaList[1]->m_Tiles[random_int(0, AreaList[1]->m_Tiles.size()-1)];
+		for(int i = 0;i < AreaList[0]->m_Tiles.size();i ++)
 		{
 			CAirTile pTile = AreaList[0]->m_Tiles[i];
-			for(int j = 0;j < AreaList[1]->m_Tiles.size();j++)
+			if(abs(pTile.m_x-End.m_x)+ abs(pTile.m_y - End.m_y) < tempdis)
 			{
-				CAirTile pTile2 = AreaList[1]->m_Tiles[j];
-				if(abs(pTile.m_x-pTile2.m_x)+ abs(pTile.m_y - pTile2.m_y) < tempdis)
-				{
-					tempdis = abs(pTile.m_x-pTile2.m_x)+ abs(pTile.m_y - pTile2.m_y);
-					Start = pTile;
-					End = pTile2;
-				}
+				tempdis = abs(pTile.m_x-End.m_x)+ abs(pTile.m_y - End.m_y);
+				Start = pTile;
 			}
+			if(i + 2 < AreaList[0]->m_Tiles.size())
+				i++;
 		}
-		
 		if (Start.m_x < End.m_x)
 		{
 			for(int x = Start.m_x; x < End.m_x; x++)
@@ -571,15 +577,15 @@ void CMapGen::GenerateDoodadsLayer()
 				|| m_pDoodadsTiles[(y+3)*Width+x+8].m_Index != 0)
 				continue;
 
-			if(m_pGameTiles[y*Width+x].m_Index == TILE_AIR && 
-				m_pGameTiles[y*Width+x+1].m_Index == TILE_AIR 
-					&& m_pGameTiles[y*Width+x+2].m_Index == TILE_AIR
-					&& m_pGameTiles[y*Width+x+3].m_Index == TILE_AIR
-					&& m_pGameTiles[y*Width+x+4].m_Index == TILE_AIR
-					&& m_pGameTiles[y*Width+x+5].m_Index == TILE_AIR
-					&& m_pGameTiles[y*Width+x+6].m_Index == TILE_AIR
-					&& m_pGameTiles[y*Width+x+7].m_Index == TILE_AIR
-					&& m_pGameTiles[y*Width+x+8].m_Index == TILE_AIR)
+			if(m_pGameTiles[(y+1)*Width+x].m_Index == TILE_AIR && 
+				m_pGameTiles[(y+1)*Width+x+1].m_Index == TILE_AIR 
+					&& m_pGameTiles[(y+1)*Width+x+2].m_Index == TILE_AIR
+					&& m_pGameTiles[(y+1)*Width+x+3].m_Index == TILE_AIR
+					&& m_pGameTiles[(y+1)*Width+x+4].m_Index == TILE_AIR
+					&& m_pGameTiles[(y+1)*Width+x+5].m_Index == TILE_AIR
+					&& m_pGameTiles[(y+1)*Width+x+6].m_Index == TILE_AIR
+					&& m_pGameTiles[(y+1)*Width+x+7].m_Index == TILE_AIR
+					&& m_pGameTiles[(y+1)*Width+x+8].m_Index == TILE_AIR)
 			{
 				if(m_pGameTiles[(y+4)*Width+x].m_Index != TILE_AIR && 
 					m_pGameTiles[(y+4)*Width+x+1].m_Index != TILE_AIR 

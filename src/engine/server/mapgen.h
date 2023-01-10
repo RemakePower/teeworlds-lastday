@@ -97,8 +97,6 @@ protected:
 
 	array<CConfiguration> m_lConfigs;
 
-
-
 	void InitState();
 	
 	void AddImageQuad(const char* pName, int ImageID, int GridX, int GridY, int X, int Y, int Width, int Height, vec2 Pos, vec2 Size, vec4 Color, int Env);

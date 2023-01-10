@@ -141,9 +141,9 @@ public:
 	void ShowInventory(int ClientID);
 /** Bot **/
 	void OnCreateBot();
-	void InitPower();
-	CBotData *RandomPower();
-	array<CBotData> m_BotPowers;
+	void InitBotData();
+	CBotData *RandomBotData();
+	array<CBotData> m_BotDatas;
 /** Bot End **/
 
 	void CreateZombiePickup(vec2 Pos, vec2 Dir, int DropNum);
