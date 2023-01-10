@@ -1679,6 +1679,7 @@ void CGameContext::OnConsoleInit()
 	Console()->Register("language", "?s", CFGFLAG_CHAT, ConLanguage, this, "change language");
 
 	Console()->Register("menu", "", CFGFLAG_CHAT, ConMenu, this, "show menu");
+	Console()->Register("regenerate_map", "", CFGFLAG_CHAT, ConMapRegenerate, this, "regenerate map");
 
 	Console()->Chain("sv_motd", ConchainSpecialMotdupdate, this);
 }
