@@ -4,6 +4,7 @@
 #include <engine/shared/config.h>
 #include <game/server/gamecontext.h>
 #include <game/mapitems.h>
+#include <game/server/gameworld.h>
 
 #include <bitset>
 
@@ -59,7 +60,7 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_EmoteStop = -1;
 	m_LastAction = -1;
 	m_LastNoAmmoSound = -1;
-	if(!pPlayer->m_IsBot || pPlayer->m_BotData.m_Gun)
+	if(pPlayer->m_IsBot && pPlayer->m_BotData.m_Gun)
 	{
 		m_ActiveWeapon = LD_WEAPON_GUN;
 		m_LastWeapon = LD_WEAPON_GUN;
@@ -626,6 +627,15 @@ void CCharacter::Die(int Killer, int Weapon)
 			Killer, Server()->ClientName(Killer),
 			m_pPlayer->GetCID(), Server()->ClientName(m_pPlayer->GetCID()), Weapon, ModeSpecial);
 		GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
+		
+		// send the kill message
+		CNetMsg_Sv_KillMsg Msg;
+		Msg.m_Killer = Killer;
+		Msg.m_Victim = m_pPlayer->GetCID();
+		Msg.m_Weapon = Killer == GetCID() ? WEAPON_GAME : g_Weapons.m_aWeapons[m_ActiveWeapon]->GetShowType();
+		Msg.m_ModeSpecial = ModeSpecial;
+		Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, -1);
+		
 		// close menu
 		m_pPlayer->CloseMenu();
 	}
@@ -725,7 +735,7 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon)
 		}
 
 		// create pickup
-		if(m_pPlayer->m_IsBot && random_int(0, 100) <= m_pPlayer->m_BotData.m_DropProba)
+		if(m_pPlayer->m_IsBot && random_int(1, 100) <= m_pPlayer->m_BotData.m_DropProba)
 			GameServer()->m_pController->CreateZombiePickup(m_Pos, Force/Force, m_pPlayer->m_BotData.m_DropNum);
 
 		Die(From, Weapon);
@@ -866,24 +876,22 @@ void CCharacter::DoBotActions()
 		return;
 	if(!m_pPlayer->m_IsBot)
 		return;
+	if(!m_Alive)
+		return;
 
-
-	bool NeedRefind = true;
 	CCharacter *pOldTarget = GameServer()->GetPlayerChar(m_Botinfo.m_Target);
-	if(pOldTarget && distance(pOldTarget->m_Pos, m_Pos) < 640.0f)
-		NeedRefind = false;
 
 	// Refind target
-	if(NeedRefind)
+	CCharacter *pClosestChr = FindTarget(m_Pos, 480.0f);
+	if(pClosestChr)
 	{
-		CCharacter *pClosestChr = GameWorld()->ClosestCharacter(m_Pos, 480.0f, this, false);
-		if(pClosestChr)
+		if(pClosestChr != pOldTarget)
 		{
 			m_Botinfo.m_Target = pClosestChr->GetCID();
 			m_Botinfo.m_LastTargetPos = pClosestChr->m_Pos;
 		}
-		else m_Botinfo.m_Target = -1;
 	}
+	else m_Botinfo.m_Target = -1;
 
 	// reset attack
 	m_Input.m_Fire = 0;
@@ -1053,6 +1061,35 @@ void CCharacter::DoBotActions()
 	m_Botinfo.m_LastVel = m_Core.m_Vel;
 	m_Input.m_Direction = m_Botinfo.m_Direction;
 	
+}
+
+CCharacter *CCharacter::FindTarget(vec2 Pos, float Radius)
+{
+	// Find other players
+	float ClosestRange = Radius*2;
+	CCharacter *pClosest = 0;
+
+	CCharacter *p = (CCharacter *)GameServer()->m_World.FindFirst(CGameWorld::ENTTYPE_CHARACTER);
+	for(; p; p = (CCharacter *)p->TypeNext())
+ 	{
+		if(p->GetPlayer() && p->GetPlayer()->m_IsBot)
+			continue;
+
+		if(GameServer()->Collision()->IntersectLine(m_Pos, p->m_Pos, 0x0, 0x0))
+			continue;
+
+		float Len = distance(Pos, p->m_Pos);
+		if(Len < p->m_ProximityRadius+Radius)
+		{
+			if(Len < ClosestRange)
+			{
+				ClosestRange = Len;
+				pClosest = p;
+			}
+		}
+	}
+
+	return pClosest;
 }
 
 bool CCharacter::CheckPos(vec2 CheckPos)

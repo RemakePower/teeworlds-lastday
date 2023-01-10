@@ -163,6 +163,7 @@ public:
 	//int m_CurrentGameTick;
 	int m_RunServer;
 	int m_MapReload;
+	int m_GeneratedMap;
 	bool m_ReloadedWhenEmpty;
 	int m_RconClientID;
 	int m_RconAuthLevel;
@@ -274,6 +275,9 @@ class CCache
 
 	char *GetMapName();
 	int LoadMap();
+	int GenerateMap();
+	void CreateMapThread();
+	LOCK m_MapLock;
 
 	int Run();
 
@@ -282,7 +286,6 @@ class CCache
 	static void ConShutdown(IConsole::IResult *pResult, void *pUser);
 	static void ConRecord(IConsole::IResult *pResult, void *pUser);
 	static void ConStopRecord(IConsole::IResult *pResult, void *pUser);
-	static void ConMapReload(IConsole::IResult *pResult, void *pUser);
 	static void ConLogout(IConsole::IResult *pResult, void *pUser);
 	static void ConchainSpecialInfoupdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 	static void ConchainMaxclientsperipUpdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
@@ -303,6 +306,7 @@ public:
 	const char* GetClientLanguage(int ClientID) override;
 	void SetClientLanguage(int ClientID, const char* pLanguage) override;
 	int* GetIdMap(int ClientID) override;
+	void RegenerateMap() override;
 };
 
 #endif

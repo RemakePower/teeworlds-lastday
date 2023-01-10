@@ -185,6 +185,10 @@
             "value": "'%s' 改名为 '%s'"
         },
         {
+            "key": "Map will regenerate!",
+            "value": "地图将会重新生成!"
+        },
+        {
             "key": "===Welcome to last day===",
             "value": "===欢迎来到最后的日子==="
         },

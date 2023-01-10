@@ -306,6 +306,7 @@ CServer::CServer() : m_DemoRecorder(&m_SnapshotDelta)
 	m_CurrentMapSize = 0;
 
 	m_MapReload = 0;
+	m_GeneratedMap = 0;
 
 	m_RconClientID = IServer::RCON_CID_SERV;
 	m_RconAuthLevel = AUTHED_ADMIN;
@@ -316,12 +317,14 @@ CServer::CServer() : m_DemoRecorder(&m_SnapshotDelta)
 	m_ServerInfoNeedsUpdate = false;
 
 	m_pRegister = nullptr;
+	m_MapLock = lock_create();
 
 	Init();
 }
 
 CServer::~CServer()
 {
+	lock_destroy(m_MapLock);
 	delete m_pRegister;
 }
 
@@ -1809,6 +1812,11 @@ char *CServer::GetMapName()
 	return pMapShortName;
 }
 
+void CServer::RegenerateMap()
+{
+	m_MapReload = 1;
+}
+
 int CServer::LoadMap()
 {
 	m_MapReload = false;
@@ -1819,22 +1827,9 @@ int CServer::LoadMap()
 	/*df = datafile_load(buf);
 	if(!df)
 		return 0;*/
-	{
-		CMapGen MapGen(Storage(), Console());
-
-		char aMapDir[256];
-		str_format(aMapDir, sizeof(aMapDir), "generated_map");
-
-		char aFullPath[512];
-		Storage()->GetCompletePath(IStorage::TYPE_SAVE, aMapDir, aFullPath, sizeof(aFullPath));
-		if(fs_makedir(aFullPath) != 0)
-		{
-			dbg_msg("infclass", "Can't create the directory '%s'", aMapDir);
-		}
-
-		if(!MapGen.CreateMap(aBuf))
+	if(!m_GeneratedMap)
+		if(!GenerateMap())
 			return 0;
-	}
 
 	if(!m_pMap->Load(aBuf))
 		return 0;
@@ -1870,7 +1865,56 @@ int CServer::LoadMap()
 		io_read(File, m_pCurrentMapData, m_CurrentMapSize);
 		io_close(File);
 	}
+	m_GeneratedMap = 0;
 	return 1;
+}
+
+int CServer::GenerateMap()
+{
+	char aBuf[512];
+	str_copy(aBuf, "generated_map/ld_generated.map");
+	{
+		CMapGen MapGen(Storage(), Console());
+
+		char aMapDir[256];
+		str_format(aMapDir, sizeof(aMapDir), "generated_map");
+
+		char aFullPath[512];
+		Storage()->GetCompletePath(IStorage::TYPE_SAVE, aMapDir, aFullPath, sizeof(aFullPath));
+		if(fs_makedir(aFullPath) != 0)
+		{
+			dbg_msg("mapgen", "Can't create the directory '%s'", aMapDir);
+		}
+
+		if(!MapGen.CreateMap(aBuf))
+			return 0;
+	}
+	m_GeneratedMap = 1;
+	return 1;
+}
+
+static void ReloadMapThread(void *user)
+{
+	CServer *pServer = (CServer *)user;
+	lock_wait(pServer->m_MapLock);
+	pServer->m_MapReload = 0;
+	// load map
+	if(!pServer->GenerateMap())
+	{
+		lock_unlock(pServer->m_MapLock);
+		pServer->Console()->ExecuteLine("shutdown", -1);
+		return;
+	}
+	
+	lock_unlock(pServer->m_MapLock);
+}
+
+void CServer::CreateMapThread()
+{
+	void *pThread = thread_init(ReloadMapThread, this);
+#if defined(CONF_FAMILY_UNIX)
+	pthread_detach((pthread_t)pThread);
+#endif
 }
 
 int CServer::Run()
@@ -1949,7 +1993,7 @@ int CServer::Run()
 			int NewTicks = 0;
 
 			// load new map
-			if(m_MapReload || m_CurrentGameTick >= 0x6FFFFFFF) // force reload to make sure the ticks stay within a valid range
+			if(m_GeneratedMap || m_CurrentGameTick >= 0x5FFFFFFF)// force reload to make sure the ticks stay within a valid range
 			{
 				// load map
 				if(LoadMap())
@@ -1974,10 +2018,11 @@ int CServer::Run()
 					GameServer()->OnInit();
 					UpdateServerInfo(true);
 				}
-				else
-				{
-					return -1;
-				}
+			}
+			
+			if(m_MapReload) // Need generated map
+			{
+				CreateMapThread();
 			}
 
 			while(t > TickStartTime(m_CurrentGameTick + 1))
@@ -2171,11 +2216,6 @@ void CServer::ConStopRecord(IConsole::IResult *pResult, void *pUser)
 	((CServer *)pUser)->m_DemoRecorder.Stop();
 }
 
-void CServer::ConMapReload(IConsole::IResult *pResult, void *pUser)
-{
-	((CServer *)pUser)->m_MapReload = 1;
-}
-
 void CServer::ConLogout(IConsole::IResult *pResult, void *pUser)
 {
 	CServer *pServer = (CServer *)pUser;
@@ -2268,8 +2308,6 @@ void CServer::RegisterCommands()
 
 	Console()->Register("record", "?s", CFGFLAG_SERVER|CFGFLAG_STORE, ConRecord, this, "Record to a file");
 	Console()->Register("stoprecord", "", CFGFLAG_SERVER, ConStopRecord, this, "Stop recording");
-
-	Console()->Register("reload", "", CFGFLAG_SERVER, ConMapReload, this, "Reload the map");
 
 	Console()->Chain("sv_name", ConchainSpecialInfoupdate, this);
 	Console()->Chain("password", ConchainSpecialInfoupdate, this);

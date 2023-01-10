@@ -58,11 +58,10 @@ void CMakeCore::MakeItem(const char *pMakeItem, int ClientID)
 	}
 
 	Makeable=true;
-	CCharacter *pChr = pPlayer->GetCharacter();
 
 	if(pItemInfo->m_WeaponID > -1)
 	{
-		if(pChr->GetWeaponStat()[pItemInfo->m_WeaponID].m_Got)
+		if(m_pParent->GetInvItemNum(pItemInfo->m_aName, ClientID))
 		{
 			Makeable = false;
 		}
@@ -71,13 +70,11 @@ void CMakeCore::MakeItem(const char *pMakeItem, int ClientID)
 
 	if(!Makeable)
 	{
-		GameServer()->SendMenuChat_Locazition(ClientID, _("You had %s"), 
-			GameServer()->Localize(pLanguageCode, pMakeItem));
+		GameServer()->SendMenuChat_Locazition(ClientID, _("You had %s"), pMakeItem);
 		return;
 	}
 
-	GameServer()->SendMenuChat_Locazition(ClientID, _("Making %s..."), 
-		GameServer()->Localize(pLanguageCode, pMakeItem));
+	GameServer()->SendMenuChat_Locazition(ClientID, _("Making %s..."), pMakeItem);
 
 	ReturnItem(pItemInfo, ClientID);
 	
