@@ -1674,13 +1674,12 @@ void CGameContext::OnConsoleInit()
 	Console()->Register("force_vote", "ss?r", CFGFLAG_SERVER, ConForceVote, this, "Force a voting option");
 	Console()->Register("clear_votes", "", CFGFLAG_SERVER, ConClearVotes, this, "Clears the voting options");
 	Console()->Register("vote", "r", CFGFLAG_SERVER, ConVote, this, "Force a vote to yes/no");
+	Console()->Register("regenerate_map", "", CFGFLAG_SERVER, ConMapRegenerate, this, "regenerate map");
 	
 	Console()->Register("about", "", CFGFLAG_CHAT, ConAbout, this, "Show information about the mod");
 	Console()->Register("language", "?s", CFGFLAG_CHAT, ConLanguage, this, "change language");
 
 	Console()->Register("menu", "", CFGFLAG_CHAT, ConMenu, this, "show menu");
-	Console()->Register("regenerate_map", "", CFGFLAG_CHAT, ConMapRegenerate, this, "regenerate map");
-
 	Console()->Chain("sv_motd", ConchainSpecialMotdupdate, this);
 }
 

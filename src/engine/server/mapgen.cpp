@@ -131,7 +131,7 @@ int CMapGen::AddExternalImage(const char* pImageName, int Width, int Height)
 	Item.m_ImageName = m_DataFile.AddData(str_length((char*)pImageName)+1, (char*)pImageName);
 	Item.m_Width = Width;
 	Item.m_Height = Height;
-	m_DataFile.AddItem(MAPITEMTYPE_IMAGE, m_NumImages++, sizeof(Item), &Item);
+	m_DataFile.AddItem(MAPITEMTYPE_IMAGE, m_NumImages++, sizeof(CMapItemImage), &Item);
 	
 	return m_NumImages-1;
 }
@@ -166,6 +166,8 @@ void CMapGen::GenerateGameLayer()
 		{
 			m_pGameTiles[y*Width+x].m_Index = TILE_SOLID;
 			m_pGameTiles[y*Width+x].m_Flags = 0;
+			m_pGameTiles[y*Width+x].m_Reserved = 0;
+			m_pGameTiles[y*Width+x].m_Skip = 0;
 		}
 	}
 	
@@ -286,7 +288,7 @@ void CMapGen::GenerateGameLayer()
 			AreaList.add(area);
 		}
 	}
-	
+
 	dbg_msg("mapgen", "game tiles clear area to 1", AreaList.size());
 	while (AreaList.size() > 1)
 	{
@@ -420,6 +422,9 @@ void CMapGen::GenerateBackgroundTile()
 		for(int y = 0;y < Height; y ++)
 		{
 			double value = open_simplex_noise2(ctx, (double) x/32, (double) y/32) * 0.5 + 0.5;
+			m_pBackGroundTiles[y*Width+x].m_Flags = 0;
+			m_pBackGroundTiles[y*Width+x].m_Reserved = 0;
+			m_pBackGroundTiles[y*Width+x].m_Skip = 0;
 			if(value < 0.45f)
 			{
 				m_pBackGroundTiles[y*Width+x].m_Index = 1;
@@ -539,6 +544,8 @@ void CMapGen::GenerateDoodadsLayer()
 		{
 			m_pDoodadsTiles[y*Width+x].m_Index = 0;
 			m_pDoodadsTiles[y*Width+x].m_Flags = 0;
+			m_pDoodadsTiles[y*Width+x].m_Reserved = 0;
+			m_pDoodadsTiles[y*Width+x].m_Skip = 0;
 		}
 	}
 
@@ -634,8 +641,8 @@ void CMapGen::GenerateHookableLayer()
 	Item.m_ClipH = 0;
 	StrToInts(Item.m_aName, sizeof(Item.m_aName)/sizeof(int), "Tiles");
 
-	int ImageHookable = AddExternalImage("grass_main_0.7", 1024, 1024);
-	int RuleHookable = LoadRules("grass_main_0.7");
+	int ImageHookable = AddExternalImage("jungle_main", 1024, 1024);
+	int RuleHookable = LoadRules("jungle_main");
 
 	m_pHookableTiles = new CTile[Width*Height];
 	for(int x = 0;x < Width;x ++)
@@ -643,6 +650,8 @@ void CMapGen::GenerateHookableLayer()
 		for(int y = 0;y < Height;y ++)
 		{
 			m_pHookableTiles[y*Width+x].m_Flags = 0;
+			m_pHookableTiles[y*Width+x].m_Reserved = 0;
+			m_pHookableTiles[y*Width+x].m_Skip = 0;
 			if(m_pGameTiles[y*Width+x].m_Index == TILE_SOLID || m_pGameTiles[y*Width+x].m_Index == TILE_NOHOOK)
 			{
 				m_pHookableTiles[y*Width+x].m_Index = 1;
@@ -687,6 +696,8 @@ void CMapGen::GenerateUnhookableLayer()
 		for(int y = 0;y < Height;y ++)
 		{
 			m_pUnhookableTiles[y*Width+x].m_Flags = 0;
+			m_pUnhookableTiles[y*Width+x].m_Reserved = 0;
+			m_pUnhookableTiles[y*Width+x].m_Skip = 0;
 			if(m_pGameTiles[y*Width+x].m_Index == TILE_NOHOOK)
 			{
 				m_pUnhookableTiles[y*Width+x].m_Index = 1;
@@ -710,6 +721,18 @@ void CMapGen::GenerateMap()
 		CMapItemVersion Item;
 		Item.m_Version = 1;
 		m_DataFile.AddItem(MAPITEMTYPE_VERSION, 0, sizeof(Item), &Item);
+	}
+
+	// save map info
+	{
+		CMapItemInfo Item;
+		Item.m_Version = 1;
+		Item.m_Author = -1;
+		Item.m_MapVersion = -1;
+		Item.m_Credits = -1;
+		Item.m_License = -1;
+
+		m_DataFile.AddItem(MAPITEMTYPE_INFO, 0, sizeof(Item), &Item);
 	}
 
 	// Generate background
@@ -913,7 +936,8 @@ int CMapGen::LoadRules(const char *pImageName)
 void CMapGen::AddGameTile(CTile *pTile)
 {
 	CMapItemLayerTilemap Item;
-	Item.m_Version = Item.m_Layer.m_Version = 3;
+	Item.m_Version = 3;
+	Item.m_Layer.m_Version = 0;
 	Item.m_Layer.m_Flags = 0;
 	Item.m_Layer.m_Type = LAYERTYPE_TILES;
 	Item.m_Color.r = 255;
@@ -936,7 +960,8 @@ void CMapGen::AddGameTile(CTile *pTile)
 void CMapGen::AddTile(CTile *pTile, const char *LayerName, int Image)
 {
 	CMapItemLayerTilemap Item;
-	Item.m_Version = Item.m_Layer.m_Version = 3;
+	Item.m_Version = 3;
+	Item.m_Layer.m_Version = 0;
 	Item.m_Layer.m_Flags = 0;
 	Item.m_Layer.m_Type = LAYERTYPE_TILES;
 	Item.m_Color.r = 255;
@@ -952,7 +977,7 @@ void CMapGen::AddTile(CTile *pTile, const char *LayerName, int Image)
 
 	Item.m_Data = m_DataFile.AddData(Item.m_Width*Item.m_Height*sizeof(CTile), pTile);
 	StrToInts(Item.m_aName, sizeof(Item.m_aName)/sizeof(int), LayerName);
-	m_DataFile.AddItem(MAPITEMTYPE_LAYER, m_NumLayers++, sizeof(Item), &Item);
+	m_DataFile.AddItem(MAPITEMTYPE_LAYER, m_NumLayers++, sizeof(CMapItemLayerTilemap), &Item);
 }
 
 bool CMapGen::CreateMap(const char* pFilename)

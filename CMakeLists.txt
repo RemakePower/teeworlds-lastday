@@ -349,11 +349,15 @@ add_library(noise EXCLUDE_FROM_ALL OBJECT ${DEP_NOISE_SRC})
 set_glob(DEP_MD5_SRC GLOB src/engine/external/md5 md5.c md5.h)
 add_library(md5 EXCLUDE_FROM_ALL OBJECT ${DEP_MD5_SRC})
 
-list(APPEND TARGETS_DEP nlohmann_json json md5)
+set_glob(DEP_PNGLITE_SRC GLOB src/engine/external/pnglite pnglite.c pnglite.h)
+add_library(pnglite EXCLUDE_FROM_ALL OBJECT ${DEP_PNGLITE_SRC})
+
+list(APPEND TARGETS_DEP nlohmann_json json md5 pnglite)
 set(DEP_NLOHMANN_JSON $<TARGET_OBJECTS:nlohmann_json>)
 set(DEP_JSON $<TARGET_OBJECTS:json>)
 set(DEP_NOISE $<TARGET_OBJECTS:noise>)
 set(DEP_MD5 $<TARGET_OBJECTS:md5>)
+set(DEP_PNGLITE $<TARGET_OBJECTS:pnglite>)
 
 ########################################################################
 # COPY DATA AND DLLS
@@ -434,7 +438,7 @@ set(GAME_GENERATED_SHARED
   src/game/generated/protocol.h
 )
 
-set(DEPS ${DEP_NLOHMANN_JSON} ${DEP_JSON} ${DEP_NOISE} ${DEP_MD5} ${ZLIB_DEP})
+set(DEPS ${DEP_NLOHMANN_JSON} ${DEP_JSON} ${DEP_NOISE} ${DEP_MD5} ${DEP_PNGLITE} ${ZLIB_DEP})
 
 # Libraries
 set(LIBS
