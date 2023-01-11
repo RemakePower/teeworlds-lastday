@@ -384,6 +384,9 @@ void CMapGen::GenerateGameLayer()
 		AreaList.remove_index(0);           
 	}
 
+	if(TileList)
+		delete[] TileList;
+	AreaList.clear();
 	
 
 	AddGameTile(m_pGameTiles);
