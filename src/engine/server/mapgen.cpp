@@ -223,9 +223,9 @@ void CMapGen::GenerateGameLayer()
 	array<CAirTile*> AirList;
 	array<CArea*> AreaList;
 
-	for(int x = 0;x < Width;x ++)
+	for(int y = 0;y < Height;y ++)
 	{
-		for(int y = 0;y < Height;y ++)
+		for(int x = 0;x < Width;x ++)
 		{
 			TileList[y*Width+x] = *(new CAirTile(x, y));
 			if(m_pGameTiles[y*Width+x].m_Index == TILE_AIR)
@@ -376,19 +376,22 @@ void CMapGen::GenerateGameLayer()
 				}
 			}
 		}
-		for(int i = 0; i < AreaList[0]->m_Tiles.size();i++)
+		for(int i = 0; i < AreaList[1]->m_Tiles.size();i++)
 		{
-			CAirTile pTile = AreaList[0]->m_Tiles[i];
-			AreaList[1]->m_Tiles.add(pTile);
+			CAirTile pTile = AreaList[1]->m_Tiles[i];
+			AreaList[0]->m_Tiles.add(pTile);
 		}
-		AreaList.remove_index(0);           
+		AreaList.remove_index(1);           
 	}
-
 	
-
 	AddGameTile(m_pGameTiles);
 	
 	m_DataFile.AddItem(MAPITEMTYPE_GROUP, m_NumGroups++, sizeof(Item), &Item);
+
+	if(TileList)
+		delete[] TileList;
+	AreaList.clear();
+	AirList.clear();
 } 
 
 void CMapGen::GenerateBackgroundTile()
